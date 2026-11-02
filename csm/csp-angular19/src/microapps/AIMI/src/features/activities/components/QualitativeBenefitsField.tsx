@@ -99,7 +99,7 @@ import {
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { useAimiOptionLists } from '@shared/lookups/useAimiOptionLists';
+import { QUALITATIVE_BENEFITS } from '../types/activityTypes';
 import { formFieldStyles } from '../styles/formStyles';
 
 interface QualitativeBenefitsFieldProps {
@@ -111,7 +111,6 @@ interface QualitativeBenefitsFieldProps {
 export const QualitativeBenefitsField: React.FC<
   QualitativeBenefitsFieldProps
 > = ({ value, onChange, disabled = false }) => {
-  const { qualitativeBenefits: QUALITATIVE_BENEFITS } = useAimiOptionLists();
   const [open, setOpen] = useState(false);
 
   const handleChange = (event: SelectChangeEvent<string[]>) => {

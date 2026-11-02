@@ -5,7 +5,6 @@ import type {
   ActivityWithProjectInfo,
 } from '../types/activityTypes';
 import { activityStorageUtils } from '@activities/utils/activityStorageUtils';
-import { logError } from '@shared/services/aimiLogService';
 
 interface FormData {
   businessUnit: string;
@@ -49,7 +48,7 @@ const persistActivities = async (
       benefitTo: activity.benefitTo,
       qualitativeBenefits: activity.qualitativeBenefits,
       comments: activity.comments,
-      aiToolDetails: activity.aiToolDetails || {},
+      //aiToolDetails: activity.aiToolDetails || {},
       status,
       createdAt: activity.createdAt,
       projectId,
@@ -81,7 +80,7 @@ const persistActivities = async (
       benefitTo: activity.benefitTo,
       qualitativeBenefits: activity.qualitativeBenefits,
       comments: activity.comments,
-      aiToolDetails: activity.aiToolDetails || {},
+      //aiToolDetails: activity.aiToolDetails || {},
       status: activity.status,
       createdAt: new Date(activity.createdAt),
       updatedAt: activity.updatedAt ? new Date(activity.updatedAt) : undefined,
@@ -116,7 +115,6 @@ export const useActivitySubmission = () => {
       return { success: true, projectId, activities: updatedActivityData };
     } catch (error) {
       console.error('Error saving activities:', error);
-      logError('Activities', 'SUBMIT_ACTIVITY', error);
       return { success: false, error };
     }
   };
@@ -141,7 +139,6 @@ export const useActivitySubmission = () => {
       return { success: true, projectId, activities: updatedActivityData };
     } catch (error) {
       console.error('Error saving draft activities:', error);
-      logError('Activities', 'SAVE_DRAFT', error);
       return { success: false, error };
     }
   };

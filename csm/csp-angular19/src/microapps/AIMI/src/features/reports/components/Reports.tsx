@@ -107,7 +107,6 @@ export const Reports = memo(() => {
     // UI state
     isGenerating,
     isGenerateEnabled,
-    isPracticeOnly,
     snackbar,
   } = useReports();
 
@@ -253,15 +252,6 @@ export const Reports = memo(() => {
             {isGenerating ? 'Generating...' : 'Generate Reports'}
           </Button>
         </Box>
-        {isPracticeOnly && (
-          <Typography
-            variant="body2"
-            sx={{ textAlign: 'center', mt: 1.5, color: 'text.secondary' }}
-          >
-            Select a Business Unit, Account or Project as well. Practice only narrows
-            the report.
-          </Typography>
-        )}
       </Paper>
 
       {/* Success/Error Message Snackbar */}

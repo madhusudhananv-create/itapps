@@ -10,10 +10,12 @@ import {
   FormHelperText,
 } from '@mui/material';
 import type { ActivityData } from '../types/activityTypes';
-import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup';
+import {
+  getSDLCPhasesForPractice,
+  getActivitiesForSDLCPhase,
+} from '../../../shared/utils/questionnaireUtils';
 import { SelectField } from './FormFieldComponents';
 import { modalStyles } from '../styles/formStyles';
-import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface CopyActivityDialogProps {
   open: boolean;
@@ -32,9 +34,6 @@ export const CopyActivityDialog: React.FC<CopyActivityDialogProps> = ({
   sourceActivity,
   existingActivities,
 }) => {
-  const { getSDLCPhasesForPractice, getActivitiesForSDLCPhase } =
-    useQuestionnaireLookup();
-  const { isAdmin } = useAuth();
   const [targetSdlcPhase, setTargetSdlcPhase] = useState('');
   const [targetActivity, setTargetActivity] = useState('');
 
@@ -48,7 +47,7 @@ export const CopyActivityDialog: React.FC<CopyActivityDialogProps> = ({
 
   const sdlcPhases = useMemo(
     () => (selectedPractice ? getSDLCPhasesForPractice(selectedPractice) : []),
-    [selectedPractice, getSDLCPhasesForPractice]
+    [selectedPractice]
   );
 
   const existingActivityNamesForPhase = useMemo(() => {
@@ -65,7 +64,7 @@ export const CopyActivityDialog: React.FC<CopyActivityDialogProps> = ({
     return [...getActivitiesForSDLCPhase(selectedPractice, targetSdlcPhase)].sort(
       (a, b) => a.localeCompare(b)
     );
-  }, [selectedPractice, targetSdlcPhase, getActivitiesForSDLCPhase]);
+  }, [selectedPractice, targetSdlcPhase]);
 
   const isTargetTaken =
     !!targetActivity && existingActivityNamesForPhase.includes(targetActivity);
@@ -150,9 +149,8 @@ export const CopyActivityDialog: React.FC<CopyActivityDialogProps> = ({
         <Button
           onClick={handleConfirm}
           variant="contained"
-          disabled={!targetSdlcPhase || !targetActivity || !isAdmin}
+          disabled={!targetSdlcPhase || !targetActivity}
           sx={modalStyles.primaryButton}
-          title={!isAdmin ? 'Only admin can copy activities' : ''}
         >
           Copy
         </Button>

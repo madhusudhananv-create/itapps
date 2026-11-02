@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ActivityFormData, ActivityData, AIToolDetails } from '../types/activityTypes';
-import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup';
+import {
+  getSDLCPhasesForPractice,
+  getActivitiesForSDLCPhase,
+} from '../../../shared/utils/questionnaireUtils';
 
 
 const initialFormData: ActivityFormData = {
@@ -25,8 +28,6 @@ export const useActivityForm = (
   editingActivity: ActivityData | null | undefined,
   existingActivities: ActivityData[] = []
 ) => {
-  const { getSDLCPhasesForPractice, getActivitiesForSDLCPhase } =
-    useQuestionnaireLookup();
   const [formData, setFormData] = useState<ActivityFormData>(initialFormData);
   const [originalFormData, setOriginalFormData] =
     useState<ActivityFormData | null>(null);
@@ -51,7 +52,7 @@ export const useActivityForm = (
         benefitTo: editingActivity.benefitTo,
         qualitativeBenefits: editingActivity.qualitativeBenefits,
         comments: editingActivity.comments,
-        aiToolDetails: editingActivity.aiToolDetails || {},
+        //aiToolDetails: editingActivity.aiToolDetails || {},
       };
       setFormData(editingFormData);
       setOriginalFormData(editingFormData);

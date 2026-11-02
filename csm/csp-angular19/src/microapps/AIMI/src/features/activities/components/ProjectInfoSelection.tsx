@@ -29,7 +29,10 @@ import {
   BlockRounded,
  // Radio,
 } from '@mui/icons-material';
-import { useQuestionnaireLookup } from '@shared/lookups/useQuestionnaireLookup';
+import {
+  getPracticesFromQuestionnaire,
+  //getSDLCPhasesForPractice,
+} from '@shared/utils/questionnaireUtils';
 import { useProjectPracticeInfo } from '../hooks/useProjectPracticeInfo';
 import type { PracticeInfo } from '@shared/practices/services/practiceInfoService';
 import type { ProjectInfo } from '@shared/projects/services/projectInfoService';
@@ -72,10 +75,16 @@ interface FormData {
   engineerContractTestCasePassRate?: string;
   engineerPerformanceDefectsPreRelease?: string;
   commonAdoptionWorkforceCertification?: string;
+  commonGrossMarginUplift?: string;
+  commonRevenuePerFTE?: string;
+  commonMarginDifferential?: string;
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
   presentationDone?: boolean;
   projectFY?: string;
+  acceptedScore?: number;
+  scoreReviewed?: boolean;
+  acceptedScoreComment?: string;
 
 }
 
@@ -89,16 +98,6 @@ interface ProjectInfoSelectionProps {
 }
 
 // Global styling object
-// Pill badge used for the Project Applicable Yes / No (Project NA) options
-const applicableBadgeSx = {
-  display: 'inline-block',
-  fontWeight: 600,
-  fontSize: '0.85rem',
-  px: 1.5,
-  py: 0.25,
-  borderRadius: 1,
-};
-
 const styles = {
   formGrid: {
     display: 'grid',
@@ -290,7 +289,6 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
   });
 
   // Get practices and SDLC phases from questionnaire data
-  const { getPracticesFromQuestionnaire } = useQuestionnaireLookup();
   const questionnairePractices = getPracticesFromQuestionnaire();
   //const [availablePhases, setAvailablePhases] = useState<string[]>([]);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
@@ -375,7 +373,10 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
   const commonChanged =
     !!formData.commonAdoptionWorkforceCertification ||
     !!formData.commonAdoptionEffortsSaved ||
-    !!formData.commonDeploymentEngineer;
+    !!formData.commonDeploymentEngineer ||
+    !!formData.commonGrossMarginUplift ||
+    !!formData.commonRevenuePerFTE ||
+    !!formData.commonMarginDifferential;
 
   const licenseChanged =
     !!formData.licenseCount ||
@@ -487,6 +488,18 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
       'commonDeploymentEngineer',
       projectInfo?.commonDeploymentEngineer ?? ''
     );
+    onFormChange(
+      'commonGrossMarginUplift',
+      projectInfo?.commonGrossMarginUplift ?? ''
+    );
+    onFormChange(
+      'commonRevenuePerFTE',
+      projectInfo?.commonRevenuePerFTE ?? ''
+    );
+    onFormChange(
+      'commonMarginDifferential',
+      projectInfo?.commonMarginDifferential ?? ''
+    );
 
     // Project Level Fields
     onFormChange(
@@ -498,6 +511,19 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
       projectInfo?.projectFY ?? ''
     );
 
+    // Review Score
+    onFormChange(
+      'acceptedScore',
+      projectInfo?.acceptedScore ?? ''
+    );
+    onFormChange(
+      'scoreReviewed',
+      projectInfo?.scoreReviewed ?? false
+    );
+    onFormChange(
+      'acceptedScoreComment',
+      projectInfo?.acceptedScoreComment ?? ''
+    );
     lastProjectInfo.current = projectInfo;
   }
 }, [projectInfo, onFormChange]);
@@ -636,7 +662,10 @@ const engineeringChanged =
 const commonChanged =
   !!formData.commonAdoptionWorkforceCertification ||
   !!formData.commonAdoptionEffortsSaved ||
-  !!formData.commonDeploymentEngineer;
+  !!formData.commonDeploymentEngineer ||
+  !!formData.commonGrossMarginUplift ||
+  !!formData.commonRevenuePerFTE ||
+  !!formData.commonMarginDifferential;
 
 const licenseChanged =
   formData.licenseCount !== undefined ||
@@ -688,6 +717,12 @@ const fyChanged =
               formData.commonAdoptionEffortsSaved,
             commonDeploymentEngineer:
               formData.commonDeploymentEngineer,
+            commonGrossMarginUplift:
+              formData.commonGrossMarginUplift,
+            commonRevenuePerFTE:
+              formData.commonRevenuePerFTE,
+            commonMarginDifferential:
+              formData.commonMarginDifferential,
 
             presentationDone: formData.presentationDone,
             projectFY: formData.projectFY,
@@ -1096,40 +1131,14 @@ const fyChanged =
                     }
                   />
                 }
-                renderValue={(value) => (
-                  <Box
-                    component="span"
-                    sx={{
-                      ...applicableBadgeSx,
-                      bgcolor: value === 'Yes' ? '#4caf50' : '#bdbdbd',
-                      color: value === 'Yes' ? 'white' : '#424242',
-                    }}
-                  >
-                    {value === 'Yes' ? 'Yes' : 'No (Project NA)'}
-                  </Box>
-                )}
                 sx={
                   formData.project
                     ? styles.select
                     : { ...styles.select, ...styles.emptyField }
                 }
               >
-                <MenuItem value="Yes">
-                  <Box
-                    component="span"
-                    sx={{ ...applicableBadgeSx, bgcolor: '#4caf50', color: 'white' }}
-                  >
-                    Yes
-                  </Box>
-                </MenuItem>
-                <MenuItem value="No">
-                  <Box
-                    component="span"
-                    sx={{ ...applicableBadgeSx, bgcolor: '#bdbdbd', color: '#424242' }}
-                  >
-                    No (Project NA)
-                  </Box>
-                </MenuItem>
+                <MenuItem value="Yes">Yes</MenuItem>
+                <MenuItem value="No">No (Project NA)</MenuItem>
               </Select>
             </FormControl>
 
@@ -1638,38 +1647,31 @@ const fyChanged =
           </Box>
         </Box>
 
-        
+        {/* Save Button */}
+        <Box sx={styles.saveButtonContainer}>
+          <Button
+            onClick={handleSaveAIMetrics}
+            disabled={
+              !formData.project ||
+              isInfoLoading ||
+              !isPeopleUsingAIValid() ||
+              !isNACommentsValid() ||
+              !hasUnsavedAIMetrics()
+            }
+            sx={styles.saveButton}
+            startIcon={
+              isInfoLoading ? <CircularProgress size={16} /> : undefined
+            }
+          >
+            {isInfoLoading ? 'Saving...' : 'Save Metrics'}
+          </Button>
+        </Box>
       </Box>
 </AccordionDetails>
           </Accordion>
-      {/* Common Save button - saves Project Information and AI Adoption Metrics together */}
-      <Box sx={styles.saveButtonContainer}>
-        <Button
-          onClick={handleSaveAIMetrics}
-          disabled={
-            !formData.project ||
-            isInfoLoading ||
-            !isPeopleUsingAIValid() ||
-            !isNACommentsValid() ||
-            !hasUnsavedAIMetrics() ||
-            !isAdmin
-          }
-          sx={styles.saveButton}
-          startIcon={
-            isInfoLoading ? <CircularProgress size={16} /> : undefined
-          }
-          title={
-            !isAdmin
-              ? 'Only admin can save Project Information and AI Adoption Metrics'
-              : ''
-          }
-        >
-          {isInfoLoading ? 'Saving...' : 'Save'}
-        </Button>
-      </Box>
       {/* Success Message Snackbar */}
       <CommonSnackbar
-        message="Project & Adoption Metrics saved successfully!"
+        message="AI adoption metrics saved successfully!"
         open={showSaveSuccess}
         autoHideDuration={3000}
         onClose={() => setShowSaveSuccess(false)}

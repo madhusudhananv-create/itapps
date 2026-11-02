@@ -8,18 +8,18 @@ import {
   Box,
   Typography,
   FormHelperText,
-  // Checkbox, // 'Mark all activity as NA' - disabled for the Firebase->SQL migration
-  // FormControlLabel, // 'Mark all activity as NA' - disabled for the Firebase->SQL migration
-  // Tooltip, // 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
+  //Tooltip,
 } from '@mui/material';
 import type { ActivityFormData, ActivityData } from '../types/activityTypes';
 import {
+  AI_ADOPTION_SCORES,
   REVENUE_GENERATED_OPTIONS,
   BENEFIT_TO_OPTIONS,
   APPLICABILITY_OPTIONS,
   //CLIENT_APPROVED_OPTIONS,
+  COMMON_AI_TOOLS,
+  COMMON_ACCELERATORS,
 } from '../types/activityTypes';
-import { useAimiOptionLists } from '@shared/lookups/useAimiOptionLists';
 import { CommonAutocomplete } from '@shared/components/CommonAutocomplete';
 import { AIAdoptionGuidelinesModal } from '@shared/components/AIAdoptionGuidelines/AIAdoptionGuidelinesModal';
 import { ApplicabilityGuidelinesModal } from '@shared/components/ApplicabilityGuidelines/ApplicabilityGuidelinesModal';
@@ -29,11 +29,9 @@ import {
   hasFormChanges,
   isApplicable,
   isNoAIAdoption,
-  requiresComments,
-  COMMENTS_REQUIRED_MESSAGE,
   validateAIToolsOrAccelerators,
-  // validateAITools, // 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
-  // validateAIToolDetails, // 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
+  //validateAITools,
+  //validateAIToolDetails,
 } from '../utils/formValidationUtils';
 import {
   SelectField,
@@ -44,14 +42,13 @@ import {
 } from './FormFieldComponents';
 import { QualitativeBenefitsField } from './QualitativeBenefitsField';
 import { modalStyles } from '../styles/formStyles';
-// import { AIToolDetailsDialog } from './AIToolDetailsDialog'; // 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
+//import { AIToolDetailsDialog } from './AIToolDetailsDialog';
 
 interface AddActivityModalProps {
   open: boolean;
   onClose: () => void;
   onSave: (activityData: ActivityFormData) => void;
   onSaveAndAddNew: (activityData: ActivityFormData) => void;
-  // onMarkPhaseAsNA?: (sdlcPhase: string) => void; // 'Mark all activity as NA' - disabled for the Firebase->SQL migration
   selectedPractice: string;
   editingActivity?: ActivityData | null;
   existingActivities?: ActivityData[];
@@ -62,21 +59,17 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   onClose,
   onSave,
   onSaveAndAddNew,
-  // onMarkPhaseAsNA, // 'Mark all activity as NA' - disabled for the Firebase->SQL migration
   selectedPractice,
   editingActivity,
   existingActivities = [],
 }) => {
   const [guidelinesModalOpen, setGuidelinesModalOpen] = useState(false);
-  // const [toolDetailsOpen, setToolDetailsModalOpen] = useState(false); // 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
+  //const [toolDetailsOpen, setToolDetailsModalOpen] = useState(false);
 
   const [
     applicabilityGuidelinesModalOpen,
     setApplicabilityGuidelinesModalOpen,
   ] = useState(false);
-
-  // const [markPhaseAsNAChecked, setMarkPhaseAsNAChecked] = useState(false); // 'Mark all activity as NA' - disabled for the Firebase->SQL migration
-  // const [phaseNAConfirmOpen, setPhaseNAConfirmOpen] = useState(false);
 
   const {
     formData,
@@ -88,12 +81,6 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
     isPhaseNA,
   } = useActivityForm(selectedPractice, editingActivity, existingActivities);
 
-  const {
-    aiAdoptionScores: AI_ADOPTION_SCORES,
-    aiTools: COMMON_AI_TOOLS,
-    accelerators: COMMON_ACCELERATORS,
-  } = useAimiOptionLists();
-
   const handleQualitativeBenefitsChange = (value: string[]) => {
     handleFormChange('qualitativeBenefits', value);
   };
@@ -102,22 +89,16 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   const applicable = isApplicable(formData.applicability);
   const noAIAdoption = isNoAIAdoption(formData.aiAdoptionScore);
 
-  // Activity NA / Customer NA need a comment saying why
-  const commentsRequired = requiresComments(formData.applicability);
-  const commentsMissing = commentsRequired && !formData.comments?.trim();
-
   // Check if at least one of AI Tools or Accelerators is required
   const needsAIToolsOrAccelerators = applicable && !noAIAdoption;
   const hasAIToolsOrAccelerators = validateAIToolsOrAccelerators(formData);
 
   // When AI Tools Used is selected, its details and Client Approved become mandatory
-/* DISABLED - 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
-   const hasAITools = validateAITools(formData.aiToolUsed);
+  /* const hasAITools = validateAITools(formData.aiToolUsed);
   const aiToolDetailsComplete = validateAIToolDetails(
     formData.aiToolUsed,
     formData.aiToolDetails
-  );
-*/
+  ); */
   //validation pop-up
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
@@ -181,7 +162,6 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
 
   const handleClose = () => {
     resetForm();
-    // setMarkPhaseAsNAChecked(false); // 'Mark all activity as NA' - disabled for the Firebase->SQL migration
     onClose();
   };
 
@@ -192,27 +172,6 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
     }
     handleClose();
   };
-
-/* DISABLED - 'Mark all activity as NA' - disabled for the Firebase->SQL migration
-  const handleMarkPhaseAsNAChange = (checked: boolean) => {
-    if (checked) {
-      setPhaseNAConfirmOpen(true);
-    } else {
-      setMarkPhaseAsNAChecked(false);
-    }
-  };
-
-  const handleCancelPhaseNA = () => {
-    setPhaseNAConfirmOpen(false);
-  };
-
-  const handleConfirmPhaseNA = () => {
-    setPhaseNAConfirmOpen(false);
-    setMarkPhaseAsNAChecked(false);
-    onMarkPhaseAsNA?.(formData.sdlcPhase);
-    resetForm();
-  };
-*/
 
   return (
     <>
@@ -238,23 +197,6 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   }))}
                   required={true}
                 />
-{/* DISABLED - 'Mark all activity as NA' - disabled for the Firebase->SQL migration
-                {!editingActivity &&
-                  formData.sdlcPhase &&
-                  formData.sdlcPhase !== 'NA' && (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={markPhaseAsNAChecked}
-                          onChange={(e) =>
-                            handleMarkPhaseAsNAChange(e.target.checked)
-                          }
-                        />
-                      }
-                      label="Mark all activity as NA"
-                    />
-                  )}
-*/}
               </Box>
 
               {/* Activity */}
@@ -376,54 +318,52 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                     </Typography>
                   }
                 />
-{/* DISABLED - 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
-                <Tooltip
-                  title={
-                    Array.isArray(formData.aiToolUsed) &&
-                    formData.aiToolUsed.length > 0
-                      ? 'Configure access type and license details for selected AI tools'
-                      : 'Select one or more AI tools to configure details'
-                  }
-                  arrow
-                >
-                  <span>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color:
-                          Array.isArray(formData.aiToolUsed) &&
-                          formData.aiToolUsed.length > 0
-                            ? hasAITools && !aiToolDetailsComplete
-                              ? 'error.main'
-                              : 'primary.main'
-                            : 'text.disabled',
-                        cursor:
-                          Array.isArray(formData.aiToolUsed) &&
-                          formData.aiToolUsed.length > 0
-                            ? 'pointer'
-                            : 'not-allowed',
-                        textDecoration: 'underline',
-                        fontWeight: 500,
-                      }}
-                      onClick={() => {
-                        if (
-                          Array.isArray(formData.aiToolUsed) &&
-                          formData.aiToolUsed.length > 0
-                        ) {
-                          setToolDetailsModalOpen(true);
-                        }
-                      }}
-                    >
-                      Configure AI Tool Details{hasAITools ? ' *' : ''}
-                    </Typography>
-                  </span>
-                </Tooltip>
-                {hasAITools && !aiToolDetailsComplete && (
-                  <FormHelperText error>
-                    Please configure AI tool details if AI tools are selected
-                  </FormHelperText>
-                )}
-*/}
+                {/* <Tooltip
+                title={
+                  Array.isArray(formData.aiToolUsed) &&
+                  formData.aiToolUsed.length > 0
+                    ? 'Configure access type and license details for selected AI tools'
+                    : 'Select one or more AI tools to configure details'
+                }
+                arrow
+              >
+                <span>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color:
+                        Array.isArray(formData.aiToolUsed) &&
+                        formData.aiToolUsed.length > 0
+                          ? hasAITools && !aiToolDetailsComplete
+                            ? 'error.main'
+                            : 'primary.main'
+                          : 'text.disabled',
+                      cursor:
+                        Array.isArray(formData.aiToolUsed) &&
+                        formData.aiToolUsed.length > 0
+                          ? 'pointer'
+                          : 'not-allowed',
+                      textDecoration: 'underline',
+                      fontWeight: 500,
+                    }}
+                    onClick={() => {
+                      if (
+                        Array.isArray(formData.aiToolUsed) &&
+                        formData.aiToolUsed.length > 0
+                      ) {
+                        setToolDetailsModalOpen(true);
+                      }
+                    }}
+                  >
+                    Configure AI Tool Details{hasAITools ? ' *' : ''}
+                  </Typography>
+                </span>
+              </Tooltip>
+              {hasAITools && !aiToolDetailsComplete && (
+                <FormHelperText error>
+                  Please configure AI tool details if AI tools are selected
+                </FormHelperText>
+              )} */}
               </Box>
               
               
@@ -488,9 +428,6 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                 disabled={false}
                 placeholder="Enter additional comments or notes"
                 rows={4}
-                required={commentsRequired}
-                error={commentsMissing}
-                helperText={commentsMissing ? COMMENTS_REQUIRED_MESSAGE : undefined}
               />
             </Box>
           </Box>
@@ -536,8 +473,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         open={applicabilityGuidelinesModalOpen}
         onClose={() => setApplicabilityGuidelinesModalOpen(false)}
       />
-{/* DISABLED - 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
-      <AIToolDetailsDialog
+      {/* <AIToolDetailsDialog
         open={toolDetailsOpen}
         onClose={() => setToolDetailsModalOpen(false)}
         aiTools={
@@ -549,8 +485,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         onChange={(value) =>
           handleFormChange('aiToolDetails', value)
         }
-      />
-*/}
+      /> */}
       <Dialog
       open={validationDialogOpen}
       onClose={() => setValidationDialogOpen(false)}
@@ -576,40 +511,6 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         </Button>
       </DialogActions>
     </Dialog>
-
-{/* DISABLED - 'Mark all activity as NA' - disabled for the Firebase->SQL migration
-    <Dialog
-      open={phaseNAConfirmOpen}
-      onClose={handleCancelPhaseNA}
-      maxWidth="xs"
-      fullWidth
-    >
-      <DialogTitle>Mark Entire Phase as Not Applicable?</DialogTitle>
-
-      <DialogContent>
-        <Typography sx={{ mb: 2 }}>
-          All activities under: <strong>{formData.sdlcPhase.replace(/:/g, '')}</strong>{' '}
-          will automatically be marked as: Applicability = Activity NA
-        </Typography>
-        <Typography color="error">
-          Any existing activity data under this phase will be overwritten.
-        </Typography>
-      </DialogContent>
-
-      <DialogActions>
-        <Button onClick={handleCancelPhaseNA} color="inherit">
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={handleConfirmPhaseNA}
-        >
-          Confirm
-        </Button>
-      </DialogActions>
-    </Dialog>
-*/}
     </>
   );
 };

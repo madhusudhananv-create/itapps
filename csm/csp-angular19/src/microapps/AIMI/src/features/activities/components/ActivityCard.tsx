@@ -16,9 +16,11 @@ import {
   Visibility as VisibilityIcon,
   //ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
-import { APPLICABILITY_OPTIONS } from '../types/activityTypes';
+import {
+  AI_ADOPTION_SCORES,
+  APPLICABILITY_OPTIONS,
+} from '../types/activityTypes';
 import type { ActivityData } from '../types/activityTypes';
-import { useAimiOptionLists } from '@shared/lookups/useAimiOptionLists';
 import { ActivityDetailsModal } from './ActivityDetailsModal';
 import {
   activityCardStyles,
@@ -64,9 +66,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 }) => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const featureFlags = useFeatureFlags('activities');
-  const { isAdmin } = useAuth();
-  const { aiAdoptionScores: AI_ADOPTION_SCORES } = useAimiOptionLists();
-
+    const { isAdmin } = useAuth();
+  
 
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', {
@@ -241,33 +242,29 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               </IconButton>
             </Tooltip>
             {onEdit && (
-              <Tooltip title={!isAdmin ? 'Only admin can edit the activity' : 'Edit Activity'}>
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={() => onEdit(activity)}
-                    disabled={actionsDisabled || !isAdmin}
-                    sx={activityCardStyles.editIconButton}
-                    aria-label="Edit Activity"
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </span>
+              <Tooltip title="Edit Activity">
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(activity)}
+                  disabled={actionsDisabled}
+                  sx={activityCardStyles.editIconButton}
+                  aria-label="Edit Activity"
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )}
             {/* {onCopy && (
-              <Tooltip title={!isAdmin ? 'Only admin can copy the activity' : 'Copy Activity'}>
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={() => onCopy(activity)}
-                    disabled={actionsDisabled || !isAdmin}
-                    sx={activityCardStyles.copyIconButton}
-                    aria-label="Copy Activity"
-                  >
-                    <ContentCopyIcon fontSize="small" />
-                  </IconButton>
-                </span>
+              <Tooltip title="Copy Activity">
+                <IconButton
+                  size="small"
+                  onClick={() => onCopy(activity)}
+                  disabled={actionsDisabled}
+                  sx={activityCardStyles.copyIconButton}
+                  aria-label="Copy Activity"
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )} */}
             {onDelete && featureFlags.showDeleteButton && (
