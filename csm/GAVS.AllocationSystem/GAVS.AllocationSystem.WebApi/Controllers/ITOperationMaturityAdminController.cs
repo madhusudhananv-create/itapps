@@ -680,17 +680,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // VAPT-flagged (Improper Input Validation): free-text admin fields (cycle label,
         // domain/category/parameter name) were stored unsanitized and reflected verbatim
         // into the Dashboard/Reports grids and into email templates (ToEmailValues does a
-        // raw string Replace, no HTML encoding). Rejecting markup at the handful of write
-        // paths is simpler and more reliable than trying to HTML-encode every later read site.
-        // Matches an actual tag ("<script>", "</div>", "<img onerror=...>"), not a bare
-        // comparison operator ("CPU usage > 80%", "latency < 5ms" must stay allowed).
-        private static readonly System.Text.RegularExpressions.Regex ITOpsMarkupPattern =
-            new System.Text.RegularExpressions.Regex(@"<\s*/?\s*[a-zA-Z][^>]*>", System.Text.RegularExpressions.RegexOptions.Compiled);
-        // VAPT-flagged (encoding bypass): the raw "<"/">" check alone missed a payload
-        // pre-encoded as "%3Cscript%3E...%3C%2Fscript%3E" or "&lt;script&gt;" - stored as
-        // literal text with no raw angle bracket in it, then rendered as a live tag wherever
-        // a later consumer URL- or HTML-decodes it for display. Decode both common encodings
-        // before matching so the check sees what the browser will eventually render.
+        // raw string Replace, no HTML encoding). These are short structured labels, not
+        // prose, so an ALLOWLIST is used here rather than chasing individual dangerous
+        // patterns: a tag-only blocklist missed "javascript:alert(1);" entirely (no angle
+        // bracket at all, but still live script if ever bound to an href/src). Only
+        // letters, digits, spaces and a small set of punctuation actually needed by a
+        // real label (- _ . , ( ) & /) are permitted; everything else is rejected,
+        // including "<", ">", ":", quotes, and any URI scheme like "javascript:"/"data:".
+        private static readonly System.Text.RegularExpressions.Regex ITOpsSafeLabelPattern =
+            new System.Text.RegularExpressions.Regex(@"^[A-Za-z0-9 _\-.,()&/]*$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        // Still decode first and re-check: a value with no unsafe character in its raw
+        // (encoded) form could decode into one once a consumer unescapes it for display
+        // (e.g. "%3Cscript%3E" or "&lt;script&gt;" has no raw "<", but decodes to one).
         private static string ITOpsDecodeForMarkupCheck(string value)
         {
             var decoded = value;
@@ -700,7 +701,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
         private static bool ITOpsContainsMarkup(string value) =>
             !string.IsNullOrEmpty(value) &&
-            (ITOpsMarkupPattern.IsMatch(value) || ITOpsMarkupPattern.IsMatch(ITOpsDecodeForMarkupCheck(value)));
+            (!ITOpsSafeLabelPattern.IsMatch(value) || !ITOpsSafeLabelPattern.IsMatch(ITOpsDecodeForMarkupCheck(value)));
 
         /// <summary>Gate for a mutation owned by one specific role (superuser always allowed).</summary>
         private IHttpActionResult DenyIfNotITOpsRole(string roleCode, string what)
@@ -1666,7 +1667,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // raw string Replace with no HTML encoding). Reject markup at the one write path
             // instead, rather than trying to encode it correctly at every later read site.
             if (ITOpsContainsMarkup(label))
-                return Content(HttpStatusCode.Conflict, "Cycle label cannot contain HTML or script tags.");
+                return Content(HttpStatusCode.Conflict, "Cycle label can only contain letters, numbers, spaces, and - _ . , ( ) & /.");
 
             // The DB carries the real uniqueness guarantee (unique index on
             // CYCLE_LABEL); this pre-check just turns the common case into a
@@ -1784,7 +1785,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var name = request.Name.Trim();
             if (ITOpsContainsMarkup(name))
-                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
+                return Content(HttpStatusCode.Conflict, "Name can only contain letters, numbers, spaces, and - _ . , ( ) & /.");
 
             // CODE is the stable slug the Angular route uses (/assessment/:domainCode),
             // so derive one from the name when the caller doesn't supply it.
@@ -1848,7 +1849,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var name = request.Name.Trim();
             if (ITOpsContainsMarkup(name))
-                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
+                return Content(HttpStatusCode.Conflict, "Name can only contain letters, numbers, spaces, and - _ . , ( ) & /.");
 
             var domain = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == request.DomainId && d.ISACTIVE);
             if (domain == null) return NotFound();
@@ -3924,7 +3925,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var name = request.Name.Trim();
             if (ITOpsContainsMarkup(name))
-                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
+                return Content(HttpStatusCode.Conflict, "Name can only contain letters, numbers, spaces, and - _ . , ( ) & /.");
             var today = DateTime.Today;
 
             // A live row with the same name IS this lineage's current version -
@@ -3983,7 +3984,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var today = DateTime.Today;
             var newName = string.IsNullOrWhiteSpace(request.Name) ? null : request.Name.Trim();
             if (ITOpsContainsMarkup(newName))
-                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
+                return Content(HttpStatusCode.Conflict, "Name can only contain letters, numbers, spaces, and - _ . , ( ) & /.");
 
             if (newName != null &&
                 !string.Equals(newName, (category.NAME ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase))
@@ -4150,7 +4151,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var name = request.Name.Trim();
             if (ITOpsContainsMarkup(name))
-                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
+                return Content(HttpStatusCode.Conflict, "Name can only contain letters, numbers, spaces, and - _ . , ( ) & /.");
             var clash = CSPdb.ITOPS_PARAMETER.GetAll()
                 .Where(p => p.CATEGORY_ID == request.CategoryId)
                 .ToList()
@@ -4316,7 +4317,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var today = DateTime.Today;
             var newName = string.IsNullOrWhiteSpace(request.Name) ? null : request.Name.Trim();
             if (ITOpsContainsMarkup(newName))
-                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
+                return Content(HttpStatusCode.Conflict, "Name can only contain letters, numbers, spaces, and - _ . , ( ) & /.");
 
             if (newName != null &&
                 !string.Equals(newName, (parameter.NAME ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase))

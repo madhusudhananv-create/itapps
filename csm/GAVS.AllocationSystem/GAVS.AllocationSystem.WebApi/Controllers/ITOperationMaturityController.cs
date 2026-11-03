@@ -229,9 +229,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // findings. Every such endpoint now routes through this one gate: the caller may
         // only ever ask for their own empId, unless they hold Superuser or any ITOps admin
         // role (who already see everyone's data by design elsewhere).
+        // VAPT follow-up: HasAnyITOpsAdminRole treats ANY active role at all - including
+        // DASHBOARD_VIEWER/REPORT_VIEWER, which are read-only aggregate-view grants with
+        // nothing to configure - as "an admin", because that's what its original callers
+        // (Admin Setup screen visibility) needed. Reusing it here let a plain Dashboard
+        // Viewer bypass the per-record ownership check and view ANY individual
+        // assessment's raw scores/notes/evidence, not just aggregate stats - confirmed
+        // live (empId 106700, DASHBOARD_VIEWER only, no Superuser/admin role, still
+        // viewed assessment 42 despite no assignment to it). Record-level bypasses use
+        // this narrower check instead: only the roles that actually administer IT Ops
+        // configuration (ITOpsAdminStepRoleCodes, defined in the Admin controller) count.
+        private bool HasAnyITOpsConfigAdminRole(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return false;
+            return GetITOpsRoleCodes(empId).Any(rc => ITOpsAdminStepRoleCodes.Contains(rc));
+        }
+
         private IHttpActionResult DenyIfNotSelfOrITOpsAdmin(string requestedEmpId, string callerEmpId, string what)
         {
-            if (IsITOpsSuperuser(callerEmpId) || HasAnyITOpsAdminRole(callerEmpId)) return null;
+            if (IsITOpsSuperuser(callerEmpId) || HasAnyITOpsConfigAdminRole(callerEmpId)) return null;
             if (!string.IsNullOrWhiteSpace(requestedEmpId) &&
                 string.Equals(requestedEmpId, callerEmpId, StringComparison.OrdinalIgnoreCase)) return null;
             return Content(HttpStatusCode.Forbidden, "You can only " + what + " for yourself.");
@@ -1575,7 +1591,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 // belongs to the GIVEN custId, never that the CALLER is entitled to that
                 // custId/assessment at all - same own-scope gate as GetITOpsAssessmentParameters.
                 var getOrCreateEmpId = GetHeaderDetails_String("empId");
-                if (!IsITOpsSuperuser(getOrCreateEmpId) && !HasAnyITOpsAdminRole(getOrCreateEmpId))
+                if (!IsITOpsSuperuser(getOrCreateEmpId) && !HasAnyITOpsConfigAdminRole(getOrCreateEmpId))
                 {
                     var ownScope = GetITOpsOwnScopeAssessmentIds(getOrCreateEmpId, new List<ITOPS_ASSESSMENT> { specific });
                     if (!ownScope.Contains(specific.ID))
@@ -2005,7 +2021,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // (GetITOpsOwnScopeAssessmentIds), plus superuser/admin-role bypass like every
             // other gate in this file.
             var requestingEmpId = GetHeaderDetails_String("empId");
-            if (!IsITOpsSuperuser(requestingEmpId) && !HasAnyITOpsAdminRole(requestingEmpId))
+            if (!IsITOpsSuperuser(requestingEmpId) && !HasAnyITOpsConfigAdminRole(requestingEmpId))
             {
                 var ownScope = GetITOpsOwnScopeAssessmentIds(requestingEmpId, new List<ITOPS_ASSESSMENT> { assessment });
                 if (!ownScope.Contains(assessmentId))
@@ -3212,7 +3228,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private IHttpActionResult DenyIfNotITOpsEntitledToScore(int? scoreId, string empId, string what)
         {
             if (!scoreId.HasValue) return null;
-            if (IsITOpsSuperuser(empId) || HasAnyITOpsAdminRole(empId)) return null;
+            if (IsITOpsSuperuser(empId) || HasAnyITOpsConfigAdminRole(empId)) return null;
             var assessmentId = GetITOpsAssessmentIdForScore(scoreId.Value);
             if (!assessmentId.HasValue) return null;
             var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId.Value);
