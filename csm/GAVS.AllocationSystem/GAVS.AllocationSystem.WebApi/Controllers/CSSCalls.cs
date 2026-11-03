@@ -479,8 +479,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             if (batch == null)
                 return "Invalid Batch. Unable to trigger.";
-            if (_isProd && batch != null && batch.END_DATE > DateTime.Today)
-                return "CSS Period not ended yet. Could not trigger CSS.";
+            //if (_isProd && batch != null && batch.END_DATE > DateTime.Today)
+            //    return "CSS Period not ended yet. Could not trigger CSS.";
             if (batch.STATUS.ToLower() == "COMPLETED")
                 return "CSS is closed. Could not trigger CSS.";
 

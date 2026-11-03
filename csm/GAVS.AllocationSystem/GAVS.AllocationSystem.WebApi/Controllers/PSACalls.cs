@@ -768,11 +768,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             if (!employee.CSM_TITLE_ID.HasValue)
             {
-                if (!string.IsNullOrWhiteSpace(employee.TITLE) && (employee.TITLE.ToLower().Contains("customer success") || employee.TITLE.ToLower().Contains("group manager")))
+                if (!string.IsNullOrWhiteSpace(employee.TITLE) && (employee.TITLE.ToLower().Contains("customer success") || employee.TITLE.ToLower().Contains("group manager"))
+                    || employee.TITLE.ToLower().Contains("director") || employee.TITLE.ToLower().Contains("president") || employee.TITLE.ToLower().Contains("chief")
+                    )
+
+
                     employee.CSM_TITLE_ID = 1;
                 else if (!string.IsNullOrWhiteSpace(employee.TITLE) && employee.TITLE.ToLower().Contains("group manager"))
                     employee.CSM_TITLE_ID = 1;
-                else if (!string.IsNullOrWhiteSpace(employee.TITLE) && employee.TITLE.ToLower().Contains("manager"))
+                else if (!string.IsNullOrWhiteSpace(employee.TITLE) && employee.TITLE.ToLower().Contains("manager") || employee.TITLE.ToLower().Contains("lead"))
                     employee.CSM_TITLE_ID = 2;
                 else
                     employee.CSM_TITLE_ID = 3;
