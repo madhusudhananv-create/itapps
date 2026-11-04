@@ -397,8 +397,8 @@
           <svg viewBox="0 0 24 24" fill="none"><path d="M4 19h16M4 15l4-6 4 3 5-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
         </div>
         <div>
-          <div class="num">{{ summary.overallMaturityLevel }}</div>
-          <div class="lbl">Maturity level &middot; {{ summary.overallAverageScore }} / 5</div>
+          <div class="num maturity-level-num">{{ summary.overallMaturityLevel }}</div>
+          <div class="lbl">Avg score &middot; {{ summary.overallAverageScore | number: '1.2-2' }}/5.00</div>
         </div>
       </div>
 
@@ -408,7 +408,7 @@
         </div>
         <div>
           <div class="num">{{ summary.domainsCompleted }}</div>
-          <div class="lbl">Domains completed</div>
+          <div class="lbl">Domains where actions are completed</div>
         </div>
       </div>
 
@@ -418,7 +418,7 @@
         </div>
         <div>
           <div class="num">{{ summary.domainsInProgress }}</div>
-          <div class="lbl">Domains in progress</div>
+          <div class="lbl">Domains where actions are In Progress</div>
         </div>
       </div>
 
@@ -428,7 +428,7 @@
         </div>
         <div>
           <div class="num">{{ summary.findingsPastDue }}</div>
-          <div class="lbl">Findings past due</div>
+          <div class="lbl">Overdue Findings</div>
         </div>
       </div>
     </section>
