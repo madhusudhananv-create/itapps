@@ -52,6 +52,7 @@ function toDomainSummary(row: ItOpsDomainTrackerRow): DomainSummary {
     accountId: row.accountId ?? undefined,
     accountName: row.accountName ?? undefined,
     allFindingsResolved: row.allFindingsResolved ?? undefined,
+    pastDueFindingsCount: row.pastDueFindingsCount ?? 0,
   };
 }
 
@@ -117,6 +118,7 @@ function computeEnterpriseSummaryFromRows(summaries: DomainSummary[]): Enterpris
       s.status === 'Draft' || s.status === 'In Progress' || s.status === 'Pending Review' || (s.status === 'Approved' && !s.allFindingsResolved),
     ).length,
     domainsNotStarted: summaries.filter((s) => s.status === 'Not Started').length,
+    findingsPastDue: summaries.reduce((sum, s) => sum + (s.pastDueFindingsCount ?? 0), 0),
     totalParamCount,
     totalApplicableParamCount,
     totalSumScores,

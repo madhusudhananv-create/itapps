@@ -11,6 +11,11 @@ export interface MaturityRubric {
 }
 
 export type FindingStatus = 'Pending' | 'Accepted' | 'Rejected' | 'Closed';
+export type FindingPriority = 'High' | 'Medium' | 'Low';
+/** Derived remediation progress on an Accepted finding, separate from FindingStatus
+ *  (the accept/reject/close decision). Open = no owner/target date yet, InProgress =
+ *  both set, Completed = actual closure date set (mirrors FindingStatus === 'Closed'). */
+export type RemediationStatus = 'Open' | 'InProgress' | 'Completed';
 
 export interface MaturityParameter {
   id: string;
@@ -39,6 +44,14 @@ export interface MaturityParameter {
   findingAssesseeName?: string;
   /** Assessor's latest dispute reason when they disputed the assessee's rejection, reopening the finding. */
   findingDisputeComment?: string;
+  /** Who's doing the remediation work - defaults to the assessee, reassignable within the project team. */
+  findingOwnerEmpId?: string;
+  findingOwnerName?: string;
+  findingPriority?: FindingPriority;
+  /** Owner-reported completion date - distinct from the system's CLOSED_DATE audit timestamp. */
+  findingActualClosureDate?: string;
+  findingRemediationStatus?: RemediationStatus;
+  findingPastDue?: boolean;
 }
 
 export interface TechnologyDomain {
@@ -101,6 +114,8 @@ export interface DomainSummary {
   reviewable?: boolean;
   /** True once every finding raised on this domain's assessment(s) is Closed - drives showing "Completed" instead of "Approved". */
   allFindingsResolved?: boolean;
+  /** Count of still-open (Accepted) findings on this domain whose target date has passed. */
+  pastDueFindingsCount?: number;
 }
 
 export interface TopRisk {
@@ -132,6 +147,8 @@ export interface EnterpriseSummary {
   totalApplicableParamCount: number;
   totalSumScores: number;
   totalMaxPossible: number;
+  /** Sum of every domain's pastDueFindingsCount - the "Findings past due" KPI tile. */
+  findingsPastDue: number;
 }
 
 export const MATURITY_LEVEL_LABELS: Record<number, string> = {

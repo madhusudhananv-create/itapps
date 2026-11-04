@@ -337,8 +337,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
               (
               new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = ServiceEmail, smtpHost = "smtp.office365.com", smtpPassword = ServicePassword, smtpPortValue = "587" },
-              new EmailContent { from = ServiceEmail, to = tomail, cc = ccMail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "",
-                  fromAddress = acsat ? Constants.ACSAT_SURVEY_FROM_MAIL : null, fromPerson = acsat ? Constants.ACSAT_SURVEY_FROM_NAME : null }, Request
+              new EmailContent { from = ServiceEmail, to = tomail, cc = ccMail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
               );
 
 
@@ -888,14 +887,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
 
-        // ACSAT = the Annual survey. Its mails are sent as Neurealm Quality Assurance (see Constants.ACSAT_SURVEY_FROM_*).
-        private bool IsAnnualSurvey(BatchCustomerAndQuestions replies)
-        {
-            var ext = replies.CSS_BATCH_CUSTOMERS_EXTENDED;
-            if (ext == null) return false;
-            return CSPdb.CSS_BATCHES.GetAll().Any(x => x.ID == ext.BATCH_ID && x.FREQUENCY == "Annual");
-        }
-
         private void SendSurveyResultEmailToCustomer(BatchCustomerAndQuestions replies, string surveyId, string frequency, string category)
         {
 
@@ -955,8 +946,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
                 (
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = ServiceEmail, smtpHost = "smtp.office365.com", smtpPassword = ServicePassword, smtpPortValue = "587" },
-                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "",
-                  fromAddress = category.ToLower() == "account" ? Constants.ACSAT_SURVEY_FROM_MAIL : null, fromPerson = category.ToLower() == "account" ? Constants.ACSAT_SURVEY_FROM_NAME : null }, Request
+                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
                 );
         }
         private void SendSurveySuccessEmailToManagement(BatchCustomerAndQuestions replies, string surveyId, string frequency, string category)
@@ -1076,8 +1066,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
                 (
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = ServiceEmail, smtpHost = "smtp.office365.com", smtpPassword = ServicePassword, smtpPortValue = "587" },
-                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "",
-                  fromAddress = category.ToLower() == "account" ? Constants.ACSAT_SURVEY_FROM_MAIL : null, fromPerson = category.ToLower() == "account" ? Constants.ACSAT_SURVEY_FROM_NAME : null }, Request
+                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
                 );
         }
 
@@ -1256,8 +1245,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
                 (
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = ServiceEmail, smtpHost = "smtp.office365.com", smtpPassword = ServicePassword, smtpPortValue = "587" },
-                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = Constants.BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "",
-                  fromAddress = IsAnnualSurvey(replies) ? Constants.ACSAT_SURVEY_FROM_MAIL : null, fromPerson = IsAnnualSurvey(replies) ? Constants.ACSAT_SURVEY_FROM_NAME : null }, Request
+                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = Constants.BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
                 );
         }
 

@@ -1683,6 +1683,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     .Where(f => f.ISACTIVE && allScoreIdsForTracker.Contains(f.SCORE_ID) && f.STATUS != "Closed")
                     .Select(f => f.SCORE_ID));
 
+            // "Findings past due" dashboard KPI - still-open (Accepted) findings whose
+            // TARGET_DATE has passed, grouped by score so each domain's tracker row can
+            // sum just the ones under its own scores.
+            var pastDueScoreIds = CSPdb.ITOPS_FINDING.GetAll()
+                .Where(f => f.ISACTIVE && allScoreIdsForTracker.Contains(f.SCORE_ID) && f.STATUS == "Accepted"
+                    && f.TARGET_DATE != null && f.TARGET_DATE.Value < DateTime.Today)
+                .Select(f => f.SCORE_ID)
+                .ToList();
+            var pastDueCountByScoreId = pastDueScoreIds
+                .GroupBy(id => id)
+                .ToDictionary(g => g.Key, g => g.Count());
+
             // Only currently-effective (END_DATE null or future) categories/parameters count
             // toward the denominator, per the V2 effective-dating of master data.
             var today = DateTime.Today;
@@ -1839,7 +1851,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     MaturityLevel = GetMaturityLevel(maturityPct),
                     AccountId = groupCustId,
                     AccountName = groupCustId != null && custNames.ContainsKey(groupCustId) ? custNames[groupCustId] : groupCustId,
-                    AllFindingsResolved = allFindingsResolved
+                    AllFindingsResolved = allFindingsResolved,
+                    PastDueFindingsCount = domainScoreIds.Sum(id => pastDueCountByScoreId.ContainsKey(id) ? pastDueCountByScoreId[id] : 0)
                 };
             }).ToList();
 
@@ -1910,6 +1923,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var assesseeIdList = findingsByScoreId.Values.Select(f => f.ASSESSEE_EMP_ID).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
             var assesseeNameById = assesseeIdList.ToDictionary(id => id, GetEmpName);
+            var ownerIdList = findingsByScoreId.Values.Select(f => f.OWNER_EMP_ID).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+            var ownerNameById = ownerIdList.ToDictionary(id => id, GetEmpName);
 
             // Surface the assessor's latest dispute reason (if any) alongside the finding -
             // it lives in the free-form activity trail, not on ITOPS_FINDING itself. Only
@@ -1964,7 +1979,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         : null,
                     DisputeComment = finding != null && disputeCommentByFindingId.ContainsKey(finding.ID)
                         ? disputeCommentByFindingId[finding.ID]
-                        : null
+                        : null,
+                    OwnerEmpId = finding?.OWNER_EMP_ID,
+                    OwnerName = finding != null && !string.IsNullOrEmpty(finding.OWNER_EMP_ID) && ownerNameById.ContainsKey(finding.OWNER_EMP_ID)
+                        ? ownerNameById[finding.OWNER_EMP_ID]
+                        : null,
+                    TargetDate = finding?.TARGET_DATE,
+                    Priority = finding?.PRIORITY,
+                    ActualClosureDate = finding?.ACTUAL_CLOSURE_DATE,
+                    // Derived, never stored - Completed once closed, In Progress once owner +
+                    // target date are both set, otherwise Open (freshly accepted).
+                    RemediationStatus = finding == null || finding.STATUS != "Accepted" && finding.STATUS != "Closed"
+                        ? null
+                        : finding.STATUS == "Closed"
+                            ? "Completed"
+                            : (finding.OWNER_EMP_ID != null && finding.TARGET_DATE != null ? "InProgress" : "Open"),
+                    PastDue = finding != null && finding.STATUS == "Accepted" && finding.TARGET_DATE.HasValue
+                        && finding.TARGET_DATE.Value.Date < DateTime.Now.Date
                 };
             }).ToList();
 
@@ -2112,9 +2143,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assessment == null)
                 return NotFound();
 
+            var draftEmpId = GetHeaderDetails_String("empId");
+            var draftDenied = DenyIfNotITOpsAssessorOnAssessment(assessmentId, draftEmpId, "save this assessment");
+            if (draftDenied != null) return draftDenied;
+
             if (assessment.STATUS == "NotStarted")
                 assessment.STATUS = "Draft";
-            UpdateAuditFields(assessment);
+            UpdateAuditFields(assessment, draftEmpId);
             CSPdb.ITOPS_ASSESSMENT.Update(assessment);
             CSPdb.Commit(CanCommit);
 
@@ -2194,7 +2229,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 NotifyITOpsManyWithCc(
                     reviewerIds,
                     submitCcEmpIds.Distinct().ToList(),
-                    $"IT Ops Maturity: {domain?.NAME} assessment submitted for review - {projectName}",
+                    $"IT Ops Maturity: {domain?.NAME} Assessment Submitted For Review - {projectName}",
                     "ITOpsSubmittedForReview.htm",
                     ToEmailValues(new
                     {
@@ -2279,7 +2314,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 NotifyITOpsManyWithCc(
                     recipientIds,
                     findingsNeedActionCcEmpIds,
-                    $"IT Ops Maturity: {openFindingCount} {findingWord} need your action - {domain?.NAME} - {projectName}",
+                    $"IT Ops Maturity: {openFindingCount} {findingWord} Need Your Action - {domain?.NAME} - {projectName}",
                     "ITOpsFindingsNeedAction.htm",
                     ToEmailValues(new
                     {
@@ -2318,7 +2353,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Content(HttpStatusCode.Conflict, "A comment is required when returning an assessment for revision.");
 
             assessment.STATUS = request.Approve ? "Approved" : "ReturnedForRevision";
-            assessment.RETURN_COMMENT = request.Approve ? null : request.Comment;
+            // Keep the last return reason even after approval - the Domain Assessment
+            // Report shows it as history, so clearing it on approve would hide it.
+            if (!request.Approve)
+                assessment.RETURN_COMMENT = request.Comment;
             assessment.APPROVED_DATE = request.Approve ? DateTime.Now : (DateTime?)null;
             UpdateAuditFields(assessment);
             CSPdb.ITOPS_ASSESSMENT.Update(assessment);
@@ -2342,7 +2380,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             NotifyITOpsManyWithCc(
                 assessorIds,
                 reviewDecisionCcEmpIds,
-                $"IT Ops Maturity: {reviewedDomain?.NAME} assessment {(request.Approve ? "approved" : "returned for revision")} - {reviewedProjectName}",
+                $"IT Ops Maturity: {reviewedDomain?.NAME} Assessment {(request.Approve ? "Approved" : "Returned For Revision")} - {reviewedProjectName}",
                 "ITOpsReviewDecision.htm",
                 ToEmailValues(new
                 {
@@ -2387,11 +2425,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assessment == null)
                 return NotFound();
 
+            var suspendEmpId = GetHeaderDetails_String("empId");
+            var suspendDenied = DenyIfNotITOpsReviewerOnAssessment(assessmentId, suspendEmpId, "suspend this assessment");
+            if (suspendDenied != null) return suspendDenied;
+
             if (assessment.STATUS != "PendingReview")
                 return Content(HttpStatusCode.Conflict, "Only an assessment that is Pending Review can be suspended.");
 
             assessment.STATUS = "Suspended";
-            UpdateAuditFields(assessment);
+            UpdateAuditFields(assessment, suspendEmpId);
             CSPdb.ITOPS_ASSESSMENT.Update(assessment);
             CSPdb.Commit(CanCommit);
 
@@ -2407,11 +2449,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assessment == null)
                 return NotFound();
 
+            var resumeEmpId = GetHeaderDetails_String("empId");
+            var resumeDenied = DenyIfNotITOpsReviewerOnAssessment(assessmentId, resumeEmpId, "resume this assessment");
+            if (resumeDenied != null) return resumeDenied;
+
             if (assessment.STATUS != "Suspended")
                 return Content(HttpStatusCode.Conflict, "Only a suspended assessment can be resumed.");
 
             assessment.STATUS = "PendingReview";
-            UpdateAuditFields(assessment);
+            UpdateAuditFields(assessment, resumeEmpId);
             CSPdb.ITOPS_ASSESSMENT.Update(assessment);
             CSPdb.Commit(CanCommit);
 
@@ -2454,6 +2500,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             finding.STATUS = request.Accept ? "Accepted" : "Rejected";
             finding.REJECTION_COMMENT = request.Accept ? null : request.Comment;
             finding.ACTION_TAKEN = request.ActionTaken;
+            // Owner defaults to the assessee who accepted it - they can reassign it to
+            // another staffed project member afterwards via SetITOpsFindingRemediationPlan.
+            if (request.Accept) finding.OWNER_EMP_ID = decideEmpId;
             UpdateAuditFields(finding, empId);
             CSPdb.ITOPS_FINDING.Update(finding);
 
@@ -2528,12 +2577,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     NotifyITOpsManyWithCc(
                         assessorIds,
                         rejectedCcEmpIds.Distinct().ToList(),
-                        $"IT Ops Maturity: finding rejected - {findingDomain?.NAME}",
+                        $"IT Ops Maturity: Finding Rejected - {findingDomain?.NAME}",
                         "ITOpsFindingDecision.htm",
                         ToEmailValues(new
                         {
                             RecipientName = string.Join(", ", GetEmpNames(assessorIds)),
                             ParameterName = findingParameter?.NAME,
+                            FindingDescription = !string.IsNullOrWhiteSpace(findingScore?.NOTES) ? findingScore.NOTES : findingParameter?.DEFINITION,
                             DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
                             AccountName = GetITOpsAccountName(rejectedProject?.CUST_ID) ?? "-",
                             ProjectName = rejectedProjectName,
@@ -2541,6 +2591,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             Decision = "Rejected",
                             DecidedBy = GetEmpName(decideEmpId),
                             Comment = request.Comment,
+                            // No remediation plan exists yet at the point of rejection - the
+                            // finding hasn't been accepted, so there's nothing to show here.
+                            RemediationRows = "",
+                            RemediationBorder = "",
                             ActionNote = ITOpsEmailDefaultActionNote,
                             // Sent to the Assessor, who Accepts/Disputes this rejection from
                             // their own /assessment page (maturity-assessment.component.ts) -
@@ -2636,7 +2690,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 NotifyITOpsManyWithCc(
                     rejectionDecisionAssesseeIds,
                     rejectionDecisionCcEmpIds.Concat(assessorIds).Distinct().ToList(),
-                    $"IT Ops Maturity: your rejection was {(request.AssessorAccepts ? "accepted" : "disputed")} - {findingDomain?.NAME}",
+                    $"IT Ops Maturity: Your Rejection Was {(request.AssessorAccepts ? "Accepted" : "Disputed")} - {findingDomain?.NAME}",
                     "ITOpsFindingDecision.htm",
                     ToEmailValues(new
                     {
@@ -2646,6 +2700,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         // shared template where the assessee is the one who acted.
                         RecipientName = string.Join(", ", GetEmpNames(rejectionDecisionAssesseeIds)),
                         ParameterName = findingParameter?.NAME,
+                        FindingDescription = !string.IsNullOrWhiteSpace(findingScore?.NOTES) ? findingScore.NOTES : findingParameter?.DEFINITION,
                         DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
                         AccountName = GetITOpsAccountName(rejectionDecisionProject?.CUST_ID) ?? "-",
                         ProjectName = rejectionDecisionProjectName,
@@ -2653,6 +2708,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         Decision = request.AssessorAccepts ? "Rejection Accepted - Closed" : "Rejection Disputed - Reopened",
                         DecidedBy = rejectionDecidedByName,
                         Comment = request.AssessorAccepts ? "-" : request.Comment,
+                        // Disputed = reopened with no remediation plan yet; accepted = the
+                        // finding is Closed outright (the rejection stands, nothing to remediate).
+                        RemediationRows = "",
+                        RemediationBorder = "",
                         ActionNote = ITOpsEmailDefaultActionNote,
                         AssessmentLink = GetITOpsAssessmentLink(findingDomain?.CODE, findingAssessment.ID, true, rejectionDecisionProject?.CUST_ID)
                     }),
@@ -2667,12 +2726,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     NotifyITOpsManyWithCc(
                         reviewerIds,
                         rejectionDecisionCcEmpIds.Concat(assessorIds).Distinct().ToList(),
-                        $"IT Ops Maturity: finding rejection {(request.AssessorAccepts ? "accepted - closed" : "disputed - reopened")} - {findingDomain?.NAME}",
+                        $"IT Ops Maturity: Finding Rejection {(request.AssessorAccepts ? "Accepted - Closed" : "Disputed - Reopened")} - {findingDomain?.NAME}",
                         "ITOpsFindingDecision.htm",
                         ToEmailValues(new
                         {
                             RecipientName = string.Join(", ", GetEmpNames(reviewerIds)),
                             ParameterName = findingParameter?.NAME,
+                            FindingDescription = !string.IsNullOrWhiteSpace(findingScore?.NOTES) ? findingScore.NOTES : findingParameter?.DEFINITION,
                             DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
                             AccountName = GetITOpsAccountName(rejectionDecisionProject?.CUST_ID) ?? "-",
                             ProjectName = rejectionDecisionProjectName,
@@ -2680,6 +2740,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             Decision = request.AssessorAccepts ? "Rejection Accepted - Closed" : "Rejection Disputed - Reopened",
                             DecidedBy = rejectionDecidedByName,
                             Comment = request.AssessorAccepts ? "-" : request.Comment,
+                            RemediationRows = "",
+                            RemediationBorder = "",
                             // Reviewer didn't decide this - the assessor did - so point them to
                             // the assessor for questions instead of the generic "go log in" line.
                             ActionNote = "Please connect with the assessor if you have any query regarding this.",
@@ -2739,11 +2801,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (request == null || string.IsNullOrWhiteSpace(request.ActionTaken))
                 return Content(HttpStatusCode.Conflict, "Describe the action taken before submitting.");
 
+            if (request.ActualClosureDate == null)
+                return Content(HttpStatusCode.Conflict, "Enter the actual closure date before submitting.");
+
             var empId = GetHeaderDetails_String("empId");
             finding.ACTION_TAKEN = request.ActionTaken.Trim();
             finding.LAST_MANAGEMENT_UPDATE = DateTime.Now;
             finding.STATUS = "Closed";
+            // CLOSED_DATE stays the system audit timestamp (when this row changed);
+            // ACTUAL_CLOSURE_DATE is the owner-reported date the remediation was done.
             finding.CLOSED_DATE = DateTime.Now;
+            finding.ACTUAL_CLOSURE_DATE = request.ActualClosureDate.Value.Date;
             UpdateAuditFields(finding, empId);
             CSPdb.ITOPS_FINDING.Update(finding);
 
@@ -2786,15 +2854,37 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 actionUpdateCcEmpIds.AddRange(GetITOpsAssesseeIds(findingAssessment.ID)
                     .Where(id => !string.IsNullOrWhiteSpace(id) && id != actionEmpId).Distinct());
 
+                // Owner/priority/target/closure - the remediation plan this close carries, as
+                // extra rows in the Finding Details table below Description/Comment. Only this
+                // email ever has real values here (see V2_36_FindingRemediationFields.sql);
+                // every other ITOpsFindingDecision.htm send passes RemediationRows = "".
+                Func<string, string, string> remediationRow = (label, value) =>
+                    $"<tr><td style='padding:8px 12px;border-top:1px solid #e1e4e8;background:#f8f9fb;font-size:10.5pt;color:#444444;'><b>{label}</b></td>" +
+                    $"<td style='padding:8px 12px;border-top:1px solid #e1e4e8;font-size:10.5pt;color:#24292e;'>{value}</td></tr>";
+                var remediationDetailRows = new List<string>();
+                if (!string.IsNullOrWhiteSpace(finding.OWNER_EMP_ID))
+                    remediationDetailRows.Add(remediationRow("Owner", GetEmpName(finding.OWNER_EMP_ID)));
+                if (!string.IsNullOrWhiteSpace(finding.PRIORITY))
+                    remediationDetailRows.Add(remediationRow("Priority", finding.PRIORITY));
+                if (finding.TARGET_DATE.HasValue)
+                    remediationDetailRows.Add(remediationRow("Target Date", finding.TARGET_DATE.Value.ToString("dd-MMM-yyyy")));
+                if (finding.ACTUAL_CLOSURE_DATE.HasValue)
+                    remediationDetailRows.Add(remediationRow("Closure Date", finding.ACTUAL_CLOSURE_DATE.Value.ToString("dd-MMM-yyyy")));
+                var remediationRowsHtml = string.Join("", remediationDetailRows);
+                // The Comment row's own bottom border is only needed when nothing follows it -
+                // with remediation rows appended, each one already carries a top border instead.
+                var remediationBorder = remediationDetailRows.Any() ? "" : "border-bottom:1px solid #e1e4e8;";
+
                 NotifyITOpsManyWithCc(
                     recipients,
                     actionUpdateCcEmpIds.Distinct().ToList(),
-                    $"IT Ops Maturity: finding accepted - {findingDomain?.NAME}",
+                    $"IT Ops Maturity: Finding Accepted - {findingDomain?.NAME}",
                     "ITOpsFindingDecision.htm",
                     ToEmailValues(new
                     {
                         RecipientName = string.Join(", ", GetEmpNames(recipients)),
                         ParameterName = findingParameter?.NAME,
+                        FindingDescription = !string.IsNullOrWhiteSpace(findingScore?.NOTES) ? findingScore.NOTES : findingParameter?.DEFINITION,
                         DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
                         AccountName = GetITOpsAccountName(actionUpdateProject?.CUST_ID) ?? "-",
                         ProjectName = actionUpdateProjectName,
@@ -2802,6 +2892,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         Decision = "Accepted",
                         DecidedBy = GetEmpName(actionEmpId),
                         Comment = finding.ACTION_TAKEN,
+                        RemediationRows = remediationRowsHtml,
+                        RemediationBorder = remediationBorder,
                         ActionNote = ITOpsEmailDefaultActionNote,
                         // Sent to the Assessor - their own /assessment page, same reasoning as
                         // the other two Assessor-facing finding-decision emails above.
@@ -2809,6 +2901,140 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }),
                     "FindingActionUpdate", null, finding.ID,
                     $"Action update submitted on \"{findingParameter?.NAME}\" in {findingDomain?.NAME}.");
+            }
+
+            return Ok(finding);
+        }
+
+        // Owner picker for an Accepted finding - restricted to members currently staffed
+        // on the finding's project, same staffing rule GetITOpsAssesseeCandidates uses
+        // (ITOperationMaturityAdminController.cs), so a reassigned owner is always someone
+        // actually on the team right now.
+        [GET("GetITOpsFindingOwnerCandidates")]
+        [ActionName("GetITOpsFindingOwnerCandidates")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsFindingOwnerCandidates(int findingId)
+        {
+            var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
+            if (finding == null) return NotFound();
+
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsFindingAssessee(finding, empId, "view owner options for this finding");
+            if (denied != null) return denied;
+
+            var assessmentId = GetITOpsAssessmentIdForScore(finding.SCORE_ID);
+            var assessment = assessmentId.HasValue ? CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId.Value) : null;
+            if (assessment == null || string.IsNullOrWhiteSpace(assessment.PROJECT_ID)) return Ok(new List<ITOPS_EmployeeRosterRow>());
+
+            var staffedEmpIds = Cldb.PROJECT_RESOURCE.GetAll()
+                .Where(pr => pr.PROJ_ID == assessment.PROJECT_ID && pr.BILL_FLG == true && pr.END_DATE >= DateTime.Now)
+                .Select(pr => pr.EMP_ID)
+                .Distinct()
+                .ToList();
+            if (!staffedEmpIds.Any()) return Ok(new List<ITOPS_EmployeeRosterRow>());
+
+            var rows = Cldb.EMP_INFO.GetAll()
+                .Where(e => staffedEmpIds.Contains(e.EMP_ID) && e.DOR == null)
+                .OrderBy(e => e.FRST_NM)
+                .Select(e => new ITOPS_EmployeeRosterRow { EmpId = e.EMP_ID, Name = e.FRST_NM, Title = e.EMP_CSP_ROLE })
+                .ToList();
+
+            return Ok(rows);
+        }
+
+        // Sets/changes an Accepted finding's remediation plan (owner, target date,
+        // priority) - the "In Progress" step between Accept and the eventual Action
+        // Taken + closure submit. Can be called again before closure to reassign the
+        // owner or adjust the target date; locked once the finding is Closed.
+        [POST("SetITOpsFindingRemediationPlan")]
+        [ActionName("SetITOpsFindingRemediationPlan")]
+        [HttpPost]
+        public IHttpActionResult SetITOpsFindingRemediationPlan(int findingId, [FromBody] ITOPS_FindingRemediationPlanRequest request)
+        {
+            var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
+            if (finding == null) return NotFound();
+            if (request == null) return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsFindingAssessee(finding, empId, "set the remediation plan for this finding");
+            if (denied != null) return denied;
+
+            if (finding.STATUS != "Accepted")
+                return Content(HttpStatusCode.Conflict, "A remediation plan can only be set for an accepted finding.");
+
+            var previousOwnerEmpId = finding.OWNER_EMP_ID;
+            ITOPS_ASSESSMENT ownerAssessment = null;
+
+            if (!string.IsNullOrWhiteSpace(request.OwnerEmpId))
+            {
+                var assessmentId = GetITOpsAssessmentIdForScore(finding.SCORE_ID);
+                ownerAssessment = assessmentId.HasValue ? CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId.Value) : null;
+                if (ownerAssessment == null || !IsITOpsEmpCurrentlyAllocated(request.OwnerEmpId, ownerAssessment.PROJECT_ID))
+                    return Content(HttpStatusCode.Conflict, "The chosen owner is not currently staffed on this project.");
+                finding.OWNER_EMP_ID = request.OwnerEmpId;
+            }
+
+            if (request.TargetDate.HasValue) finding.TARGET_DATE = request.TargetDate.Value.Date;
+            if (!string.IsNullOrWhiteSpace(request.Priority)) finding.PRIORITY = request.Priority;
+
+            UpdateAuditFields(finding, empId);
+            CSPdb.ITOPS_FINDING.Update(finding);
+            CSPdb.Commit(CanCommit);
+
+            // Only notify when the owner is actually a DIFFERENT person than before and than
+            // whoever just saved the plan - assigning yourself (the default on Accept, or
+            // re-confirming it here) needs no email, you already know.
+            var ownerChangedToSomeoneElse = !string.IsNullOrWhiteSpace(finding.OWNER_EMP_ID)
+                && finding.OWNER_EMP_ID != previousOwnerEmpId
+                && finding.OWNER_EMP_ID != empId;
+            if (ownerChangedToSomeoneElse && ownerAssessment != null)
+            {
+                var ownerScore = CSPdb.ITOPS_SCORE.GetAll().FirstOrDefault(s => s.ID == finding.SCORE_ID);
+                var ownerParameter = ownerScore != null ? CSPdb.ITOPS_PARAMETER.GetAll().FirstOrDefault(p => p.ID == ownerScore.PARAMETER_ID) : null;
+                var ownerDomain = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == ownerAssessment.DOMAIN_ID);
+                var ownerProject = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == ownerAssessment.PROJECT_ID);
+                var ownerProjectName = ownerProject?.PROJ_NM ?? ownerAssessment.PROJECT_ID;
+
+                var ownerRemediationRows = new List<string>();
+                Func<string, string, string> row = (label, value) =>
+                    $"<tr><td style='padding:8px 12px;border-top:1px solid #e1e4e8;background:#f8f9fb;font-size:10.5pt;color:#444444;'><b>{label}</b></td>" +
+                    $"<td style='padding:8px 12px;border-top:1px solid #e1e4e8;font-size:10.5pt;color:#24292e;'>{value}</td></tr>";
+                if (!string.IsNullOrWhiteSpace(finding.PRIORITY)) ownerRemediationRows.Add(row("Priority", finding.PRIORITY));
+                if (finding.TARGET_DATE.HasValue) ownerRemediationRows.Add(row("Target Date", finding.TARGET_DATE.Value.ToString("dd-MMM-yyyy")));
+
+                // Same Cc set every other finding email uses - Dex Partner (QUALITY_SPOC),
+                // CSM (DP_ID), and every other assessee on the assessment, so they stay in
+                // the loop on who's actually doing the remediation, not just the owner.
+                var ownerCcEmpIds = new List<string>();
+                if (!string.IsNullOrWhiteSpace(ownerProject?.QUALITY_SPOC)) ownerCcEmpIds.Add(ownerProject.QUALITY_SPOC);
+                if (!string.IsNullOrWhiteSpace(ownerProject?.DP_ID)) ownerCcEmpIds.Add(ownerProject.DP_ID);
+                ownerCcEmpIds.AddRange(GetITOpsAssesseeIds(ownerAssessment.ID)
+                    .Where(id => !string.IsNullOrWhiteSpace(id) && id != finding.OWNER_EMP_ID).Distinct());
+
+                NotifyITOpsManyWithCc(
+                    new List<string> { finding.OWNER_EMP_ID },
+                    ownerCcEmpIds.Distinct().ToList(),
+                    $"IT Ops Maturity: You've Been Assigned A Finding - {ownerDomain?.NAME}",
+                    "ITOpsFindingDecision.htm",
+                    ToEmailValues(new
+                    {
+                        RecipientName = GetEmpName(finding.OWNER_EMP_ID),
+                        ParameterName = ownerParameter?.NAME,
+                        FindingDescription = !string.IsNullOrWhiteSpace(ownerScore?.NOTES) ? ownerScore.NOTES : ownerParameter?.DEFINITION,
+                        DomainName = ITOpsEmailDomainName(ownerDomain?.NAME, ownerAssessment.CLOUD_PROVIDER),
+                        AccountName = GetITOpsAccountName(ownerProject?.CUST_ID) ?? "-",
+                        ProjectName = ownerProjectName,
+                        CycleLabel = GetITOpsCycleLabel(ownerAssessment.ASSESSMENT_MASTER_ID) ?? "-",
+                        Decision = "assigned to you for remediation",
+                        DecidedBy = GetEmpName(empId),
+                        Comment = "-",
+                        RemediationRows = string.Join("", ownerRemediationRows),
+                        RemediationBorder = ownerRemediationRows.Any() ? "" : "border-bottom:1px solid #e1e4e8;",
+                        ActionNote = ITOpsEmailDefaultActionNote,
+                        AssessmentLink = GetITOpsAssessmentLink(ownerDomain?.CODE, ownerAssessment.ID, true, ownerProject?.CUST_ID)
+                    }),
+                    "FindingOwnerAssigned", ownerAssessment.ID, finding.ID,
+                    $"You've been assigned as owner of a finding on \"{ownerParameter?.NAME}\" in {ownerDomain?.NAME}.");
             }
 
             return Ok(finding);

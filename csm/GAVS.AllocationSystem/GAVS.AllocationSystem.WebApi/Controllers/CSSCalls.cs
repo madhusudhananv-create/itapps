@@ -404,13 +404,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
                 (
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587", excludeSender = true },
-                new EmailContent
-                {
-                    from = _email, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = cust.PROJ_ID,
-                    // Annual (ACSAT) invitation goes out as Neurealm Quality Assurance; other surveys keep the default sender
-                    fromAddress = batch.FREQUENCY == "Annual" ? Constants.ACSAT_SURVEY_FROM_MAIL : null,
-                    fromPerson = batch.FREQUENCY == "Annual" ? Constants.ACSAT_SURVEY_FROM_NAME : null
-                }
+                new EmailContent { from = _email, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = cust.PROJ_ID }
                 , Request
                 );
         }
@@ -720,13 +714,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
                 (
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
-                new EmailContent
-                {
-                    from = _email, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = cust.PROJ_ID,
-                    // Annual (ACSAT) reminder goes out as Neurealm Quality Assurance; other surveys keep the default sender
-                    fromAddress = Frequency.ToLower() == "annual" ? Constants.ACSAT_SURVEY_FROM_MAIL : null,
-                    fromPerson = Frequency.ToLower() == "annual" ? Constants.ACSAT_SURVEY_FROM_NAME : null
-                }
+                new EmailContent { from = _email, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = cust.PROJ_ID }
                 , Request
                 );
 

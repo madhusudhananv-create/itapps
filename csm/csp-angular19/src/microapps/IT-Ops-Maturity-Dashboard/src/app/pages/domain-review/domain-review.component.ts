@@ -12,6 +12,7 @@ import { statusPillClass } from '../../utils/status.util';
 import { RUBRIC_LEVELS, rubricScoreKey } from '../../utils/rubric.util';
 import { ToastService } from '../../services/toast.service';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../components/searchable-select/searchable-select.component';
 
 /** Maps the backend's ITOPS_ASSESSMENT.STATUS values onto this app's DomainStatus labels. */
 const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
@@ -34,7 +35,7 @@ const BACKEND_FINDING_STATUS_MAP: Record<string, FindingStatus> = {
 @Component({
   selector: 'app-domain-review',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SpinnerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, SpinnerComponent, SearchableSelectComponent],
   templateUrl: './domain-review.component.html',
   styleUrl: './domain-review.component.scss',
 })
@@ -189,6 +190,13 @@ export class DomainReviewComponent implements OnInit {
       findingActionTaken: r.findingActionTaken ?? undefined,
       findingAssesseeName: r.assesseeName ?? undefined,
       findingDisputeComment: r.disputeComment ?? undefined,
+      findingOwnerEmpId: r.ownerEmpId ?? undefined,
+      findingOwnerName: r.ownerName ?? undefined,
+      findingPriority: (r.priority as MaturityParameter['findingPriority']) ?? undefined,
+      findingTargetDate: r.targetDate ?? undefined,
+      findingActualClosureDate: r.actualClosureDate ?? undefined,
+      findingRemediationStatus: (r.remediationStatus as MaturityParameter['findingRemediationStatus']) ?? undefined,
+      findingPastDue: r.pastDue ?? undefined,
     }));
 
     return {
@@ -390,6 +398,9 @@ export class DomainReviewComponent implements OnInit {
         next: () => {
           param.findingStatus = 'Accepted';
           param.findingRejectionComment = undefined;
+          // Backend defaults OWNER_EMP_ID to the accepting assessee on accept - mirror that
+          // here too so the owner picker doesn't read as blank until the next reload.
+          param.findingOwnerEmpId = localStorage.getItem('empid') ?? undefined;
           this.toast.success('Finding accepted', `"${param.name}" has been accepted.`);
         },
         error: () => this.toast.error('Action failed', 'Something went wrong accepting this finding. Please try again.'),
@@ -491,17 +502,18 @@ export class DomainReviewComponent implements OnInit {
     this.pendingEvidenceFiles[param.findingId] = this.pendingEvidenceFor(param).filter((f) => f !== file);
   }
 
-  /** Submit Update should only be clickable while there's actually something new to send - not while a submit is already in flight, and not again for text that's already been saved with no new evidence attached. */
+  /** Submit Update should only be clickable while there's actually something new to send - not while a submit is already in flight, and not again for text that's already been saved with no new evidence attached. Also needs the actual closure date, since that's required server-side to close the finding. */
   canSubmitActionUpdate(param: MaturityParameter): boolean {
     if (this.assesseeAllocationExpired) return false;
     if (!param.findingId || this.submittingActionId === param.findingId) return false;
+    if (!param.findingActualClosureDate) return false;
     const current = (param.findingActionTaken ?? '').trim();
     if (!current) return false;
     if (this.pendingEvidenceFor(param).length) return true;
     return current !== (this.lastSavedActionTaken.get(param.findingId) ?? '');
   }
 
-  /** Assessee submits their remediation progress note plus any newly attached evidence in one action. */
+  /** Assessee submits their remediation progress note, actual closure date, plus any newly attached evidence in one action. */
   submitActionUpdate(param: MaturityParameter): void {
     if (!param.findingId || this.submittingActionId) return;
     const actionTaken = (param.findingActionTaken ?? '').trim();
@@ -509,7 +521,12 @@ export class DomainReviewComponent implements OnInit {
       this.toast.error('Action required', 'Describe the action taken before submitting.');
       return;
     }
+    if (!param.findingActualClosureDate) {
+      this.toast.error('Closure date required', 'Enter the actual closure date before submitting.');
+      return;
+    }
     const findingId = param.findingId;
+    const actualClosureDate = param.findingActualClosureDate;
     this.submittingActionId = findingId;
     // Force the disabled/spinner state to paint immediately, in case the request
     // resolves fast enough (e.g. local dev) that zone.js's normal change-detection
@@ -517,7 +534,7 @@ export class DomainReviewComponent implements OnInit {
     this.cdr.detectChanges();
 
     this.api
-      .updateFindingAction(findingId, actionTaken)
+      .updateFindingAction(findingId, actionTaken, actualClosureDate)
       .pipe(
         switchMap(() => {
           const files = this.pendingEvidenceFor(param);
@@ -535,12 +552,71 @@ export class DomainReviewComponent implements OnInit {
           // An accepted finding is fully resolved as soon as its action-taken description is
           // submitted - no separate assessor sign-off needed, unlike a rejection.
           param.findingStatus = 'Closed';
+          param.findingRemediationStatus = 'Completed';
           this.lastSavedActionTaken.set(findingId, actionTaken);
           this.pendingEvidenceFiles[findingId] = [];
           this.loadEvidence(findingId);
           this.toast.success('Finding closed', `Your action on "${param.name}" has been recorded and shared with the Assessor and Reviewer.`);
         },
         error: () => this.toast.error('Submit failed', 'Something went wrong submitting this action update. Please try again.'),
+      });
+  }
+
+  /** Lazily loaded per finding the first time its owner picker opens - kept here rather than loaded for every finding up front, since most findings never get their owner reassigned. */
+  ownerCandidatesByFindingId: Record<number, { empId: string; name: string }[]> = {};
+  savingRemediationPlanId: number | null = null;
+
+  ownerCandidatesFor(param: MaturityParameter): { empId: string; name: string }[] {
+    return param.findingId ? this.ownerCandidatesByFindingId[param.findingId] ?? [] : [];
+  }
+
+  ownerOptionsFor(param: MaturityParameter): SearchableSelectOption[] {
+    this.loadOwnerCandidates(param);
+    const options = this.ownerCandidatesFor(param).map((c) => ({ value: c.empId, label: c.name }));
+    // Accept already defaults OWNER_EMP_ID to the assessee server-side, so the picker
+    // must show that default even if the staffed-candidate list hasn't loaded yet, or
+    // doesn't happen to include this person - otherwise the control reads as "nothing
+    // picked" despite a real owner already being set.
+    if (param.findingOwnerEmpId && !options.some((o) => o.value === param.findingOwnerEmpId)) {
+      options.unshift({ value: param.findingOwnerEmpId, label: param.findingOwnerName || 'Me' });
+    }
+    return options;
+  }
+
+  loadOwnerCandidates(param: MaturityParameter): void {
+    if (!param.findingId || this.ownerCandidatesByFindingId[param.findingId]) return;
+    const findingId = param.findingId;
+    this.api.getFindingOwnerCandidates(findingId).subscribe({
+      next: (rows) => (this.ownerCandidatesByFindingId[findingId] = rows),
+      error: () => (this.ownerCandidatesByFindingId[findingId] = []),
+    });
+  }
+
+  /** Saves owner + target date + priority for an Accepted finding - the "move to In Progress" step. Can be called again later to reassign the owner. */
+  saveRemediationPlan(param: MaturityParameter): void {
+    if (!param.findingId || this.savingRemediationPlanId) return;
+    if (!param.findingOwnerEmpId || !param.findingTargetDate) {
+      this.toast.error('Missing details', 'Pick an owner and a target date before saving.');
+      return;
+    }
+    const findingId = param.findingId;
+    this.savingRemediationPlanId = findingId;
+    this.cdr.detectChanges();
+    this.api
+      .setFindingRemediationPlan(findingId, {
+        ownerEmpId: param.findingOwnerEmpId,
+        targetDate: param.findingTargetDate,
+        priority: param.findingPriority,
+      })
+      .pipe(finalize(() => (this.savingRemediationPlanId = null)))
+      .subscribe({
+        next: () => {
+          param.findingRemediationStatus = 'InProgress';
+          const picked = this.ownerCandidatesFor(param).find((c) => c.empId === param.findingOwnerEmpId);
+          if (picked) param.findingOwnerName = picked.name;
+          this.toast.success('Plan saved', `"${param.name}" moved to In Progress.`);
+        },
+        error: () => this.toast.error('Save failed', 'Something went wrong saving the remediation plan. Please try again.'),
       });
   }
 

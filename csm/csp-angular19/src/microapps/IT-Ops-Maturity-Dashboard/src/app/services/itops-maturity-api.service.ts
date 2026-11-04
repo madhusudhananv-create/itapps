@@ -98,6 +98,8 @@ export interface ItOpsDomainTrackerRow {
   accountName?: string | null;
   /** True once every finding raised on this domain's assessment(s) is Closed. */
   allFindingsResolved?: boolean;
+  /** Count of still-open (Accepted) findings on this domain whose target date has passed. */
+  pastDueFindingsCount?: number;
 }
 
 export interface ItOpsExecutiveDashboard {
@@ -150,6 +152,13 @@ export interface ItOpsParameterScoreRow {
   assesseeEmpId?: string | null;
   assesseeName?: string | null;
   disputeComment?: string | null;
+  ownerEmpId?: string | null;
+  ownerName?: string | null;
+  targetDate?: string | null;
+  priority?: string | null;
+  actualClosureDate?: string | null;
+  remediationStatus?: string | null;
+  pastDue?: boolean;
 }
 
 export interface ItOpsEvidenceRow {
@@ -481,10 +490,28 @@ export class ItOpsMaturityApiService {
   }
 
   /** Assessee records/updates remediation progress on an accepted finding - can be called repeatedly. */
-  updateFindingAction(findingId: number, actionTaken: string): Observable<unknown> {
+  updateFindingAction(findingId: number, actionTaken: string, actualClosureDate: string): Observable<unknown> {
     return this.http.post(
       `${this.apiurl}UpdateITOpsFindingAction?findingId=${findingId}`,
-      { ActionTaken: actionTaken },
+      { ActionTaken: actionTaken, ActualClosureDate: actualClosureDate },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  getFindingOwnerCandidates(findingId: number): Observable<{ empId: string; name: string; title?: string }[]> {
+    return this.http.get<{ empId: string; name: string; title?: string }[]>(
+      `${this.apiurl}GetITOpsFindingOwnerCandidates?findingId=${findingId}`,
+      { headers: this.getHeaders() },
+    );
+  }
+
+  setFindingRemediationPlan(
+    findingId: number,
+    plan: { ownerEmpId?: string; targetDate?: string; priority?: string },
+  ): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}SetITOpsFindingRemediationPlan?findingId=${findingId}`,
+      { OwnerEmpId: plan.ownerEmpId, TargetDate: plan.targetDate, Priority: plan.priority },
       { headers: this.getHeaders() },
     );
   }
