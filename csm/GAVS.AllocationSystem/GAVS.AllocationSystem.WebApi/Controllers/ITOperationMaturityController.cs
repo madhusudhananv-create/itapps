@@ -221,6 +221,100 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Content(HttpStatusCode.Forbidden, "You are not an Assessor on this finding's assessment, so you cannot " + what + ".");
         }
 
+        // VAPT-flagged (IDOR): the "my own data" endpoints below (accounts, assignments,
+        // notifications, report/dashboard access, assessee findings) all take the subject
+        // empId as a caller-supplied parameter instead of deriving it from the
+        // authenticated token, with nothing checking the two match - swapping ?empId= for
+        // any other employee's id returned THEIR accounts, assignments, notifications and
+        // findings. Every such endpoint now routes through this one gate: the caller may
+        // only ever ask for their own empId, unless they hold Superuser or any ITOps admin
+        // role (who already see everyone's data by design elsewhere).
+        // VAPT follow-up: HasAnyITOpsAdminRole treats ANY active role at all - including
+        // DASHBOARD_VIEWER/REPORT_VIEWER, which are read-only aggregate-view grants with
+        // nothing to configure - as "an admin", because that's what its original callers
+        // (Admin Setup screen visibility) needed. Reusing it here let a plain Dashboard
+        // Viewer bypass the per-record ownership check and view ANY individual
+        // assessment's raw scores/notes/evidence, not just aggregate stats - confirmed
+        // live (empId 106700, DASHBOARD_VIEWER only, no Superuser/admin role, still
+        // viewed assessment 42 despite no assignment to it). Record-level bypasses use
+        // this narrower check instead: only the roles that actually administer IT Ops
+        // configuration (ITOpsAdminStepRoleCodes, defined in the Admin controller) count.
+        private bool HasAnyITOpsConfigAdminRole(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return false;
+            return GetITOpsRoleCodes(empId).Any(rc => ITOpsAdminStepRoleCodes.Contains(rc));
+        }
+
+        private IHttpActionResult DenyIfNotSelfOrITOpsAdmin(string requestedEmpId, string callerEmpId, string what)
+        {
+            if (IsITOpsSuperuser(callerEmpId) || HasAnyITOpsConfigAdminRole(callerEmpId)) return null;
+            if (!string.IsNullOrWhiteSpace(requestedEmpId) &&
+                string.Equals(requestedEmpId, callerEmpId, StringComparison.OrdinalIgnoreCase)) return null;
+            return Content(HttpStatusCode.Forbidden, "You can only " + what + " for yourself.");
+        }
+
+        // VAPT-flagged (Improper Input Validation): the admin controller's catalogue fields
+        // (cycle label, domain/category/parameter name) already reject "<"/">" - but the
+        // free-text fields every Assessor/Assessee fills constantly (score Notes, rejection
+        // comment, dispute comment, Action Taken) did not, and these are the fields a
+        // regular (non-admin) user actually controls, reflected back verbatim into the
+        // Dashboard/Reports grids and into plain-text-substituted email templates. Same
+        // reject-at-the-write-path approach as the admin controller, so every subsequent
+        // reader (grid, report, email) stays correct without having to re-encode anywhere.
+        // Matches an actual tag ("<script>", "</div>", "<img onerror=...>"), not a bare
+        // comparison operator ("CPU usage > 80%", "latency < 5ms" must stay allowed).
+        private static readonly System.Text.RegularExpressions.Regex ITOpsFreeTextMarkupPattern =
+            new System.Text.RegularExpressions.Regex(@"<\s*/?\s*[a-zA-Z][^>]*>", System.Text.RegularExpressions.RegexOptions.Compiled);
+        // VAPT-flagged (encoding bypass): same miss as the admin controller's check - a
+        // payload pre-encoded as "%3Cscript%3E...%3C%2Fscript%3E" or "&lt;script&gt;" has no
+        // raw angle bracket, so decode both common encodings before matching.
+        private static string ITOpsDecodeForFreeTextMarkupCheck(string value)
+        {
+            var decoded = value;
+            try { decoded = Uri.UnescapeDataString(decoded); } catch { /* not URL-encoded; keep as-is */ }
+            decoded = System.Net.WebUtility.HtmlDecode(decoded);
+            return decoded;
+        }
+        private bool ITOpsContainsFreeTextMarkup(string value) =>
+            !string.IsNullOrEmpty(value) &&
+            (ITOpsFreeTextMarkupPattern.IsMatch(value) || ITOpsFreeTextMarkupPattern.IsMatch(ITOpsDecodeForFreeTextMarkupCheck(value)));
+
+        // VAPT-flagged (IDOR): GetITOpsDomainTracker/GetITOpsTopRisks take a caller-supplied
+        // myEmpId used only to NARROW results - but nothing stopped a non-admin caller from
+        // either omitting it (seeing every account unfiltered) or passing someone else's
+        // empId (seeing that other person's own-scope view instead of their own). Same
+        // fullAccess test GetITOpsHasDashboardAccess already uses to decide whether a user
+        // may see beyond their own assignments - mirrored here so the enforcement lives
+        // server-side instead of trusting whatever the request happened to send.
+        private bool HasITOpsDashboardFullAccess(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return false;
+            if (IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_DASHBOARD_VIEWER)) return true;
+            return GetITOpsGdhBusinessUnitsForEmpId(empId).Any();
+        }
+
+        /// <summary>
+        /// For an own-scope-narrowing "myEmpId" parameter: returns the requested value
+        /// unchanged if the caller has full Dashboard access (so Superuser/Dashboard
+        /// Viewer/GDH can still aggregate across everyone, or nobody, as today), otherwise
+        /// forces it to the caller's own empId regardless of what was requested.
+        /// </summary>
+        private string ITOpsEnforceOwnScopeEmpId(string requestedMyEmpId, string callerEmpId)
+        {
+            if (HasITOpsDashboardFullAccess(callerEmpId)) return requestedMyEmpId;
+            return callerEmpId;
+        }
+
+        // Same fullAccess test as HasITOpsDashboardFullAccess, but keyed off the Report
+        // Viewer role (see GetITOpsHasReportAccess) instead of Dashboard Viewer - a GDH
+        // still counts as full access on Reports too.
+        private bool HasITOpsReportFullAccess(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return false;
+            if (IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_REPORT_VIEWER)) return true;
+            return GetITOpsGdhBusinessUnitsForEmpId(empId).Any();
+        }
+
         private List<int> GetITOpsScoreIdsForAssessment(int assessmentId)
         {
             return CSPdb.ITOPS_SCORE.GetAll()
@@ -668,6 +762,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetITOpsAccountsForEmp(string empId)
         {
             if (string.IsNullOrWhiteSpace(empId)) return Ok(new List<ProjectsBaseCustomer>());
+            var accountsDenied = DenyIfNotSelfOrITOpsAdmin(empId, GetHeaderDetails_String("empId"), "view accounts");
+            if (accountsDenied != null) return accountsDenied;
 
             var assessmentIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
                 .Where(a => a.ISACTIVE && a.ASSESSOR_EMP_ID == empId)
@@ -719,6 +815,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetITOpsMyAssignments(string empId)
         {
             if (string.IsNullOrWhiteSpace(empId)) return Ok(new List<ITOPS_MyAssignmentRow>());
+            var assignmentsDenied = DenyIfNotSelfOrITOpsAdmin(empId, GetHeaderDetails_String("empId"), "view assignments");
+            if (assignmentsDenied != null) return assignmentsDenied;
 
             var rolesByAssessmentId = new Dictionary<int, List<string>>();
             Action<int, string> addRole = (assessmentId, role) =>
@@ -1044,6 +1142,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetITOpsHasAccess(string empId)
         {
             if (string.IsNullOrWhiteSpace(empId)) return Ok(false);
+            var hasAccessDenied = DenyIfNotSelfOrITOpsAdmin(empId, GetHeaderDetails_String("empId"), "check access");
+            if (hasAccessDenied != null) return hasAccessDenied;
 
             // Called unconditionally on every login, in every environment, to
             // decide whether the shell shows the nav icon - NOT gated behind
@@ -1143,6 +1243,31 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             string spName = GetHeaderDetails_String("spname");
             if (string.IsNullOrWhiteSpace(spName)) return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            if (spName.ToUpperInvariant().Contains("ITOPS"))
+            {
+                // VAPT-flagged (IDOR, matches the original report's POC exactly): the
+                // Angular app sends a "MyEmpId" param meant to narrow every row to this
+                // employee's own assessor/reviewer/assessee scope (see
+                // reports.component.ts), but nothing server-side ever checked it - a
+                // caller could pass "-1" (or anyone else's empId) regardless of whether
+                // they actually hold Report Viewer/Superuser/GDH access, and pull any
+                // account's/project's full report data by varying CustomerId/ProjectId
+                // alone. Same enforcement as the Dashboard's myEmpId (see
+                // ITOpsEnforceOwnScopeEmpId): force it server-side unless the caller
+                // genuinely has full Report access.
+                var reportCallerEmpId = GetHeaderDetails_String("empId");
+                var enforcedMyEmpId = HasITOpsReportFullAccess(reportCallerEmpId) ? null : reportCallerEmpId;
+                if (enforcedMyEmpId != null)
+                {
+                    lstParams = lstParams ?? new List<REPORTS_PARAMS>();
+                    var myEmpIdParam = lstParams.FirstOrDefault(p => string.Equals(p.PARAM_NAME, "MyEmpId", StringComparison.OrdinalIgnoreCase));
+                    if (myEmpIdParam != null)
+                        myEmpIdParam.PARAM_VALUE = enforcedMyEmpId;
+                    else
+                        lstParams.Add(new REPORTS_PARAMS { PARAM_NAME = "MyEmpId", PARAM_VALUE = enforcedMyEmpId });
+                }
+            }
 
             if (lstParams != null && lstParams.Any())
             {
@@ -1346,6 +1471,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetITOpsHasDashboardAccess(string empId)
         {
             if (string.IsNullOrWhiteSpace(empId)) return Ok(new { FullAccess = false, HasAnyAssignment = false, IsGdh = false, GdhBusinessUnits = new List<string>() });
+            var dashAccessDenied = DenyIfNotSelfOrITOpsAdmin(empId, GetHeaderDetails_String("empId"), "check dashboard access");
+            if (dashAccessDenied != null) return dashAccessDenied;
             try
             {
                 var explicitFullAccess = IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_DASHBOARD_VIEWER);
@@ -1387,6 +1514,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetITOpsHasReportAccess(string empId)
         {
             if (string.IsNullOrWhiteSpace(empId)) return Ok(new { FullAccess = false, HasAnyAssignment = false, IsGdh = false, GdhBusinessUnits = new List<string>() });
+            var reportAccessDenied = DenyIfNotSelfOrITOpsAdmin(empId, GetHeaderDetails_String("empId"), "check report access");
+            if (reportAccessDenied != null) return reportAccessDenied;
             try
             {
                 var explicitFullAccess = IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_REPORT_VIEWER);
@@ -1455,6 +1584,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                       && a.DOMAIN_ID == domain.ID
                                       && projectIdsForAccount.Contains(a.PROJECT_ID));
                 if (specific == null) return NotFound();
+
+                // VAPT-flagged (IDOR) - this is the exact
+                // "/assessment/<domain>?assessmentId=40" URL the report's POC swapped
+                // between accounts. The check above only confirms the assessment really
+                // belongs to the GIVEN custId, never that the CALLER is entitled to that
+                // custId/assessment at all - same own-scope gate as GetITOpsAssessmentParameters.
+                var getOrCreateEmpId = GetHeaderDetails_String("empId");
+                if (!IsITOpsSuperuser(getOrCreateEmpId) && !HasAnyITOpsConfigAdminRole(getOrCreateEmpId))
+                {
+                    var ownScope = GetITOpsOwnScopeAssessmentIds(getOrCreateEmpId, new List<ITOPS_ASSESSMENT> { specific });
+                    if (!ownScope.Contains(specific.ID))
+                        return Content(HttpStatusCode.Forbidden, "You are not assigned to this assessment, so you cannot view it.");
+                }
 
                 var specificMaster = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().FirstOrDefault(m => m.ID == specific.ASSESSMENT_MASTER_ID);
                 return Ok(BuildITOpsAssessmentInfo(specific, domain, custId, specificMaster));
@@ -1578,6 +1720,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetITOpsDomainTracker(string custId, string myEmpId = null, string projectId = null, int? assessmentMasterId = null, string businessUnit = null)
         {
+            myEmpId = ITOpsEnforceOwnScopeEmpId(myEmpId, GetHeaderDetails_String("empId"));
+
             // Blank custId means "All accounts" - the Dashboard's default view now loads
             // an aggregate across every account instead of requiring one to be picked first.
             var custIdProvided = !string.IsNullOrWhiteSpace(custId);
@@ -1869,6 +2013,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assessment == null)
                 return NotFound();
 
+            // VAPT-flagged (IDOR): this endpoint previously returned full parameter/score/
+            // finding data for ANY assessmentId to ANY authenticated caller, with no check
+            // that the caller is actually assessor/reviewer/assessee/allocated/GDH on it -
+            // the exact "swap assessmentId=40 for another user's" POC in the report. Same
+            // own-scope entitlement check the Dashboard/Reports screens already enforce
+            // (GetITOpsOwnScopeAssessmentIds), plus superuser/admin-role bypass like every
+            // other gate in this file.
+            var requestingEmpId = GetHeaderDetails_String("empId");
+            if (!IsITOpsSuperuser(requestingEmpId) && !HasAnyITOpsConfigAdminRole(requestingEmpId))
+            {
+                var ownScope = GetITOpsOwnScopeAssessmentIds(requestingEmpId, new List<ITOPS_ASSESSMENT> { assessment });
+                if (!ownScope.Contains(assessmentId))
+                    return Content(HttpStatusCode.Forbidden, "You are not assigned to this assessment, so you cannot view it.");
+            }
+
             var today = DateTime.Today;
             var domain = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == assessment.DOMAIN_ID);
 
@@ -2063,6 +2222,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var scoreDenied = DenyIfNotITOpsAssessorOnAssessment(request.AssessmentId, empId, "submit a score for this assessment");
             if (scoreDenied != null) return scoreDenied;
+
+            if (ITOpsContainsFreeTextMarkup(request.Notes))
+                return Content(HttpStatusCode.Conflict, "Notes cannot contain HTML or script tags.");
 
             // Once a Cloud assessment has locked in a provider, a score can only be entered
             // for a parameter that actually belongs to that provider - the UI never shows the
@@ -2470,6 +2632,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetITOpsFindingsForAssessee(string assesseeEmpId)
         {
+            var findingsDenied = DenyIfNotSelfOrITOpsAdmin(assesseeEmpId, GetHeaderDetails_String("empId"), "view findings");
+            if (findingsDenied != null) return findingsDenied;
+
             var findings = CSPdb.ITOPS_FINDING.GetAll()
                 .Where(f => f.ASSESSEE_EMP_ID == assesseeEmpId && f.ISACTIVE)
                 .ToList();
@@ -2494,6 +2659,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (!request.Accept && string.IsNullOrWhiteSpace(request.Comment))
                 return Content(HttpStatusCode.Conflict, "A comment is required when rejecting a finding.");
+
+            if (ITOpsContainsFreeTextMarkup(request.Comment) || ITOpsContainsFreeTextMarkup(request.ActionTaken))
+                return Content(HttpStatusCode.Conflict, "Comments cannot contain HTML or script tags.");
 
             var empId = GetHeaderDetails_String("empId");
 
@@ -2634,6 +2802,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (!request.AssessorAccepts && string.IsNullOrWhiteSpace(request.Comment))
                 return Content(HttpStatusCode.Conflict, "A comment is required when disputing the assessee's rejection.");
+
+            if (ITOpsContainsFreeTextMarkup(request.Comment))
+                return Content(HttpStatusCode.Conflict, "Comment cannot contain HTML or script tags.");
 
             var empId = GetHeaderDetails_String("empId");
 
@@ -2801,8 +2972,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (request == null || string.IsNullOrWhiteSpace(request.ActionTaken))
                 return Content(HttpStatusCode.Conflict, "Describe the action taken before submitting.");
 
+            if (ITOpsContainsFreeTextMarkup(request.ActionTaken))
+                return Content(HttpStatusCode.Conflict, "Action taken cannot contain HTML or script tags.");
+
             if (request.ActualClosureDate == null)
                 return Content(HttpStatusCode.Conflict, "Enter the actual closure date before submitting.");
+
+            if (request.ActualClosureDate.Value.Date > DateTime.Today)
+                return Content(HttpStatusCode.Conflict, "The actual closure date cannot be in the future.");
 
             var empId = GetHeaderDetails_String("empId");
             finding.ACTION_TAKEN = request.ActionTaken.Trim();
@@ -3045,11 +3222,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // Assessor attached while scoring. Evidence uploaded before V2_35 ran has
         // FINDING_ID = NULL and so will not appear here even if it was conceptually a
         // finding attachment at the time (see V2_35's migration note).
+        // VAPT-flagged (IDOR): shared by all evidence read/download endpoints below - none
+        // of them checked that the caller is actually entitled to the assessment the
+        // evidence belongs to, only that the row/file existed.
+        private IHttpActionResult DenyIfNotITOpsEntitledToScore(int? scoreId, string empId, string what)
+        {
+            if (!scoreId.HasValue) return null;
+            if (IsITOpsSuperuser(empId) || HasAnyITOpsConfigAdminRole(empId)) return null;
+            var assessmentId = GetITOpsAssessmentIdForScore(scoreId.Value);
+            if (!assessmentId.HasValue) return null;
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId.Value);
+            if (assessment == null) return null;
+            var ownScope = GetITOpsOwnScopeAssessmentIds(empId, new List<ITOPS_ASSESSMENT> { assessment });
+            if (ownScope.Contains(assessmentId.Value)) return null;
+            return Content(HttpStatusCode.Forbidden, "You are not assigned to this assessment, so you cannot " + what + ".");
+        }
+
         [GET("GetITOpsFindingEvidence")]
         [ActionName("GetITOpsFindingEvidence")]
         [HttpGet]
         public IHttpActionResult GetITOpsFindingEvidence(int findingId)
         {
+            var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
+            var denied = DenyIfNotITOpsEntitledToScore(finding?.SCORE_ID, GetHeaderDetails_String("empId"), "view this finding's evidence");
+            if (denied != null) return denied;
             return Ok(GetITOpsEvidenceForFinding(findingId));
         }
 
@@ -3065,6 +3261,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetITOpsScoreEvidence(int scoreId)
         {
+            var denied = DenyIfNotITOpsEntitledToScore(scoreId, GetHeaderDetails_String("empId"), "view this score's evidence");
+            if (denied != null) return denied;
             return Ok(GetITOpsEvidenceRows(e => e.ISACTIVE && e.SCORE_ID == scoreId && e.FINDING_ID == null));
         }
 
@@ -3114,6 +3312,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
             if (finding == null) return NotFound();
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsFindingAssessee(finding, empId, "attach evidence to this finding");
+            if (denied != null) return denied;
             return UploadITOpsEvidenceForScore(finding.SCORE_ID, findingId);
         }
 
@@ -3125,8 +3326,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var score = CSPdb.ITOPS_SCORE.GetAll().FirstOrDefault(s => s.ID == scoreId);
             if (score == null) return NotFound();
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsAssessorOnAssessment(score.ASSESSMENT_ID, empId, "attach evidence to this score");
+            if (denied != null) return denied;
             return UploadITOpsEvidenceForScore(scoreId, findingId: null);
         }
+
+        // VAPT-flagged: evidence upload accepted any file type/size and was unlimited in
+        // count (.exe/.msi/double-extension files were accepted and distributed to other
+        // users with access to the same assessment). The UI only ever offered
+        // .pdf/.jpg/.jpeg/.png (see evidence-upload accept= attribute in both Angular
+        // components) - this enforces that same allowlist server-side, by extension AND
+        // by the file's actual magic-byte signature, so a renamed executable (e.g.
+        // "file.pdf.exe" or an .exe content byte-for-byte renamed to "file.pdf") is
+        // rejected either way, plus a per-score/finding count cap against upload-volume abuse.
+        private static readonly Dictionary<string, byte[][]> ITOpsAllowedEvidenceSignatures = new Dictionary<string, byte[][]>(StringComparer.OrdinalIgnoreCase)
+        {
+            [".pdf"] = new[] { new byte[] { 0x25, 0x50, 0x44, 0x46 } },                 // %PDF
+            [".jpg"] = new[] { new byte[] { 0xFF, 0xD8, 0xFF } },
+            [".jpeg"] = new[] { new byte[] { 0xFF, 0xD8, 0xFF } },
+            [".png"] = new[] { new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A } },
+        };
+        private const int ITOpsMaxEvidencePerItem = 20;
 
         private IHttpActionResult UploadITOpsEvidenceForScore(int scoreId, int? findingId)
         {
@@ -3134,6 +3355,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var httpRequest = HttpContext.Current.Request;
             if (httpRequest.Files.Count == 0)
                 return Content(HttpStatusCode.Conflict, "No file was included in the upload.");
+
+            var existingCount = CSPdb.ITOPS_EVIDENCE.GetAll()
+                .Count(e => e.ISACTIVE && e.SCORE_ID == scoreId && e.FINDING_ID == findingId);
+            if (existingCount + httpRequest.Files.Count > ITOpsMaxEvidencePerItem)
+                return Content(HttpStatusCode.Conflict, $"Up to {ITOpsMaxEvidencePerItem} evidence files are allowed here - please remove some before adding more.");
 
             const long maxBytes = 10 * 1024 * 1024;
             var saved = new List<ITOPS_EVIDENCE>();
@@ -3143,6 +3369,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var postedFile = httpRequest.Files[i];
                 if (postedFile.ContentLength > maxBytes)
                     return Content(HttpStatusCode.Conflict, $"\"{postedFile.FileName}\" exceeds the 10MB upload limit.");
+
+                var extension = Path.GetExtension(postedFile.FileName);
+                byte[][] allowedSignatures;
+                if (!ITOpsAllowedEvidenceSignatures.TryGetValue(extension ?? "", out allowedSignatures))
+                    return Content(HttpStatusCode.Conflict, $"\"{postedFile.FileName}\" is not an allowed file type. Only PDF, JPG and PNG are accepted.");
+
+                var header = new byte[allowedSignatures.Max(sig => sig.Length)];
+                postedFile.InputStream.Position = 0;
+                var headerBytesRead = postedFile.InputStream.Read(header, 0, header.Length);
+                postedFile.InputStream.Position = 0;
+                var signatureMatches = allowedSignatures.Any(sig =>
+                    headerBytesRead >= sig.Length && header.Take(sig.Length).SequenceEqual(sig));
+                if (!signatureMatches)
+                    return Content(HttpStatusCode.Conflict, $"\"{postedFile.FileName}\" does not look like a real {extension.TrimStart('.').ToUpperInvariant()} file.");
 
                 var serverFileName = Guid.NewGuid().ToString();
                 var filePath = HttpContext.Current.Server.MapPath("~/UploadFile/" + serverFileName);
@@ -3203,6 +3443,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var evidence = CSPdb.ITOPS_EVIDENCE.GetAll().FirstOrDefault(e => e.ID == evidenceId && e.ISACTIVE);
             if (evidence == null) return new HttpResponseMessage(HttpStatusCode.NotFound);
 
+            var denied = DenyIfNotITOpsEntitledToScore(evidence.SCORE_ID, GetHeaderDetails_String("empId"), "download this evidence");
+            if (denied != null) return new HttpResponseMessage(HttpStatusCode.Forbidden);
+
             var fileData = Cldb.FILE_DATA.GetAll().FirstOrDefault(f => f.ID == evidence.FILE_DATA_ID && f.ISACTIVE);
             if (fileData == null) return new HttpResponseMessage(HttpStatusCode.NotFound);
 
@@ -3226,6 +3469,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (evidence == null) return NotFound();
 
             var empId = GetHeaderDetails_String("empId");
+            // VAPT-flagged (IDOR): this endpoint had no entitlement check at all - any
+            // authenticated user could delete any evidence file by guessing evidenceId.
+            // Same own-scope gate every other evidence endpoint in this file uses.
+            var deleteDenied = DenyIfNotITOpsEntitledToScore(evidence.SCORE_ID, empId, "delete this evidence");
+            if (deleteDenied != null) return deleteDenied;
             UpdateAuditFields(evidence, empId);
             evidence.ISACTIVE = false;
             CSPdb.ITOPS_EVIDENCE.Update(evidence);
@@ -3242,6 +3490,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetITOpsMyNotifications(string empId)
         {
             if (string.IsNullOrWhiteSpace(empId)) return Ok(new List<ITOPS_NotificationRow>());
+            var notifDenied = DenyIfNotSelfOrITOpsAdmin(empId, GetHeaderDetails_String("empId"), "view notifications");
+            if (notifDenied != null) return notifDenied;
 
             var notifications = CSPdb.ITOPS_NOTIFICATION.GetAll()
                 .Where(n => n.ISACTIVE && n.RECIPIENT_EMP_ID == empId)
@@ -3332,6 +3582,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var notification = CSPdb.ITOPS_NOTIFICATION.GetAll().FirstOrDefault(n => n.ID == id);
             if (notification == null) return NotFound();
 
+            // VAPT-flagged (IDOR): no check that the caller is who this notification was
+            // sent to - any authenticated user could dismiss someone else's notification by
+            // guessing the id.
+            var dismissOneDenied = DenyIfNotSelfOrITOpsAdmin(notification.RECIPIENT_EMP_ID, GetHeaderDetails_String("empId"), "dismiss this notification");
+            if (dismissOneDenied != null) return dismissOneDenied;
+
             // UpdateAuditFields(...) -> UpdateAuditFieldsExt always sets ISACTIVE = true,
             // so it must run BEFORE the dismissal is applied.
             UpdateAuditFields(notification);
@@ -3348,6 +3604,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult DismissAllITOpsNotifications(string empId)
         {
             if (string.IsNullOrWhiteSpace(empId)) return Ok();
+            var dismissDenied = DenyIfNotSelfOrITOpsAdmin(empId, GetHeaderDetails_String("empId"), "dismiss notifications");
+            if (dismissDenied != null) return dismissDenied;
 
             var notifications = CSPdb.ITOPS_NOTIFICATION.GetAll().Where(n => n.ISACTIVE && n.RECIPIENT_EMP_ID == empId).ToList();
             foreach (var notification in notifications)
@@ -3425,6 +3683,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetITOpsTopRisks(string custId = null, string projectId = null, int? assessmentMasterId = null, string businessUnit = null, string myEmpId = null)
         {
+            myEmpId = ITOpsEnforceOwnScopeEmpId(myEmpId, GetHeaderDetails_String("empId"));
+
             var parameters = CSPdb.ITOPS_PARAMETER.GetAll().ToList().GroupBy(p => p.ID).ToDictionary(g => g.Key, g => g.First());
             var categories = CSPdb.ITOPS_CATEGORY.GetAll().ToList().GroupBy(c => c.ID).ToDictionary(g => g.Key, g => g.First());
             var assessments = CSPdb.ITOPS_ASSESSMENT.GetAll().ToList().GroupBy(a => a.ID).ToDictionary(g => g.Key, g => g.First());

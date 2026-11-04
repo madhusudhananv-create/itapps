@@ -696,7 +696,9 @@
               <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span class="lc-node is-act"><i class="pip"></i>Accepted</span>
               <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-              <span class="lc-node"><i class="pip"></i>Action Taken submitted</span>
+              <span class="lc-node"><i class="pip"></i>Remediation planned</span>
+              <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="lc-node"><i class="pip"></i>In Progress</span>
               <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <span class="lc-node is-ok"><i class="pip"></i>Closed</span>
             </div>
@@ -743,9 +745,12 @@
         <div class="panel ok">
           <h4><span class="badge"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>If the Assessee accepts</h4>
           <ul>
-            <li>The finding moves to <strong>Accepted</strong>.</li>
-            <li>An <strong>Action Taken</strong> field opens on the same finding, where the Assessee records the remediation carried out and may attach evidence (PDF, JPG or PNG, up to 10&nbsp;MB).</li>
-            <li>Submitting that update closes the finding immediately. No separate Assessor sign-off is required.</li>
+            <li>The finding moves to <strong>Accepted</strong>, and a <strong>Plan the remediation</strong> card opens on the same finding.</li>
+            <li>The Assessee sets an <strong>Owner</strong> (defaults to themselves, but can be reassigned to anyone currently staffed on the project), a <strong>Target date</strong>, and a <strong>Priority</strong> (Low, Medium or High).</li>
+            <li>Selecting <strong>Save &amp; move to In Progress</strong> records the plan. The finding now reads <strong>Accepted &amp; In Progress</strong> everywhere it appears, including the Domain Assessment Report.</li>
+            <li>An <strong>Action Taken</strong> field and an <strong>Actual closure date</strong> field (which cannot be set to a future date) then open on the same finding; evidence may also be attached (PDF, JPG or PNG, up to 10&nbsp;MB).</li>
+            <li>Selecting <strong>Submit Update</strong> closes the finding immediately. No separate Assessor sign-off is required.</li>
+            <li>If the owner is reassigned to someone other than the Assessee, that person receives an email naming the finding, its priority and target date.</li>
             <li>The domain assessment reads as fully <strong>Completed</strong> only once every finding it raised has reached Closed.</li>
           </ul>
         </div>
@@ -758,6 +763,33 @@
           </ul>
         </div>
       </div>
+
+      <h4 style="margin:28px 0 6px;">Planning the remediation</h4>
+      <p>Once accepted, a finding carries its own remediation plan separate from the review decision itself. The Owner defaults to the Assessee but can be reassigned to anyone currently staffed on the project; Target date and Priority are both required before the plan can be saved.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="The Plan the remediation card on a newly accepted finding, with Owner, Target date and Priority fields.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-08-assessee-plan-remediation.png" alt="The Plan the remediation card on a newly accepted finding, with Owner, Target date and Priority fields" width="1351" height="420" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>An accepted finding, before its remediation plan has been saved.</figcaption>
+      </figure>
+
+      <p>Saving the plan moves the finding to <strong>Accepted &amp; In Progress</strong>, which unlocks the Action Taken description and the Actual closure date (restricted to today or earlier). A summary bar above them shows the owner, target date and priority at a glance, and flags the target date in red once it has passed.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="A finding In Progress: the remediation plan summary, Action Taken field and Actual closure date.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-11-assessee-finding-inprogress.png" alt="A finding In Progress, showing the remediation plan summary, Action Taken field and Actual closure date" width="1351" height="480" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>In Progress: ready for Action Taken and an actual closure date.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="The same finding after Submit Update: Finding closed, with the remediation plan and action taken both on record.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-12-assessee-finding-closed.png" alt="The finding after closure, showing Finding closed with owner, target date, priority, closure date and the action taken" width="1351" height="440" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>Finding closed, with the full remediation plan and action taken retained on record.</figcaption>
+      </figure>
 
       <figure class="shot">
         <button class="shot-frame" type="button" data-caption="Two findings on the same assessment from the Assessee's perspective: one rejected and awaiting the Assessor, one accepted, remediated and closed.">
@@ -794,11 +826,12 @@
     <section class="chapter" id="dashboard">
       <div class="chapter-head"><h2>Dashboard</h2></div>
       <p class="intro">The Dashboard is the application's landing page, presenting an organization-wide view of technology domain maturity, assessment progress and the leading improvement opportunities across every account and project. Use the cycle, business unit, account and project selectors in the header to narrow the view.</p>
+      <p>The KPI tiles at the top read: Overall maturity, Avg score (the average parameter score out of 5.00), Domains where actions are completed, Domains where actions are In Progress, and Overdue Findings — still-open (Accepted, not yet Closed) findings whose target date has passed.</p>
       <hr class="rule">
       <figure class="shot">
         <button class="shot-frame tall" type="button" data-caption="The Dashboard: maturity and progress across all accounts and projects, filtered by cycle, business unit, account and project.">
           <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand full page</span>
-          <img src="manual-assets/dashboard-01-overview.png" alt="The Dashboard, showing domain maturity and assessment progress across accounts and projects" width="1583" height="1894" loading="lazy">
+          <img src="manual-assets/dashboard-01-overview.png" alt="The Dashboard, showing domain maturity and assessment progress across accounts and projects" width="1351" height="2243" loading="lazy">
         </button>
         <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>Maturity overview across all accounts and projects.</figcaption>
       </figure>
@@ -821,7 +854,7 @@
       </figure>
 
       <h3 class="topic" id="reports-parameter">Parameter Detail Report</h3>
-      <p>Drills down to one row per scored parameter within each domain assessment, for a granular view of individual scores and the findings they raised.</p>
+      <p>Drills down to one row per scored parameter within each domain assessment, for a granular view of individual scores and the findings they raised. Finding Status reads <strong>Accepted &amp; In Progress</strong> once a remediation plan has been saved on it. Each row also carries Owner, Priority, Target Date, Actual Closure Date, and Days to Close (actual closure date minus target date — negative means closed early, positive means closed late), alongside the Assessee's Accept and Action Taken comments.</p>
       <figure class="shot">
         <button class="shot-frame" type="button" data-caption="The Parameter Detail Report: one row per scored parameter.">
           <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
