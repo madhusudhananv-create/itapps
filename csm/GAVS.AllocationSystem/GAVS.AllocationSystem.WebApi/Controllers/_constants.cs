@@ -9,7 +9,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     internal partial class Constants
     {
         internal const string DOMAIN = "neurealm.com";
-        internal const string QUALITY_MAIL = "csmsupport@" + DOMAIN;
+        internal const string QUALITY_MAIL = "quality@" + DOMAIN;
+        // Sender of the Annual (ACSAT) survey invitation and reminder mails only; every other mail keeps
+        // the default sender (QUALITY_MAIL / "CSM Support", see EmailProvider).
+        internal const string ACSAT_SURVEY_FROM_MAIL = "quality@" + DOMAIN;
+        internal const string ACSAT_SURVEY_FROM_NAME = "Neurealm Quality Assurance";
         internal const string PREMIER_QUALITY_TEAM = "PremierQualityTeam@" + DOMAIN;
         internal const string PEX_MAIL = "PEX_Team@" + DOMAIN;
         internal const string QUALITY_HEAD = "ambrish.sethi@" + DOMAIN;

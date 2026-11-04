@@ -851,7 +851,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             email = string.Empty;
             empid = string.Empty;
             DisplayName = string.Empty;
-           
+
             // VAPT-flagged (Authentication Bypass): a username prefixed "xx" (e.g.
             // "xxjaishree.v@neurealm.com") skipped AD/password validation entirely and
             // logged in as that employee by email lookup alone. Gated on the same IsProd
@@ -923,6 +923,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             Token query = Cldb.Token.GetAll().FirstOrDefault(c => c.EMAILID == email);
             if (query != null)
             {
+                //DateTime ExpiresOn = query.EXPIRESON; //update
+                //if (ExpiresOn >= DateTime.Now)
+                //{
+                //    AuthKey = query.AUTHKEY;
+                //}
+                //else
+                //{
+                //    query.ISSUEDON = DateTime.Now;
+                //    query.AUTHKEY = AuthKey;
+                //    query.EXPIRESON = DateTime.Now.AddHours(1);
+                //    Cldb.Token.Update(query);
+                //    Cldb.Commit(CanCommit);
+                //}
                 query.ISSUEDON = DateTime.Now;
                 query.AUTHKEY = AuthKey;
                 query.EXPIRESON = DateTime.Now.AddHours(1);
