@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Download, TrendingUp } from 'lucide-react';
+import { Download, TrendingUp, BarChart3, Trophy, AlertTriangle, Building2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
+import { showAcsatAlert } from '../utils/acsatAlert';
 import {
   buildRowFromHeaders,
   filterRowsByAcsatCycle,
@@ -27,58 +28,76 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.85rem 1rem;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
 `;
 
 const Title = styled.h1`
-  color: #1f2937;
-  font-size: 1.875rem;
+  color: #16233D;
+  font-size: 1.15rem;
   font-weight: 700;
   margin: 0;
 `;
 
 const BackButton = styled.button`
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  background: transparent;
+  color: #16233D;
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.15s ease;
 
   &:hover {
-    background: #2563eb;
+    border-color: #7c3aed;
+    background: #7c3aed;
+    color: white;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
   }
 `;
 
 const ControlsContainer = styled.div`
   display: flex;
-  gap: 1rem;
+  gap: 0.6rem;
   align-items: center;
-  margin-bottom: 2rem;
-  padding: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.75rem;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 `;
 
 const ToggleButton = styled.button`
-  background: ${props => props.active ? '#10b981' : '#e5e7eb'};
-  color: ${props => props.active ? 'white' : '#6b7280'};
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  background: ${props => props.active ? '#1D4ED8' : 'transparent'};
+  color: ${props => props.active ? 'white' : '#1D4ED8'};
+  border: 1px solid #1D4ED8;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 
   &:hover {
-    background: ${props => props.active ? '#059669' : '#d1d5db'};
+    background: #1D4ED8;
+    color: white;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.2);
   }
 `;
 
@@ -89,16 +108,16 @@ const SearchContainer = styled.div`
 `;
 
 const SearchInput = styled.input`
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  width: 300px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  width: 240px;
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #1D4ED8;
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.1);
   }
 `;
 
@@ -119,8 +138,8 @@ const ClearButton = styled.button`
 
 const TableContainer = styled.div`
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   overflow: auto;
   max-height: 70vh;
   overflow-y: auto;
@@ -131,7 +150,7 @@ const Table = styled.table`
   width: 100%;
   min-width: 1000px;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   border: 2px solid #374151;
 `;
 
@@ -143,11 +162,12 @@ const TableHeader = styled.thead`
 `;
 
 const TableHeaderCell = styled.th`
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
   text-align: center;
   vertical-align: middle;
   font-weight: 600;
   color: #ffffff;
+  font-size: 0.8rem;
   border: 1px solid #ffffff;
   background: #1e3a8a;
   position: ${props => props.isFirstColumn ? 'sticky' : 'static'};
@@ -174,7 +194,7 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #6b7280;
   color: #374151;
   text-align: ${props => props.isNumeric ? 'center' : 'left'};
@@ -214,39 +234,54 @@ const TableCell = styled.td`
 `;
 
 const DownloadButton = styled.button`
-  background: #10b981;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  background: transparent;
+  color: #1B8A5A;
+  border: 1px solid #1B8A5A;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s;
+  gap: 0.4rem;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 
   &:hover {
-    background: #059669;
+    background: #1B8A5A;
+    color: white;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(27, 138, 90, 0.2);
   }
 `;
 
 const TrendAnalysisButton = styled.button`
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
+  background: ${props => props.active ? '#1D4ED8' : 'transparent'};
+  color: ${props => props.active ? 'white' : '#1D4ED8'};
+  border: 1px solid #1D4ED8;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
+  gap: 0.4rem;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
+    background: #1D4ED8;
+    color: white;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.2);
   }
 `;
 
@@ -287,30 +322,25 @@ const LegendColor = styled.div`
 
 const SummaryContainer = styled.div`
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
 `;
 
 const SummaryTitle = styled.h2`
-  color: #1f2937;
-  font-size: 1.8rem;
+  color: #16233D;
+  font-size: 1.1rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
   text-align: center;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 `;
 
 const SummaryGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -318,17 +348,17 @@ const SummaryGrid = styled.div`
 `;
 
 const SummaryCard = styled.div`
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border: 2px solid #cbd5e0;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: #fafbfc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem;
 `;
 
 const SummaryCardTitle = styled.h3`
-  color: #1f2937;
-  font-size: 1.2rem;
+  color: #16233D;
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   text-align: center;
 `;
 
@@ -362,7 +392,7 @@ const PerspectiveName = styled.span`
 
 const PerspectivePercentage = styled.span`
   font-weight: 700;
-  color: ${props => props.percentage >= 90 ? '#047857' : '#059669'};
+  color: ${props => props.percentage > 90 ? '#047857' : props.percentage >= 70 ? '#b45309' : '#dc2626'};
   font-size: 0.9rem;
 `;
 
@@ -561,13 +591,13 @@ const findSheetColumn = (firstRow, matchers, fallback) => {
 
 const getTrendRowValue = (row, columnKey, ...fallbackNames) => {
   if (!row) return '';
-  if (columnKey && row[columnKey] !== undefined && row[columnKey] !== '') return row[columnKey];
+  if (columnKey && row[columnKey] !== undefined && row[columnKey] !== '' && row[columnKey] !== null) return row[columnKey];
   const keys = Object.keys(row);
   const names = [columnKey, ...fallbackNames].filter(Boolean);
   for (const name of names) {
     const norm = String(name).toLowerCase().replace(/[\s_]/g, '');
     const key = keys.find((k) => (k || '').trim().toLowerCase().replace(/[\s_]/g, '') === norm);
-    if (key !== undefined) return row[key];
+    if (key !== undefined && row[key] !== null && row[key] !== undefined) return row[key];
   }
   return '';
 };
@@ -1192,7 +1222,7 @@ const mapBuWiseTrendGroupToRow = (group, perspectives) => {
   };
 };
 
-const ACSAT_BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
+const ACSAT_BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
 
 const sortBuWiseTrendRows = (rows) =>
   [...rows].sort((a, b) => {
@@ -2581,7 +2611,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     }
 
     // Apply fixed BU order when BU-wise
-    const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
+    const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
     let ordered = finalResult;
     
     if (groupByBU) {
@@ -3129,7 +3159,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
   const downloadAccountWiseSatisfiedTrendExcel = async () => {
     const accountTrendFiles = acsatTrendAnalysisData.filter((f) => f.hasData && f.rows?.length);
     if (!accountTrendFiles.length) {
-      alert('No account-wise trend data available to download.');
+      showAcsatAlert('No account-wise trend data available to download.');
       return;
     }
     const workbook = new ExcelJS.Workbook();
@@ -3152,7 +3182,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
   const downloadBuWiseSatisfiedTrendExcel = async () => {
     const buTrendFiles = acsatTrendAnalysisData.filter((f) => f.hasData && f.rows?.length);
     if (!buTrendFiles.length) {
-      alert('No BU-wise trend data available to download.');
+      showAcsatAlert('No BU-wise trend data available to download.');
       return;
     }
     const workbook = new ExcelJS.Workbook();
@@ -3175,7 +3205,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
   const downloadTop10SatisfiedTrendExcel = async () => {
     const top10TrendFiles = acsatTrendAnalysisData.filter((f) => f.hasData && f.rows?.length);
     if (!top10TrendFiles.length) {
-      alert('No Top 10 trend data available to download.');
+      showAcsatAlert('No Top 10 trend data available to download.');
       return;
     }
     const workbook = new ExcelJS.Workbook();
@@ -3196,20 +3226,20 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
   };
 
   const handleViewAcsatTrendAnalysis = () => {
+    if (showAcsatTrendAnalysis) {
+      setShowAcsatTrendAnalysis(false);
+      return;
+    }
     if (!isAccountWiseSatisfiedView && !isTop10SatisfiedView && !isBuWiseSatisfiedView) {
-      alert('ACSAT trend analysis is available only in Account-wise, BU-wise, or Top 10 view on this dashboard.');
+      showAcsatAlert('ACSAT trend analysis is available only in Account-wise, BU-wise, or Top 10 view on this dashboard.');
       return;
     }
     if (!trendAnalysisFiles?.length) {
-      alert('Please upload ACSAT trend files using "Upload data for ACSAT trend analysis" on the Upload ACSAT Data page.');
+      showAcsatAlert('Please upload ACSAT trend files using "Upload data for ACSAT trend analysis" on the Upload ACSAT Data page.');
       return;
     }
-    if (!showAcsatTrendAnalysis) {
-      setShowAcsatTrendAnalysis(true);
-      setTimeout(scrollToAcsatTrendSection, 150);
-      return;
-    }
-    scrollToAcsatTrendSection();
+    setShowAcsatTrendAnalysis(true);
+    setTimeout(scrollToAcsatTrendSection, 150);
   };
 
   const downloadExcel = async () => {
@@ -3812,11 +3842,11 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
         // Summary Title - Different titles based on view type
         let summaryTitle;
         if (groupByBU) {
-          summaryTitle = '📊 ACSAT - Org level/BU wise % of 4,5 rater summary';
+          summaryTitle = 'ACSAT - Org level/BU wise % of 4,5 rater summary';
         } else if (showTop10) {
-          summaryTitle = '📊 ACSAT - Top 10 Account % of satisfied customers summary';
+          summaryTitle = 'ACSAT - Top 10 Account % of satisfied customers summary';
         } else {
-          summaryTitle = '📊 ACSAT - Account level % of satisfied customers summary';
+          summaryTitle = 'ACSAT - Account level % of satisfied customers summary';
         }
         
         const summaryTitleRow = worksheet.addRow([summaryTitle]);
@@ -3829,7 +3859,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
 
         // Add Perspectives with % ≥ 70% section
         worksheet.addRow([]);
-        const above75TitleRow = worksheet.addRow(['🏆 Perspectives with % ≥ 70%']);
+        const above75TitleRow = worksheet.addRow(['Perspectives with % ≥ 70%']);
         const above75TitleRowNum = above75TitleRow.number;
         above75TitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF059669' } };
         above75TitleRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -3875,7 +3905,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
         let below75Title;
         let below75Data = [];
         
-        below75Title = '⚠️ Perspectives with % < 70%';
+        below75Title = 'Perspectives with % < 70%';
         if (grandTotals) {
           const keys = ['Meeting Delivery Commitments','Customer Engagement and Relationship','Partner adding value to Customer Business'];
           below75Data = keys
@@ -3914,7 +3944,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
         // Add BU Level Summary - Only for BU-wise view
         if (groupByBU) {
         worksheet.addRow([]);
-        const buSummaryTitleRow = worksheet.addRow(['🏢 BU Level Summary']);
+        const buSummaryTitleRow = worksheet.addRow(['BU Level Summary']);
         const buSummaryTitleRowNum = buSummaryTitleRow.number;
         buSummaryTitleRow.getCell(1).font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
         buSummaryTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; // Navy blue
@@ -4035,7 +4065,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
 
     } catch (error) {
       console.error('Error downloading Excel:', error);
-      alert('Error downloading Excel file');
+      showAcsatAlert('Error downloading Excel file');
     }
   };
 
@@ -4073,9 +4103,9 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
         </Title>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <BackButton onClick={onBack}>Back to ACSAT</BackButton>
-          <TrendAnalysisButton type="button" onClick={handleViewAcsatTrendAnalysis}>
+          <TrendAnalysisButton type="button" active={showAcsatTrendAnalysis} onClick={handleViewAcsatTrendAnalysis}>
             <TrendingUp size={16} />
-            View ACSAT trend analysis
+            {showAcsatTrendAnalysis ? 'Hide ACSAT trend analysis' : 'View ACSAT trend analysis'}
           </TrendAnalysisButton>
         </div>
       </Header>
@@ -4149,12 +4179,12 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
       {/* ACSAT Summary - Only show when BU-wise View is active */}
       {processedData?.summary && grandTotals && groupByBU && (
         <SummaryContainer>
-          <SummaryTitle>📊 ACSAT - Org level/BU wise % of 4,5 rater summary</SummaryTitle>
+          <SummaryTitle><BarChart3 size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> ACSAT - Org level/BU wise % of 4,5 rater summary</SummaryTitle>
           
           {/* Org Level Summary */}
           <SummaryGrid>
             <SummaryCard>
-              <SummaryCardTitle>🏆 Perspectives with % ≥ 70%</SummaryCardTitle>
+              <SummaryCardTitle><Trophy size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Perspectives with % ≥ 70%</SummaryCardTitle>
               <PerspectiveList>
                 {(() => {
                   const keys = [
@@ -4183,7 +4213,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             </SummaryCard>
 
             <SummaryCard>
-              <SummaryCardTitle>⚠️ Perspectives with % &lt; 70%</SummaryCardTitle>
+              <SummaryCardTitle><AlertTriangle size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Perspectives with % &lt; 70%</SummaryCardTitle>
               <PerspectiveList>
                 {(() => {
                   const keys = [
@@ -4214,7 +4244,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
 
           {/* BU Level Summary */}
           <BULevelContainer>
-            <SummaryCardTitle>🏢 BU Level Summary</SummaryCardTitle>
+            <SummaryCardTitle><Building2 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> BU Level Summary</SummaryCardTitle>
             {Object.entries(processedData.summary.buLevel).map(([buName, buData]) => (
               <BUCard key={buName}>
                 <BUName>{normalizeBusinessUnitDisplay(buName)}</BUName>
@@ -4260,11 +4290,11 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
       {/* ACSAT Account-wise Summary - Only show when Account-wise View is active */}
       {processedData?.summary && grandTotals && !groupByBU && !showTop10 && (
         <SummaryContainer>
-          <SummaryTitle>📊 ACSAT - Account level % of satisfied customers summary</SummaryTitle>
+          <SummaryTitle><BarChart3 size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> ACSAT - Account level % of satisfied customers summary</SummaryTitle>
           
           <SummaryGrid>
             <SummaryCard>
-              <SummaryCardTitle>🏆 Perspectives with % ≥ 70%</SummaryCardTitle>
+              <SummaryCardTitle><Trophy size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Perspectives with % ≥ 70%</SummaryCardTitle>
               <PerspectiveList>
                 {(() => {
                   const keys = [
@@ -4293,7 +4323,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             </SummaryCard>
 
             <SummaryCard>
-              <SummaryCardTitle>⚠️ Perspectives with % &lt; 70%</SummaryCardTitle>
+              <SummaryCardTitle><AlertTriangle size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Perspectives with % &lt; 70%</SummaryCardTitle>
               <PerspectiveList>
                 {(() => {
                   const keys = [
@@ -4327,11 +4357,11 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
       {/* ACSAT Top 10 Summary - Only show when Top 10 view is active */}
       {processedData?.summary && grandTotals && showTop10 && (
         <SummaryContainer>
-          <SummaryTitle>📊 ACSAT - Top 10 Account % of satisfied customers summary</SummaryTitle>
+          <SummaryTitle><BarChart3 size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> ACSAT - Top 10 Account % of satisfied customers summary</SummaryTitle>
           
           <SummaryGrid>
             <SummaryCard>
-              <SummaryCardTitle>🏆 Perspectives with % ≥ 70%</SummaryCardTitle>
+              <SummaryCardTitle><Trophy size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Perspectives with % ≥ 70%</SummaryCardTitle>
               <PerspectiveList>
                 {(() => {
                   const keys = [
@@ -4360,7 +4390,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             </SummaryCard>
 
             <SummaryCard>
-              <SummaryCardTitle>⚠️ Perspectives with % &lt; 70%</SummaryCardTitle>
+              <SummaryCardTitle><AlertTriangle size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Perspectives with % &lt; 70%</SummaryCardTitle>
               <PerspectiveList>
                 {(() => {
                   const keys = [
@@ -4646,7 +4676,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             </div>
             <DownloadButton
               onClick={downloadBuWiseSatisfiedTrendExcel}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: 'transparent', color: 'white', border: '1px solid white' }}
             >
               <Download size={16} />
               Download Excel
@@ -4767,7 +4797,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             </div>
             <DownloadButton
               onClick={downloadAccountWiseSatisfiedTrendExcel}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: 'transparent', color: 'white', border: '1px solid white' }}
             >
               <Download size={16} />
               Download Excel
@@ -4881,7 +4911,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             </div>
             <DownloadButton
               onClick={downloadTop10SatisfiedTrendExcel}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: 'transparent', color: 'white', border: '1px solid white' }}
             >
               <Download size={16} />
               Download Excel

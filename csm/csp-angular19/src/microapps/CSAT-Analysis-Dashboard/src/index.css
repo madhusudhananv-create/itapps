@@ -19,6 +19,17 @@ code {
     monospace;
 }
 
+/* Replace the browser's default focus rectangle on buttons/clickable tiles
+   with a subtle ring, so clicking a dashboard tile doesn't look like a
+   leftover hover artifact. */
+button, [role="button"] {
+  outline: none;
+}
+button:focus-visible, [role="button"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

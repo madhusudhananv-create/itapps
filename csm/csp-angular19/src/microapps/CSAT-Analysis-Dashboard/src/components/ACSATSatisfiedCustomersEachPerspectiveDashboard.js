@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
-import { Download } from 'lucide-react';
+import { Download, BarChart3, Calendar, Users, Building2, CheckCircle2, Search } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { normalizeBusinessUnitDisplay, businessUnitsMatch } from '../utils/normalizeBusinessUnitDisplay';
+import { showAcsatAlert } from '../utils/acsatAlert';
+import { useCSATContext } from '../context/CSATContext';
 
 const DashboardContainer = styled.div`
   padding: 2rem;
@@ -15,81 +17,83 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.85rem 1rem;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
 `;
 
 const Title = styled.h1`
-  color: #1f2937;
-  font-size: 1.5rem;
-  font-weight: 600;
+  color: #16233D;
+  font-size: 1.15rem;
+  font-weight: 700;
   margin: 0;
 `;
 
 const BackButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  color: #16233D;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  transition: all 0.15s ease;
 
   &:hover {
-    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
-    transform: translateY(-1px);
+    border-color: #7c3aed;
+    background: #7c3aed;
+    color: white;
   }
 `;
 
 const DownloadButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  color: #1B8A5A;
+  border: 1px solid #1B8A5A;
+  border-radius: 6px;
+  font-size: 0.8rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 
   &:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    transform: translateY(-1px);
+    background: #1B8A5A;
+    color: white;
   }
 `;
 
 const ToggleButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  background: ${props => props.active 
-    ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' 
-    : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
-  };
-  color: white;
-  border: none;
-  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  background: ${props => props.active ? '#1D4ED8' : 'transparent'};
+  color: ${props => props.active ? 'white' : '#1D4ED8'};
+  border: 1px solid #1D4ED8;
+  border-radius: 999px;
+  font-size: 0.8rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 
   &:hover {
-    background: ${props => props.active 
-      ? 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)' 
-      : 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)'
-    };
-    transform: translateY(-1px);
+    background: #1D4ED8;
+    color: white;
   }
 `;
 
 const TableContainer = styled.div`
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   overflow: auto;
   max-height: 80vh;
   max-width: 100%;
@@ -124,11 +128,11 @@ const Table = styled.table`
   width: 100%;
   min-width: 1200px; /* Ensure table has minimum width for all columns */
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 `;
 
 const TableHeader = styled.thead`
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  background: #1E3A8A;
   position: sticky;
   top: 0;
   left: 0;
@@ -136,13 +140,14 @@ const TableHeader = styled.thead`
 `;
 
 const TableHeaderCell = styled.th`
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
   text-align: left;
   font-weight: 600;
-  color: #374151;
-  border-bottom: 2px solid #d1d5db;
+  color: white;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #ffffff;
   white-space: nowrap;
-  background: ${props => props.isFirstColumn ? 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' : 'transparent'};
+  background: ${props => props.isFirstColumn ? '#1E3A8A' : 'transparent'};
   position: ${props => props.isFirstColumn ? 'sticky' : 'static'};
   left: ${props => props.isFirstColumn ? '0' : 'auto'};
   z-index: ${props => props.isFirstColumn ? '11' : 'auto'};
@@ -162,7 +167,7 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid #e5e7eb;
   color: #374151;
   background: ${props => props.isFirstColumn ? '#ffffff' : 'transparent'};
@@ -181,7 +186,7 @@ const GrandTotalRow = styled.tr`
 `;
 
 const GrandTotalCell = styled.td`
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid #e5e7eb;
   color: #000000;
   background: #e2e8f0;
@@ -289,7 +294,7 @@ const ClearButton = styled.button`
 `;
 
 const ColoredTableCell = styled.td`
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid #e5e7eb;
   text-align: center;
   font-weight: 500;
@@ -351,6 +356,7 @@ const LegendText = styled.span`
 `;
 
 const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateFormatted, onBack }) => {
+  const { acsatCycle } = useCSATContext();
   const [uploadedData, setUploadedData] = useState(null);
   const [secondSheetData, setSecondSheetData] = useState(null);
   const [groupByBU, setGroupByBU] = useState(true);
@@ -1327,8 +1333,14 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
       });
 
       // Convert to array and sort
+      const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
       let result = Object.values(groupedData).sort((a, b) => {
         if (groupByBU) {
+          const aIndex = BU_ORDER.findIndex(bu => bu.toLowerCase() === (a.businessUnit || '').toLowerCase());
+          const bIndex = BU_ORDER.findIndex(bu => bu.toLowerCase() === (b.businessUnit || '').toLowerCase());
+          const aOrder = aIndex === -1 ? BU_ORDER.length : aIndex;
+          const bOrder = bIndex === -1 ? BU_ORDER.length : bIndex;
+          if (aOrder !== bOrder) return aOrder - bOrder;
           return a.businessUnit.localeCompare(b.businessUnit);
         } else {
           return a.customerName.localeCompare(b.customerName);
@@ -1383,7 +1395,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
   // Download Excel function
   const downloadExcel = async () => {
     if (!processedData?.data || processedData.data.length === 0) {
-      alert('No data available to download');
+      showAcsatAlert('No data available to download');
       return;
     }
 
@@ -1605,7 +1617,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
 
     } catch (error) {
       console.error('Error downloading Excel:', error);
-      alert('Error downloading Excel file');
+      showAcsatAlert('Error downloading Excel file');
     }
   };
 
@@ -1613,7 +1625,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
     return (
       <DashboardContainer>
         <Header>
-          <Title>📊 ACSAT - Org level/BU wise percentage of Satisfied Customers (Each Perspective)</Title>
+          <Title><BarChart3 size={16} style={{ marginRight: '0.4rem' }} /> ACSAT - Org level/BU wise percentage of Satisfied Customers (Each Perspective)</Title>
           <BackButton onClick={onBack}>
             Back
           </BackButton>
@@ -1629,7 +1641,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
     return (
       <DashboardContainer>
         <Header>
-          <Title>📊 ACSAT - Org level/BU wise percentage of Satisfied Customers (Each Perspective)</Title>
+          <Title><BarChart3 size={16} style={{ marginRight: '0.4rem' }} /> ACSAT - Org level/BU wise percentage of Satisfied Customers (Each Perspective)</Title>
           <BackButton onClick={onBack}>
             Back
           </BackButton>
@@ -1645,7 +1657,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
     return (
       <DashboardContainer>
         <Header>
-          <Title>📊 ACSAT - Org level/BU wise percentage of Satisfied Customers (Each Perspective)</Title>
+          <Title><BarChart3 size={16} style={{ marginRight: '0.4rem' }} /> ACSAT - Org level/BU wise percentage of Satisfied Customers (Each Perspective)</Title>
           <BackButton onClick={onBack}>
             Back
           </BackButton>
@@ -1675,15 +1687,15 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
     <DashboardContainer>
       <Header>
         <div>
-          <Title>📊 ACSAT - Org level/BU wise percentage of Satisfied Customers (Each Perspective)</Title>
-          {acsatCycleStartDateFormatted && (
-            <div style={{ 
-              marginTop: '0.5rem', 
-              fontSize: '0.875rem', 
+          <Title><BarChart3 size={16} style={{ marginRight: '0.4rem' }} /> ACSAT - Org level/BU wise percentage of Satisfied Customers (Each Perspective)</Title>
+          {acsatCycle && (
+            <div style={{
+              marginTop: '0.5rem',
+              fontSize: '0.875rem',
               color: '#6b7280',
               fontWeight: '500'
             }}>
-              📅 CSAT Cycle Start Date: {acsatCycleStartDateFormatted}
+              <Calendar size={14} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} /> Cycle: {acsatCycle}
             </div>
           )}
         </div>
@@ -1692,7 +1704,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
             active={groupByBU}
             onClick={() => setGroupByBU(!groupByBU)}
           >
-            {groupByBU ? '👥 Show by Customer' : '🏢 Show by BU Only'}
+            {groupByBU ? <><Users size={16} style={{ marginRight: '0.4rem' }} /> Show by Customer</> : <><Building2 size={16} style={{ marginRight: '0.4rem' }} /> Show by BU Only</>}
           </ToggleButton>
           <DownloadButton onClick={downloadExcel}>
             <Download size={16} />
@@ -1706,7 +1718,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
 
       {uploadedData && uploadedData.length > 0 && (
         <SuccessMessage>
-          ✅ Data loaded successfully! Found {uploadedData.length} records from Excel file.
+          <CheckCircle2 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'text-bottom' }} /> Data loaded successfully! Found {uploadedData.length} records from Excel file.
         </SuccessMessage>
       )}
 
@@ -1714,7 +1726,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
       {!groupByBU && (
         <SearchContainer>
           <SearchLabel htmlFor="customer-search">
-            🔍 Search Customer:
+            <Search size={14} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} /> Search Customer:
           </SearchLabel>
           <SearchInput
             id="customer-search"

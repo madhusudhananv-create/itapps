@@ -1,0 +1,18 @@
+<div class="toast-stack" role="status" aria-live="polite">
+  <div
+    *ngFor="let toast of toasts"
+    class="toast toast-{{ toast.kind }}"
+  >
+    <span class="toast-icon">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+        <path [attr.d]="iconPath(toast.kind)" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
+    <div class="toast-body">
+      <div class="toast-title">{{ toast.title }}</div>
+      <div class="toast-detail" *ngIf="toast.detail">{{ toast.detail }}</div>
+    </div>
+    <button type="button" class="toast-close" (click)="dismiss(toast.id)" aria-label="Dismiss notification">&times;</button>
+    <div class="toast-timer" [style.animation-duration.ms]="toast.duration"></div>
+  </div>
+</div>

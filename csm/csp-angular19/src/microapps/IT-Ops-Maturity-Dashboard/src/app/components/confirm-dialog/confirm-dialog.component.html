@@ -1,0 +1,29 @@
+<div class="dialog-backdrop" *ngIf="request" (click)="request.kind === 'confirm' ? confirm(false) : cancelPrompt()">
+  <div class="dialog" (click)="$event.stopPropagation()" role="alertdialog" aria-modal="true">
+    <h3>{{ request.title }}</h3>
+    <p class="dialog-message">{{ request.message }}</p>
+
+    <ng-container *ngIf="request.kind === 'prompt'">
+      <input
+        type="text"
+        class="dialog-input"
+        [(ngModel)]="request.value"
+        [placeholder]="request.placeholder || ''"
+        (keydown.enter)="submitPrompt()"
+        (keydown.escape)="cancelPrompt()"
+        autofocus
+      >
+    </ng-container>
+
+    <div class="dialog-actions">
+      <ng-container *ngIf="request.kind === 'confirm'">
+        <button type="button" class="dialog-btn dialog-btn-secondary" (click)="confirm(false)">{{ request.cancelText || 'Cancel' }}</button>
+        <button type="button" class="dialog-btn dialog-btn-primary" [class.dialog-btn-danger]="request.tone === 'danger'" (click)="confirm(true)">{{ request.confirmText || 'Confirm' }}</button>
+      </ng-container>
+      <ng-container *ngIf="request.kind === 'prompt'">
+        <button type="button" class="dialog-btn dialog-btn-secondary" (click)="cancelPrompt()">{{ request.cancelText || 'Cancel' }}</button>
+        <button type="button" class="dialog-btn dialog-btn-primary" [class.dialog-btn-danger]="request.tone === 'danger'" (click)="submitPrompt()">{{ request.confirmText || 'OK' }}</button>
+      </ng-container>
+    </div>
+  </div>
+</div>
