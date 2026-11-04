@@ -677,6 +677,31 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Content(HttpStatusCode.Forbidden, ITOPS_ADMIN_FORBIDDEN);
         }
 
+        // VAPT-flagged (Improper Input Validation): free-text admin fields (cycle label,
+        // domain/category/parameter name) were stored unsanitized and reflected verbatim
+        // into the Dashboard/Reports grids and into email templates (ToEmailValues does a
+        // raw string Replace, no HTML encoding). Rejecting markup at the handful of write
+        // paths is simpler and more reliable than trying to HTML-encode every later read site.
+        // Matches an actual tag ("<script>", "</div>", "<img onerror=...>"), not a bare
+        // comparison operator ("CPU usage > 80%", "latency < 5ms" must stay allowed).
+        private static readonly System.Text.RegularExpressions.Regex ITOpsMarkupPattern =
+            new System.Text.RegularExpressions.Regex(@"<\s*/?\s*[a-zA-Z][^>]*>", System.Text.RegularExpressions.RegexOptions.Compiled);
+        // VAPT-flagged (encoding bypass): the raw "<"/">" check alone missed a payload
+        // pre-encoded as "%3Cscript%3E...%3C%2Fscript%3E" or "&lt;script&gt;" - stored as
+        // literal text with no raw angle bracket in it, then rendered as a live tag wherever
+        // a later consumer URL- or HTML-decodes it for display. Decode both common encodings
+        // before matching so the check sees what the browser will eventually render.
+        private static string ITOpsDecodeForMarkupCheck(string value)
+        {
+            var decoded = value;
+            try { decoded = Uri.UnescapeDataString(decoded); } catch { /* not URL-encoded; keep as-is */ }
+            decoded = System.Net.WebUtility.HtmlDecode(decoded);
+            return decoded;
+        }
+        private static bool ITOpsContainsMarkup(string value) =>
+            !string.IsNullOrEmpty(value) &&
+            (ITOpsMarkupPattern.IsMatch(value) || ITOpsMarkupPattern.IsMatch(ITOpsDecodeForMarkupCheck(value)));
+
         /// <summary>Gate for a mutation owned by one specific role (superuser always allowed).</summary>
         private IHttpActionResult DenyIfNotITOpsRole(string roleCode, string what)
         {
@@ -1635,6 +1660,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Content(HttpStatusCode.Conflict, "The end date must be later than the start date.");
 
             var label = request.CycleLabel.Trim();
+            // VAPT-flagged: a cycle label containing markup (e.g. "<script>alert(1)</script>")
+            // was stored as-is and reflected verbatim into the Dashboard/Reports grids and
+            // into plain-text-substituted email templates (ToEmailValues/GetEmailContent do a
+            // raw string Replace with no HTML encoding). Reject markup at the one write path
+            // instead, rather than trying to encode it correctly at every later read site.
+            if (ITOpsContainsMarkup(label))
+                return Content(HttpStatusCode.Conflict, "Cycle label cannot contain HTML or script tags.");
 
             // The DB carries the real uniqueness guarantee (unique index on
             // CYCLE_LABEL); this pre-check just turns the common case into a
@@ -1751,6 +1783,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Content(HttpStatusCode.Conflict, "A domain name is required.");
 
             var name = request.Name.Trim();
+            if (ITOpsContainsMarkup(name))
+                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
 
             // CODE is the stable slug the Angular route uses (/assessment/:domainCode),
             // so derive one from the name when the caller doesn't supply it.
@@ -1813,6 +1847,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Content(HttpStatusCode.Conflict, "A domain name is required.");
 
             var name = request.Name.Trim();
+            if (ITOpsContainsMarkup(name))
+                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
 
             var domain = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == request.DomainId && d.ISACTIVE);
             if (domain == null) return NotFound();
@@ -3887,6 +3923,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (domain == null) return NotFound();
 
             var name = request.Name.Trim();
+            if (ITOpsContainsMarkup(name))
+                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
             var today = DateTime.Today;
 
             // A live row with the same name IS this lineage's current version -
@@ -3944,6 +3982,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var empId = GetHeaderDetails_String("empId");
             var today = DateTime.Today;
             var newName = string.IsNullOrWhiteSpace(request.Name) ? null : request.Name.Trim();
+            if (ITOpsContainsMarkup(newName))
+                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
 
             if (newName != null &&
                 !string.Equals(newName, (category.NAME ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase))
@@ -4109,6 +4149,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Content(HttpStatusCode.Conflict, "That category version is retired - add the parameter to the current version instead.");
 
             var name = request.Name.Trim();
+            if (ITOpsContainsMarkup(name))
+                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
             var clash = CSPdb.ITOPS_PARAMETER.GetAll()
                 .Where(p => p.CATEGORY_ID == request.CategoryId)
                 .ToList()
@@ -4273,6 +4315,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var empId = GetHeaderDetails_String("empId");
             var today = DateTime.Today;
             var newName = string.IsNullOrWhiteSpace(request.Name) ? null : request.Name.Trim();
+            if (ITOpsContainsMarkup(newName))
+                return Content(HttpStatusCode.Conflict, "Name cannot contain HTML or script tags.");
 
             if (newName != null &&
                 !string.Equals(newName, (parameter.NAME ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase))

@@ -21,8 +21,13 @@ function normalizeRow(row) {
   const out = { ...row };
   Object.keys(row).forEach(key => {
     const upperKey = key.toUpperCase();
-    if (upperKey !== key && !Object.prototype.hasOwnProperty.call(out, upperKey)) {
-      out[upperKey] = row[key];
+    if (upperKey !== key) {
+      if (!Object.prototype.hasOwnProperty.call(out, upperKey)) {
+        out[upperKey] = row[key];
+      }
+      // Drop the mangled camelCased key so nothing downstream (e.g. a table that
+      // derives its column headers from Object.keys) ever displays it verbatim.
+      delete out[key];
     }
   });
   return out;

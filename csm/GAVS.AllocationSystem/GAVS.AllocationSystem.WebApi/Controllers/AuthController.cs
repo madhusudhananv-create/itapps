@@ -910,6 +910,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             return isValid;
         }
+        // VAPT-flagged (Improper Session Invalidation and Token Reuse): this used to reissue
+        // the SAME AUTHKEY on every re-authentication as long as the old one hadn't yet
+        // expired, instead of rotating to a fresh session identifier - so a token captured
+        // once (e.g. via Burp) stayed valid across a user's next several logins too, not
+        // just until its own 1-hour window. Every call here is a real login/re-auth path
+        // (see the 4 call sites above), so it's always safe - and now always required - to
+        // issue a brand-new AUTHKEY, never reuse the existing row's value.
         private string getAuthKey(string email)
         {
             string AuthKey = Guid.NewGuid().ToString();
