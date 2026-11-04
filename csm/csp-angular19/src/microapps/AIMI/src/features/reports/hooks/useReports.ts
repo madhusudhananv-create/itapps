@@ -1,10 +1,15 @@
 import { useState, useCallback, useMemo } from 'react';
-import { reportService } from '../services/reportService';
+import { activityService } from '@activities/services/activityService';
+import { projectInfoService } from '@shared/projects/services/projectInfoService';
+import { practiceInfoService } from '@shared/practices/services/practiceInfoService';
 import { generateAndDownloadMultiReport } from '../utils/csvExportUtils';
-import type { EnrichedActivityWithProjectInfo } from '../utils/activityEnrichmentUtils';
+import {
+  enrichActivitiesWithProjectInfo,
+  type EnrichedActivityWithProjectInfo,
+} from '../utils/activityEnrichmentUtils';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
 import { useAllocatedAccounts } from '@shared/projects/hooks/useAllocatedAccounts';
-import { useQuestionnaireLookup } from '@shared/lookups/useQuestionnaireLookup';
+import { getPracticesFromQuestionnaire } from '@shared/utils/questionnaireUtils';
 
 // Type definitions for the reports form data
 type ReportType = 'business-units' | 'accounts' | 'projects';
@@ -34,7 +39,6 @@ export const useReports = () => {
   const { projectMapping, getBusinessUnits, getAccounts, getProjects } =
     useProjectHierarchy();
   const { allocatedAccountNames } = useAllocatedAccounts();
-  const { getPracticesFromQuestionnaire } = useQuestionnaireLookup();
 
   const questionnairePractices = getPracticesFromQuestionnaire();
 
@@ -197,64 +201,55 @@ export const useReports = () => {
     []
   );
 
-  // Practice only narrows a report, it cannot start one, so a Business Unit, Account or
-  // Project is needed before Generate Reports is enabled.
-  const hasPrimaryFilter =
-    formData.businessUnits.length > 0 ||
-    formData.accounts.length > 0 ||
-    formData.projects.length > 0;
-
-  const isGenerateEnabled = hasPrimaryFilter;
-
-  // Practice chosen on its own: tell the user what is missing instead of leaving the button
-  // disabled without a reason
-  const isPracticeOnly = !hasPrimaryFilter && formData.practices.length > 0;
+  // Check if generate button should be enabled
+  const isGenerateEnabled = useMemo(() => {
+    return (
+      formData.businessUnits.length > 0 ||
+      formData.accounts.length > 0 ||
+      formData.projects.length > 0 ||
+      formData.practices.length > 0
+    );
+  }, [formData]);
 
   // Handle generate reports
   const handleGenerateReports = useCallback(async () => {
     setIsGenerating(true);
 
     try {
+      let activities;
       let reportType: 'business-units' | 'accounts' | 'projects';
       let selectedItems: string[];
-      const practices =
-        formData.practices.length > 0 ? formData.practices : undefined;
 
-      // Determine which filter dimension to report on, same priority as
-      // before: Projects > Accounts > Business Units, Practice always narrows
-      // further - usp_AIMI_GetReportData.sql applies that same rule server-side.
+      // Determine which API to call based on selected filters
       if (formData.projects.length > 0) {
+        // If projects are selected, get activities by projects and practices
+        activities = await activityService.getActivitiesByProjects(
+          formData.projects,
+          formData.practices.length > 0 ? formData.practices : undefined
+        );
         reportType = 'projects';
         selectedItems = formData.projects;
       } else if (formData.accounts.length > 0) {
+        // If accounts are selected, get activities by accounts and practices
+        activities = await activityService.getActivitiesByAccounts(
+          formData.accounts,
+          formData.practices.length > 0 ? formData.practices : undefined
+        );
         reportType = 'accounts';
         selectedItems = formData.accounts;
       } else if (formData.businessUnits.length > 0) {
+        // If only business units are selected, get activities by business units and practices
+        activities = await activityService.getActivitiesByBusinessUnits(
+          formData.businessUnits,
+          formData.practices.length > 0 ? formData.practices : undefined
+        );
         reportType = 'business-units';
         selectedItems = [...formData.businessUnits, 'New Growth'];
       } else {
-        throw new Error(
-          'Select a Business Unit, Account or Project to generate a report. Practice alone is not enough.'
-        );
+        throw new Error('Please select at least one filter option');
       }
 
-      // One API call: the SP already joins activities with their project's AI
-      // Adoption Metrics server-side, replacing the old fetch-activities +
-      // fetch-every-ProjectInfo + fetch-every-PracticeInfo + client-side-join flow.
-      const enrichedActivities = await reportService.getReportData(
-        {
-          businessUnits:
-            formData.businessUnits.length > 0
-              ? formData.businessUnits
-              : undefined,
-          accounts: formData.accounts.length > 0 ? formData.accounts : undefined,
-          projects: formData.projects.length > 0 ? formData.projects : undefined,
-          practices,
-        },
-        projectMapping
-      );
-
-      if (enrichedActivities.length === 0) {
+      if (activities.length === 0) {
         setSnackbar({
           open: true,
           message: 'No activities found for the selected filters',
@@ -262,6 +257,20 @@ export const useReports = () => {
         });
         return;
       }
+
+      // Fetch additional project and practice information
+      const [projectInfoList, practiceInfoList] = await Promise.all([
+        projectInfoService.getAllProjectInfo(),
+        practiceInfoService.getAllPracticeInfo(),
+      ]);
+
+      // Enrich activities with all project and practice information in a single pass
+      const enrichedActivities = enrichActivitiesWithProjectInfo(
+        activities,
+        projectMapping,
+        projectInfoList,
+        practiceInfoList
+      );
 
       // Sort activities based on applied filter
       const sortedActivities = sortActivitiesByFilter(
@@ -273,14 +282,14 @@ export const useReports = () => {
 
       setSnackbar({
         open: true,
-        message: `Report generated successfully! ${enrichedActivities.length} activities exported.`,
+        message: `Report generated successfully! ${activities.length} activities exported.`,
         severity: 'success',
       });
 
       return {
         reportType,
         selectedItems,
-        activitiesCount: enrichedActivities.length,
+        activitiesCount: activities.length,
       } as ReportGenerationResult;
     } catch (error) {
       console.error('Error generating report:', error);
@@ -290,8 +299,7 @@ export const useReports = () => {
           error instanceof Error ? error.message : 'Failed to generate report',
         severity: 'error',
       });
-      // The snackbar above already tells the user; re-throwing would only surface as an
-      // unhandled promise rejection because the button's click handler doesn't catch it.
+      throw error;
     } finally {
       setIsGenerating(false);
     }
@@ -322,7 +330,6 @@ export const useReports = () => {
     // UI state
     isGenerating,
     isGenerateEnabled,
-    isPracticeOnly,
     snackbar,
   };
 };

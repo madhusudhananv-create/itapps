@@ -1,14 +1,19 @@
-import { aimiApiClient } from '@shared/services/aimiApiClient';
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  getDocs,
+  query,
+  where,
+  serverTimestamp,
+} from 'firebase/firestore';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import { db } from '@shared/config/firebaseConfig';
 
-// Was Firestore-backed (collection 'practiceInfo'); now calls the SQL-backed
-// AimiController endpoints (usp_AIMI_GetPracticeInfo / UpsertAimiPracticeInfo).
+// Collection name
+const PRACTICE_INFO_COLLECTION = 'practiceInfo';
 
-const ENDPOINTS = {
-  GET_PRACTICE_INFO: '/api/AllSys/GetAimiPracticeInfo',
-  UPSERT_PRACTICE_INFO: '/api/AllSys/UpsertAimiPracticeInfo',
-};
-
-// Interface for practice info
+// Interface for practice info document
 export interface PracticeInfo {
   projectId: string;
   practice: string;
@@ -17,24 +22,51 @@ export interface PracticeInfo {
   updatedAt?: Date;
 }
 
-// Row shape returned by GetAimiPracticeInfo - mirrors AimiPracticeInfoSpRow in
-// the C# API, UPPER_SNAKE field names matching the SQL columns.
-interface ApiPracticeInfoRow {
-  ID: number;
-  PROJECT_ID: string;
-  PRACTICE: string;
-  CURRENT_PHASE: string | null;
-  CREATED_DATE: string | null;
-  UPDATED_DATE: string | null;
+// Interface for Firestore documents
+interface FirestorePracticeInfo
+  extends Omit<PracticeInfo, 'createdAt' | 'updatedAt'> {
+  createdAt: unknown; // Firestore timestamp
+  updatedAt: unknown; // Firestore timestamp
 }
 
-const fromApiPracticeInfo = (row: ApiPracticeInfoRow): PracticeInfo => ({
-  projectId: row.PROJECT_ID,
-  practice: row.PRACTICE,
-  currentPhase: row.CURRENT_PHASE || '',
-  createdAt: row.CREATED_DATE ? new Date(row.CREATED_DATE) : new Date(),
-  updatedAt: row.UPDATED_DATE ? new Date(row.UPDATED_DATE) : new Date(),
-});
+/**
+ * Convert Firestore document to PracticeInfo
+ */
+const convertFirestoreToPracticeInfo = (
+  doc: QueryDocumentSnapshot<DocumentData>
+): PracticeInfo => {
+  const data = doc.data() as FirestorePracticeInfo;
+  return {
+    projectId: data.projectId,
+    practice: data.practice,
+    currentPhase: data.currentPhase,
+    createdAt:
+      data.createdAt &&
+      typeof data.createdAt === 'object' &&
+      'toDate' in data.createdAt
+        ? (data.createdAt as { toDate(): Date }).toDate()
+        : new Date(),
+    updatedAt:
+      data.updatedAt &&
+      typeof data.updatedAt === 'object' &&
+      'toDate' in data.updatedAt
+        ? (data.updatedAt as { toDate(): Date }).toDate()
+        : new Date(),
+  };
+};
+
+/**
+ * Convert PracticeInfo to Firestore document
+ */
+const convertPracticeInfoToFirestore = (
+  practiceInfo: Omit<PracticeInfo, 'createdAt' | 'updatedAt'>
+): Omit<FirestorePracticeInfo, 'createdAt' | 'updatedAt'> => {
+  return {
+    projectId: practiceInfo.projectId,
+    practice: practiceInfo.practice,
+    currentPhase: practiceInfo.currentPhase,
+  };
+};
 
 /**
  * Save or update practice info (upsert operation)
@@ -43,19 +75,49 @@ const saveOrUpdatePracticeInfo = async (
   practiceInfo: Omit<PracticeInfo, 'createdAt' | 'updatedAt'>
 ): Promise<PracticeInfo> => {
   try {
-    await aimiApiClient.post(ENDPOINTS.UPSERT_PRACTICE_INFO, {
-      PROJECT_ID: practiceInfo.projectId,
-      PRACTICE: practiceInfo.practice,
-      CURRENT_PHASE: practiceInfo.currentPhase,
-    });
+    // Check if info already exists
+    const q = query(
+      collection(db, PRACTICE_INFO_COLLECTION),
+      where('projectId', '==', practiceInfo.projectId),
+      where('practice', '==', practiceInfo.practice)
+    );
 
-    return {
-      ...practiceInfo,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      // Create new document
+      const infoData = convertPracticeInfoToFirestore(practiceInfo);
+      await addDoc(collection(db, PRACTICE_INFO_COLLECTION), {
+        ...infoData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      return {
+        ...practiceInfo,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    } else {
+      // Update existing document
+      const docRef = querySnapshot.docs[0].ref;
+      await updateDoc(docRef, {
+        currentPhase: practiceInfo.currentPhase,
+        updatedAt: serverTimestamp(),
+      });
+
+      return {
+        ...practiceInfo,
+        createdAt:
+          querySnapshot.docs[0].data().createdAt?.toDate() ?? new Date(),
+        updatedAt: new Date(),
+      };
+    }
   } catch (error) {
-    console.error('Error saving or updating practice info:', error);
+    console.error(
+      'Error saving or updating practice info in Firestore:',
+      error
+    );
     throw error;
   }
 };
@@ -68,33 +130,42 @@ const getPracticeInfo = async (
   practice: string
 ): Promise<PracticeInfo | null> => {
   try {
-    const rows = await aimiApiClient.get<ApiPracticeInfoRow[]>(
-      ENDPOINTS.GET_PRACTICE_INFO,
-      { projectId, practice }
+    const q = query(
+      collection(db, PRACTICE_INFO_COLLECTION),
+      where('projectId', '==', projectId),
+      where('practice', '==', practice)
     );
 
-    if (rows.length === 0) {
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
       return null;
     }
 
-    return fromApiPracticeInfo(rows[0]);
+    return convertFirestoreToPracticeInfo(querySnapshot.docs[0]);
   } catch (error) {
-    console.error('Error fetching practice info:', error);
+    console.error('Error fetching practice info from Firestore:', error);
     throw error;
   }
 };
 
 /**
- * Get all practice info
+ * Get all practice info from Firestore
  */
 const getAllPracticeInfo = async (): Promise<PracticeInfo[]> => {
   try {
-    const rows = await aimiApiClient.get<ApiPracticeInfoRow[]>(
-      ENDPOINTS.GET_PRACTICE_INFO
+    const querySnapshot = await getDocs(
+      collection(db, PRACTICE_INFO_COLLECTION)
     );
-    return rows.map(fromApiPracticeInfo);
+    const practiceInfoList: PracticeInfo[] = [];
+
+    querySnapshot.forEach((doc) => {
+      practiceInfoList.push(convertFirestoreToPracticeInfo(doc));
+    });
+
+    return practiceInfoList;
   } catch (error) {
-    console.error('Error fetching all practice info:', error);
+    console.error('Error fetching all practice info from Firestore:', error);
     throw error;
   }
 };

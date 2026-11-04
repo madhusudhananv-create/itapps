@@ -11,11 +11,10 @@ import {
   Paper,
   Chip,
 } from '@mui/material';
-import { useAimiOptionLists } from '@shared/lookups/useAimiOptionLists';
+import { AI_ADOPTION_SCORES } from '@activities/types/activityTypes';
 import { getScoreColor } from '@shared/utils/scoreColorUtils';
 
 export const AIAdoptionGuidelines: React.FC = () => {
-  const { aiAdoptionScores: AI_ADOPTION_SCORES } = useAimiOptionLists();
   return (
     <Box sx={{ maxWidth: 800, p: 2 }}>
       {/* Header */}

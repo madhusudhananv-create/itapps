@@ -1,4 +1,7 @@
 import type { ActivityWithProjectInfo } from '@activities/types/activityTypes';
+import type { ProjectInfo } from '@shared/projects/services/projectInfoService';
+import type { PracticeInfo } from '@shared/practices/services/practiceInfoService';
+import type { ProjectMapping } from '@shared/projects/types/projectMappingTypes';
 
 // Interface for fully enriched activity data
 export interface EnrichedActivityWithProjectInfo
