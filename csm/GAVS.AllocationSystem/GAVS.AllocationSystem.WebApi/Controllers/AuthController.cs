@@ -851,8 +851,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             email = string.Empty;
             empid = string.Empty;
             DisplayName = string.Empty;
-           
-            if (strUsername.StartsWith("xx"))
+
+            // VAPT-flagged (Authentication Bypass): a username prefixed "xx" (e.g.
+            // "xxjaishree.v@neurealm.com") skipped AD/password validation entirely and
+            // logged in as that employee by email lookup alone. Gated on the same IsProd
+            // AppSetting (Web.Release.config sets it true) every other prod/non-prod split
+            // in this codebase already uses (see GlobalConfig.cs's CORS gate) - off in UAT
+            // and PROD, so this only works in a true local/dev deploy.
+            bool isProdForXxLogin;
+            bool.TryParse(ConfigurationManager.AppSettings["IsProd"], out isProdForXxLogin);
+            if (!isProdForXxLogin && strUsername.StartsWith("xx"))
             {
                 var emp = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMAIL_ID == strUsername.Replace("xx", "") && !x.DOR.HasValue);
                 if (emp != null)
@@ -908,19 +916,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             Token query = Cldb.Token.GetAll().FirstOrDefault(c => c.EMAILID == email);
             if (query != null)
             {
-                DateTime ExpiresOn = query.EXPIRESON; //update
-                if (ExpiresOn >= DateTime.Now)
-                {
-                    AuthKey = query.AUTHKEY;
-                }
-                else
-                {
-                    query.ISSUEDON = DateTime.Now;
-                    query.AUTHKEY = AuthKey;
-                    query.EXPIRESON = DateTime.Now.AddHours(1);
-                    Cldb.Token.Update(query);
-                    Cldb.Commit(CanCommit);
-                }
+                //DateTime ExpiresOn = query.EXPIRESON; //update
+                //if (ExpiresOn >= DateTime.Now)
+                //{
+                //    AuthKey = query.AUTHKEY;
+                //}
+                //else
+                //{
+                //    query.ISSUEDON = DateTime.Now;
+                //    query.AUTHKEY = AuthKey;
+                //    query.EXPIRESON = DateTime.Now.AddHours(1);
+                //    Cldb.Token.Update(query);
+                //    Cldb.Commit(CanCommit);
+                //}
+                query.ISSUEDON = DateTime.Now;
+                query.AUTHKEY = AuthKey;
+                query.EXPIRESON = DateTime.Now.AddHours(1);
+                Cldb.Token.Update(query);
+                Cldb.Commit(CanCommit);
             }
             else
             {
