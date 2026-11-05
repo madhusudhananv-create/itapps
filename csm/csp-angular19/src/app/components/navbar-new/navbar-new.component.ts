@@ -71,6 +71,8 @@ export class NavbarNewComponent implements OnInit {
   
   // User info signals
   readonly displayname = signal<string>('');
+  readonly roleTitle = signal<string>('');
+  readonly showRoleTip = signal<boolean>(false);
   readonly empid = signal<string>('');
   readonly isLoggedIn = signal<boolean>(false);
   readonly isGAVS = signal<boolean>(false);
@@ -144,6 +146,17 @@ constructor(
     this.isEditable.set(this.checkIsEditable(session));
     this.isHR.set(this.checkIsHR(session));
 
+    const roleId = session.role ? parseInt(session.role, 10) : 0;
+    this.roleTitle.set('');
+    if (roleId) {
+      this.appsService.getProjectRoles()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (titles) => this.roleTitle.set(titles.find(t => t.id === roleId)?.title ?? ''),
+          error: () => this.roleTitle.set(''),
+        });
+    }
+
     if (session.empid) {
       this.appsService.getITOpsHasAccess(session.empid)
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -189,6 +202,7 @@ constructor(
    */
   private resetUserState(): void {
     this.displayname.set('');
+    this.roleTitle.set('');
     this.empid.set('');
     this.isLoggedIn.set(false);
     this.isGAVS.set(false);

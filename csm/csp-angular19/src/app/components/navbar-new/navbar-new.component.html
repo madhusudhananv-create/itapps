@@ -19,6 +19,15 @@
       <div class="user-info">
         @if (isLoggedIn()) {
         <span class="username-text">{{ displayname() }}</span>
+        @if (roleTitle()) {
+        <span class="role-chip" tabindex="0" [attr.aria-label]="'Your Role in CSM Platform: ' + roleTitle()"
+          (mouseenter)="showRoleTip.set(true)" (mouseleave)="showRoleTip.set(false)"
+          (focus)="showRoleTip.set(true)" (blur)="showRoleTip.set(false)">{{ roleTitle() }}
+          @if (showRoleTip()) {
+          <span class="role-tip" role="tooltip">Your Role in CSM Platform:<br><strong>{{ roleTitle() }}</strong></span>
+          }
+        </span>
+        }
         }
         <i class="fa fa-user fa_fnt navbar-icon"></i>
       </div>
@@ -95,12 +104,12 @@
           </div>
         </mat-menu>
       </div>
-        <!-- FAQ Document Link -->
+      }
+      <!-- FAQ Document Link -->
       <a class="navbar-icon-wrapper" routerLink="/faq" matTooltip="FAQ Document"
         [matTooltipPosition]="'before'">
         <i class="fa fa-question-circle fa_fnt navbar-icon"></i>
       </a>
-      }
       @if (isEditable() || isHR() || isAllowed(33, 1)) {
       <div class="navbar-icon-wrapper" [matMenuTriggerFor]="menu" matTooltip="Settings" [matTooltipPosition]="'before'">
         <i class="fa fa-cog fa_fnt navbar-icon"></i>

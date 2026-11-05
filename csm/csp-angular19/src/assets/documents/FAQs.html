@@ -425,6 +425,501 @@
 
   .approver-item i { color: var(--accent); font-size: 15px; }
 
+  .faq-card.open .faq-body.faq-body-tall { max-height: 9000px; }
+
+  .access-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px;
+    align-items: stretch;
+    margin: 0.75rem 0 1rem;
+  }
+
+  .flow-box {
+    background: var(--surface-alt);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+  }
+
+  .flow-box i { font-size: 20px; color: var(--accent); }
+
+  .flow-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 6px 0 4px;
+  }
+
+  .flow-desc { font-size: 13px; color: #55524b; line-height: 1.55; }
+
+  .flow-list {
+    margin: 4px 0 6px 1.1rem;
+    font-size: 13px;
+    color: #55524b;
+    line-height: 1.55;
+  }
+
+  .flow-plus {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--accent-mid);
+  }
+
+  .subhead {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 1.5rem 0 0.6rem;
+  }
+
+  .level-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.75rem; }
+
+  .lv {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 50px;
+    white-space: nowrap;
+  }
+  .lv-full { background: #e3f1ea; color: #1f5a3e; }
+  .lv-edit { background: #e6edf8; color: #1a4a8c; }
+  .lv-view { background: #fdf0e0; color: #7a4f1a; }
+  .lv-none { background: #eceae6; color: #4a4740; }
+
+  .chip {
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 50px;
+    background: var(--surface-alt);
+    color: #33302a;
+    line-height: 1.4;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .chip-muted {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: #5f5c55;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .chip-muted i { font-size: 12px; color: #8a867e; }
+
+  .rx { margin-top: 0.5rem; }
+
+  .rx-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+
+  .rx-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: #3f3c36;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .rx-tab i { font-size: 13px; color: var(--accent-mid); flex-shrink: 0; }
+  .rx-tab:hover { border-color: var(--accent-mid); background: var(--accent-light); }
+  .rx-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .rx-tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .rx-tab[aria-selected="true"] i { color: #fff; }
+
+  .rx-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .rx-tab[aria-selected="true"] .rx-dot { box-shadow: 0 0 0 2px rgba(255,255,255,0.85); }
+  .dot-full { background: #2f8a5f; }
+  .dot-edit { background: #2d63b0; }
+  .dot-view { background: #c07a1e; }
+  .dot-min  { background: #8a867e; }
+
+  .rx-you {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 50px;
+    background: #e3f1ea;
+    color: #1f5a3e;
+  }
+
+  .rx-hero-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+  .rx-hero-body { min-width: 0; flex: 1; }
+
+  .rx-hero-scope {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    margin-top: 10px !important;
+    padding-top: 10px;
+    border-top: 1px solid rgba(78, 88, 130, 0.15);
+    font-size: 13px !important;
+  }
+  .rx-hero-scope i { color: var(--accent); font-size: 16px; margin-top: 2px; }
+
+  .rx-sec {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin: 18px 0 8px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .rx-sec span { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12px; color: #5f5c55; }
+
+  .rx-matrix-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .rx-matrix { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .rx-matrix th, .rx-matrix td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: center; }
+  .rx-matrix thead th {
+    background: var(--surface-alt);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #5f5c55;
+    font-weight: 600;
+  }
+  .rx-matrix thead th:first-child, .rx-matrix tbody th { text-align: left; }
+  .rx-matrix tbody th { font-weight: 500; color: var(--ink); white-space: nowrap; }
+  .rx-matrix tbody tr:last-child th, .rx-matrix tbody tr:last-child td { border-bottom: none; }
+  .rx-matrix tbody tr:hover { background: var(--accent-light); }
+
+  .rx-yes, .rx-no {
+    display: inline-flex;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .rx-yes { background: #e3f1ea; color: #1f5a3e; }
+  .rx-no { color: #8a867e; }
+
+  .loc-num.sm { display: inline-flex; width: 18px; height: 18px; font-size: 10px; margin-right: 8px; vertical-align: -3px; }
+
+  .rx-rows { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .rx-row {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 14px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rx-row:last-child { border-bottom: none; }
+  .rx-row-head { display: flex; align-items: flex-start; gap: 0; }
+  .rx-row-head .loc-num.sm { margin-top: 1px; flex-shrink: 0; }
+  .rx-row-title { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .rx-row-where { font-size: 11.5px; color: #5f5c55; line-height: 1.45; margin-top: 2px; }
+  .rx-row-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+  .rx-pane { min-width: 0; }
+
+  .rx-hero {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: var(--accent-light);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+  }
+
+  .rx-hero-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .rx-hero h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+
+  .rx-hero p { font-size: 13.5px; color: #4a4740; line-height: 1.6; margin-top: 4px; }
+
+  .rx-scope {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 10px 0 14px;
+    padding: 9px 12px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 10px;
+    font-size: 13px;
+    color: #4a4740;
+    line-height: 1.55;
+  }
+
+  .rx-scope i { color: var(--accent); font-size: 17px; flex-shrink: 0; }
+
+  .rx-mods {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 10px;
+  }
+
+  .rx-mod {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .rx-mod-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .rx-mod-head i {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    background: var(--surface-alt);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .rx-mod-head > span { display: flex; flex-direction: column; gap: 1px; }
+  .rx-where { font-size: 11.5px; font-weight: 400; color: #5f5c55; }
+
+  .rx-perms { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+
+  .rx-perm {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 0;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    color: #7a766e;
+    display: flex; align-items: center; justify-content: center; gap: 3px;
+  }
+
+  .rx-perm i { font-size: 12px; }
+  .rx-perm.on { background: #e3f1ea; border-color: #c3e0d0; color: #1f5a3e; }
+
+  .rx-mod-note { font-size: 12px; color: #5f5c55; line-height: 1.5; }
+  .rx-mod-note strong { color: #3f3c36; font-weight: 600; }
+
+  .rx-label {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5f5c55;
+    font-weight: 600;
+    margin-bottom: -4px;
+  }
+
+  .chip-menu {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .chip-menu i { font-size: 11px; color: var(--accent-mid); }
+
+  .rx-off { margin-top: 14px; }
+
+  .rx-off-title {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5f5c55;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex; gap: 6px; align-items: center;
+  }
+
+  .rx-footnote { font-size: 12.5px; color: #5f5c55; line-height: 1.6; margin-top: 12px; }
+
+  .loc-map {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-alt);
+    padding: 16px 14px 14px;
+    margin-bottom: 12px;
+  }
+
+  .mock-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 1px 3px rgba(78, 88, 130, 0.12);
+  }
+
+  .mock-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    margin-right: 4px;
+    border-radius: 50px;
+    background: rgba(78, 88, 130, 0.06);
+    border: 1px solid var(--border);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #4e5882;
+  }
+
+  .mock-role {
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 50px;
+    background: rgba(78, 88, 130, 0.12);
+    color: #3d4670;
+  }
+
+  .mock-ico {
+    position: relative;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    color: #6b6860;
+  }
+
+  .mock-ico.hl { color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 2px var(--accent); }
+
+  .pin {
+    position: absolute;
+    top: -9px; right: -9px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+
+  .mock-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin-top: 12px;
+  }
+
+  .mock-cap { font-size: 11px; font-weight: 600; color: #5f5c55; }
+
+  .mock-tabs-row {
+    position: relative;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .mock-tab {
+    font-size: 11.5px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    color: #4a4740;
+    white-space: nowrap;
+  }
+
+  .mock-tab.on { background: var(--accent); color: #fff; font-weight: 600; }
+
+  .loc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 10px;
+  }
+
+  .loc {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .loc-head { display: flex; align-items: center; gap: 10px; }
+
+  .loc-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .loc-title { display: flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+  .loc-title i { color: var(--accent); font-size: 17px; }
+
+  .loc-how { font-size: 12.5px; color: #55524b; line-height: 1.5; }
+
+  .loc-group-label {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5f5c55;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .loc-owner {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    font-size: 12px;
+    color: #55524b;
+    line-height: 1.5;
+    border-top: 1px dashed var(--border);
+    padding-top: 8px;
+    margin-top: auto;
+  }
+
+  .loc-owner i { color: var(--accent); font-size: 14px; margin-top: 1px; }
+
   .no-results {
     text-align: center;
     padding: 3rem 1rem;
@@ -442,6 +937,9 @@
     .main { padding: 1.5rem 1.25rem 3rem; }
     .faq-body-inner { padding-left: 1.25rem; }
     .role-grid { grid-template-columns: 1fr 1fr; }
+    .access-flow { grid-template-columns: 1fr; }
+    .flow-plus { transform: rotate(90deg); }
+    .rx-row { grid-template-columns: 1fr; gap: 8px; }
   }
 </style>
 </head>
@@ -476,6 +974,7 @@
     <button class="cat-btn" data-cat="capa">Findings Closure Process</button>
     <button class="cat-btn" data-cat="notifications">Findings Closure Notifications</button>
     <button class="cat-btn" data-cat="reports">Reports</button>
+    <button class="cat-btn" data-cat="roles">Roles &amp; Responsibilities</button>
   </div>
 
   <div id="faqContainer">
@@ -980,6 +1479,171 @@
       </div>
     </article>
 
+    <!-- ROLES & RESPONSIBILITIES -->
+    <p class="section-label" data-section="roles">Roles &amp; Responsibilities</p>
+
+    <article class="faq-card" data-cat="roles" data-keywords="my role my title what is my csm role csm title where find wrong role change title">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-purple"><i class="ti ti-id-badge-2" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">How do I know my CSM Role?</p>
+          <div class="faq-meta">
+            <span class="tag tag-process">Roles &amp; Responsibilities</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Your CSM Role is shown at the <strong>top-right of every page</strong> as a small tag <strong>next to your name</strong> — for example, <em>Your Name</em> <span class="chip">Project Manager</span>. Hover over the tag to see "Your Role in CSM Platform".</p>
+          <ul class="step-list">
+            <li class="step-item"><span class="step-num">1</span><span class="step-text">Note the role in the tag next to your name.</span></li>
+            <li class="step-item"><span class="step-num">2</span><span class="step-text">Open <strong>"What can my role see and do?"</strong> below. It opens on your own role automatically and shows your menus and permissions.</span></li>
+          </ul>
+          <div class="info-box"><p><strong>Role looks wrong?</strong> Email <strong><a href="mailto:csmplatformsupport@neurealm.com" style="color:var(--accent)">csmplatformsupport@neurealm.com</a></strong> with your Email ID, the role shown, and the role you expect. After the role is updated, log out and log back in to see the new menus.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="roles" data-keywords="new user getting started how access works D365 allocation sync project not visible where menus settings gear integrated apps who owns manages module">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-purple"><i class="ti ti-compass" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">I'm new to CSM — how does access work, and where are things on screen?</p>
+          <div class="faq-meta">
+            <span class="tag tag-process">Roles &amp; Responsibilities</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body faq-body-tall" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Two separate things decide what you see after you log in:</p>
+
+          <div class="access-flow">
+            <div class="flow-box">
+              <i class="ti ti-id-badge-2" aria-hidden="true"></i>
+              <p class="flow-title">Your CSM Role</p>
+              <p class="flow-desc">Shown top-right as a tag <strong>next to your name</strong>. Decides <strong>which menus</strong> you see and whether you can view, create, edit, or delete in them.</p>
+            </div>
+            <div class="flow-plus" aria-hidden="true"><i class="ti ti-plus"></i></div>
+            <div class="flow-box">
+              <i class="ti ti-refresh" aria-hidden="true"></i>
+              <p class="flow-title">Your project link (from D365)</p>
+              <p class="flow-desc">Synced automatically from D365. Decides <strong>which projects and customer accounts</strong> appear inside those menus. A project appears if you are either:</p>
+              <ul class="flow-list">
+                <li><strong>Allocated</strong> to the project, or</li>
+                <li>Assigned to the project as its <strong>PM, BU Head, CSM, or DP</strong>.</li>
+              </ul>
+              <p class="flow-desc">Added in D365 = appears in CSM; removed = disappears.</p>
+            </div>
+          </div>
+
+          <div class="info-box"><p><strong>Can't see a project?</strong> You are probably neither allocated to it nor assigned as its PM, BU Head, CSM, or DP in D365. That's a D365 data gap, not a CSM permission issue. Contact <strong><a href="mailto:WFM@neurealm.com" style="color:var(--accent)">WFM@neurealm.com</a></strong> first.</p></div>
+
+          <p class="subhead">Where things are on screen</p>
+          <p class="answer-text">The numbered pins match the panels below.</p>
+
+          <div class="loc-map" aria-label="Map of the CSM top bar and dashboard tabs">
+            <div class="mock-bar">
+              <span class="mock-user"><i class="ti ti-user" aria-hidden="true"></i>Your Name <span class="mock-role">Your Role</span></span>
+              <span class="mock-ico hl" title="Menu"><i class="ti ti-menu-2" aria-hidden="true"></i><span class="pin">1</span></span>
+              <span class="mock-ico" title="New Release"><i class="ti ti-bell" aria-hidden="true"></i></span>
+              <span class="mock-ico" title="User Manual"><i class="ti ti-book" aria-hidden="true"></i></span>
+              <span class="mock-ico hl" title="Integrated Apps"><i class="ti ti-grid-dots" aria-hidden="true"></i><span class="pin">3</span></span>
+              <span class="mock-ico" title="FAQ"><i class="ti ti-help-circle" aria-hidden="true"></i></span>
+              <span class="mock-ico hl" title="Settings"><i class="ti ti-settings" aria-hidden="true"></i><span class="pin">4</span></span>
+              <span class="mock-ico" title="Logout"><i class="ti ti-power" aria-hidden="true"></i></span>
+            </div>
+            <div class="mock-tabs">
+              <span class="mock-cap">Customer dashboard tabs</span>
+              <span class="mock-tabs-row">
+                <span class="mock-tab on">Operational Dashboard</span>
+                <span class="mock-tab">Business Value</span>
+                <span class="mock-tab">CSAT Insights</span>
+                <span class="mock-tab">QA Governance</span>
+                <span class="mock-tab">Risk Dashboard</span>
+                <span class="pin pin-inline">2</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="loc-grid">
+            <div class="loc">
+              <div class="loc-head"><span class="loc-num">1</span><span class="loc-title"><i class="ti ti-menu-2" aria-hidden="true"></i>Menu</span></div>
+              <p class="loc-how">Click the menu icon beside your name while a customer dashboard is open.</p>
+              <p class="loc-group-label">Project</p>
+              <div class="chips"><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Overview</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Project Scope</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>People</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Process</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Delivery</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Success Goals</span></div>
+              <p class="loc-group-label">Engagement</p>
+              <div class="chips"><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Voice of Customer</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Lessons Learnt</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Best Practices</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Feedback</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Appreciation</span></div>
+              <p class="loc-group-label">Administration</p>
+              <div class="chips"><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Manage KPI Products</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Contacts</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Planner</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Project Data Migration</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>CRISP</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Checklist Assessment</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Assessment Findings</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Project Data Configuration</span></div>
+              <p class="loc-owner"><i class="ti ti-user-check" aria-hidden="true"></i><span>Project screens owned by PM, reviewed by CSM. Assessment Findings (CAPA stages) owned by Quality.</span></p>
+            </div>
+
+            <div class="loc">
+              <div class="loc-head"><span class="loc-num">2</span><span class="loc-title"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Customer Dashboard</span></div>
+              <p class="loc-how">Open a customer from the Enterprise Overview Dashboard. The tabs run across the top of the page.</p>
+              <p class="loc-group-label">Tabs</p>
+              <div class="chips"><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Operational Dashboard</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Business Value Dashboard</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>CSAT Insights</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>QA Governance</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Risk Dashboard</span></div>
+              <p class="loc-group-label">On the Operational Dashboard</p>
+              <div class="chips"><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>KPI</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Planner</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Action Items</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Risks</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Issues</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Key Highlights</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Success Journey</span></div>
+              <p class="loc-owner"><i class="ti ti-user-check" aria-hidden="true"></i><span>Owned by CSM.</span></p>
+            </div>
+
+            <div class="loc">
+              <div class="loc-head"><span class="loc-num">3</span><span class="loc-title"><i class="ti ti-grid-dots" aria-hidden="true"></i>Integrated Apps</span></div>
+              <p class="loc-how">Click the grid icon at the top-right.</p>
+              <p class="loc-group-label">Apps</p>
+              <div class="chips"><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>CSAT Analysis</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>AI Maturity Index</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>IT Operations Maturity</span></div>
+              <p class="loc-owner"><i class="ti ti-user-check" aria-hidden="true"></i><span>IT Operations Maturity is administered by Quality; others join as Assessor or Reviewer per cycle.</span></p>
+            </div>
+
+            <div class="loc">
+              <div class="loc-head"><span class="loc-num">4</span><span class="loc-title"><i class="ti ti-settings" aria-hidden="true"></i>Settings</span></div>
+              <p class="loc-how">Click the gear icon at the top-right.</p>
+              <p class="loc-group-label">Menu items</p>
+              <div class="chips"><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Reports</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Application Access Control</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Project Access Control</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>Risk Repository</span><span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>SQA Management</span></div>
+              <p class="loc-owner"><i class="ti ti-user-check" aria-hidden="true"></i><span>Admin items are managed by named platform administrators. SQA Management (SQA and GRC tabs) is owned by Quality.</span></p>
+            </div>
+          </div>
+
+          <div class="info-box"><p>Access is configured per <strong>role + menu item</strong>, and can be further scoped to a specific employee, customer account, or project. If your access doesn't match your role, contact <strong><a href="mailto:csmplatformsupport@neurealm.com" style="color:var(--accent)">csmplatformsupport@neurealm.com</a></strong> with your CSM Role and the screen in question.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="roles" data-keywords="csm roles csm titles roles responsibilities what can each role see do permissions view create edit delete access level menus explorer compare">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-purple"><i class="ti ti-shield-lock" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">What can my role see and do?</p>
+          <div class="faq-meta">
+            <span class="tag tag-process">Roles &amp; Responsibilities</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body faq-body-tall" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Select a role to see its menus, what it can do in each, and which projects or accounts it covers.</p>
+          <div class="level-legend">
+            <span class="lv lv-full">Full control</span>
+            <span class="lv lv-edit">Create &amp; edit</span>
+            <span class="lv lv-view">Mostly view</span>
+            <span class="lv lv-none">Minimal access</span>
+          </div>
+
+          <div class="rx" id="roleExplorer">
+            <div class="rx-list" role="tablist" aria-label="CSM roles" aria-orientation="horizontal"></div>
+            <div class="rx-pane" role="tabpanel" aria-live="polite"></div>
+          </div>
+
+          <p class="rx-footnote">Some screens are switched on only for named individuals within a role (for example, specific Quality leads or administrators). If a menu listed here is missing for you, contact <a href="mailto:csmplatformsupport@neurealm.com" style="color:var(--accent)">csmplatformsupport@neurealm.com</a> with your CSM Role and the screen name.</p>
+        </div>
+      </div>
+    </article>
+
   </div><!-- /#faqContainer -->
 
   <div class="no-results" id="noResults">
@@ -1040,6 +1704,211 @@
     });
     header.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); header.click(); } });
   });
+
+  const RX_LEVELS = {
+    full: ['lv-full', 'dot-full', 'Full control'],
+    edit: ['lv-edit', 'dot-edit', 'Create & edit'],
+    view: ['lv-view', 'dot-view', 'Mostly view'],
+    min:  ['lv-none', 'dot-min',  'Minimal access']
+  };
+  const RX_LOC = {
+    project:  ['Menu › Project', 'ti-menu-2', 'Menu icon (top-right, beside your name) on a customer dashboard'],
+    engage:   ['Menu › Engagement', 'ti-messages', 'Menu icon on a customer dashboard'],
+    admin:    ['Menu › Administration', 'ti-tool', 'Menu icon on a customer dashboard'],
+    dash:     ['Customer Dashboard', 'ti-layout-dashboard', 'Open a customer from the Enterprise Overview Dashboard'],
+    settings: ['Settings', 'ti-settings', 'Gear icon, top-right'],
+    sqa:      ['Settings › SQA Management', 'ti-checklist', 'Gear icon › SQA Management'],
+    apps:     ['Integrated Apps', 'ti-grid-dots', 'Grid icon, top-right'],
+    premier:  ['Customer Dashboard › Premier', 'ti-award', 'Service Improvement Plan widgets on your dashboard']
+  };
+  const D365 = 'Projects and customers you are allocated to, or assigned to as PM, BU Head, CSM, or DP, in D365.';
+  const ROLES = [
+    { name: 'Customer Success Manager', icon: 'ti-user-star', level: 'full',
+      summary: 'Owns the customer relationship end to end — project health, KPIs, and findings.',
+      scope: D365,
+      mods: [
+        ['project', 'VCED', ['Overview','Project Scope','People','Process','Delivery','Success Goals']],
+        ['engage', 'VCED', ['Lessons Learnt','Best Practices','Feedback','Appreciation'], 'View-only: Voice of Customer.'],
+        ['admin', 'VCED', ['Contacts','Project Data Migration','CRISP'], 'View-only: Manage KPI Products, Checklist Assessment, Assessment Findings, Project Data Configuration.'],
+        ['dash', 'VCED', ['Operational Dashboard','Edit KPI','Risks','Issues','Action Items'], 'View-only tabs: Business Value Dashboard, CSAT Insights, QA Governance, Risk Dashboard.'],
+        ['settings', 'V', ['Reports','Customer Satisfaction Survey','SQA Management'], 'Full control: Benchmark KPI.'],
+        ['sqa', 'V', ['SQA Management tab','Setup','Execute','Checklist Based Assessment']],
+        ['apps', 'V', ['AI Maturity Index','IT Operations Maturity']]
+      ],
+      off: ['Settings › Application Access Control','Project Access Control','Resource Allocation','Risk Repository','CSAT Analysis','SQA › Plan','SQA › GRC'] },
+    { name: 'Project Manager', icon: 'ti-briefcase', level: 'edit',
+      summary: 'Runs day-to-day delivery on allocated projects and drives findings to closure.',
+      scope: D365 + ' Delete is restricted on most project data.',
+      mods: [
+        ['project', 'VCE', ['Overview','Project Scope','People','Process','Delivery','Success Goals'], 'Create only on Project Scope and Process; delete only on Process.'],
+        ['engage', 'VCE', ['Lessons Learnt','Best Practices','Feedback'], 'Full control: Appreciation. View-only: Voice of Customer.'],
+        ['admin', 'VCED', ['Project Data Migration','CRISP'], 'Edit: Contacts. View-only: Checklist Assessment, Assessment Findings, Project Data Configuration.'],
+        ['dash', 'VCE', ['Operational Dashboard','Risks','Issues','Action Items'], 'Edit: KPI. View-only tabs: Business Value Dashboard, CSAT Insights, QA Governance, Risk Dashboard.'],
+        ['settings', 'V', ['Reports','SQA Management'], 'Full control: Benchmark KPI.'],
+        ['sqa', 'VCED', ['Plan','View Planner','Add Event / Task'], 'View-only: SQA Management tab, Setup, Execute, Checklist Based Assessment.'],
+        ['apps', 'V', ['AI Maturity Index','IT Operations Maturity']]
+      ],
+      off: ['Manage KPI Products','Application Access Control','Project Access Control','Resource Allocation','CSAT Analysis','SQA › GRC'] },
+    { name: 'Team Member', icon: 'ti-users', level: 'view',
+      summary: 'Works on allocated projects; reads project data and logs risks, issues, and action items.',
+      scope: D365 + ' On findings you see Request Access instead of Accept/Reject.',
+      mods: [
+        ['project', 'V', ['Overview','Project Scope','People','Process','Delivery','Success Goals'], 'Some team members also edit Overview and Delivery.'],
+        ['engage', 'V', ['Lessons Learnt','Best Practices','Feedback'], 'Full control: Appreciation. Edit on Lessons Learnt and Best Practices for named members.'],
+        ['admin', 'V', ['Contacts','Checklist Assessment','Assessment Findings'], 'Full control: CRISP.'],
+        ['dash', 'VCE', ['Operational Dashboard','Risks','Issues','Action Items'], 'View-only: KPI.'],
+        ['apps', 'V', ['AI Maturity Index','IT Operations Maturity']]
+      ],
+      off: ['Settings (gear icon)','Voice of Customer','Manage KPI Products','Business Value Dashboard','CSAT Insights','QA Governance','Risk Dashboard'] },
+    { name: 'Quality', icon: 'ti-award', level: 'full',
+      summary: 'Runs audits, CAPA, SQA, and IT Operations Maturity, and owns quality configuration.',
+      scope: 'Audit and quality data across all projects in scope.',
+      mods: [
+        ['project', 'VCE', ['Overview','Project Scope','People','Process','Delivery','Success Goals'], 'Create on Project Scope and Process; delete on Process.'],
+        ['engage', 'VCED', ['Voice of Customer','Lessons Learnt','Best Practices','Feedback','Appreciation']],
+        ['admin', 'VCED', ['Project Data Migration','CRISP','Checklist Assessment','Assessment Findings','Project Data Configuration'], 'Edit: Contacts. View-only: Manage KPI Products.'],
+        ['dash', 'VCED', ['Operational Dashboard','Risks','Issues','Action Items'], 'Edit: KPI. View-only tabs: Business Value Dashboard, CSAT Insights, QA Governance, Risk Dashboard.'],
+        ['settings', 'VCED', ['Benchmark KPI','CI LeaderBoard'], 'View-only: Customer Satisfaction Survey, Project Access Control, Reports, ConfigurationExt, Risk Repository, Auditor Qualified Standards, SQA Management.'],
+        ['sqa', 'VCED', ['Setup','Plan','View Planner','Add Event / Task','Execute','Checklist Based Assessment','Risk Based Assessment','Compliance Requirements Tracker','Add/Map Objective','Add Risk','Add Control','Add Test'], 'View-only: GRC tab.'],
+        ['apps', 'VCED', ['IT Operations Maturity'], 'View-only: AI Maturity Index.']
+      ],
+      off: ['Application Access Control','Resource Allocation','CSAT Analysis'] },
+    { name: 'HR', icon: 'ti-heart-handshake', level: 'min',
+      summary: 'Uses CSM for reporting only.',
+      scope: 'Platform-wide reports; no project or customer screens.',
+      mods: [
+        ['settings', 'V', ['Reports']]
+      ],
+      off: ['Menu (project screens)','Customer Dashboard','Integrated Apps','SQA Management'] },
+    { name: 'Account Manager', icon: 'ti-address-book', level: 'edit',
+      summary: 'Manages account relationships and commercial health across allocated customers.',
+      scope: D365 + ' Delete is restricted on most screens.',
+      mods: [
+        ['project', 'VCE', ['Overview','Project Scope','People','Process','Delivery','Success Goals'], 'Create on Project Scope and Process; delete on Process.'],
+        ['engage', 'VCE', ['Lessons Learnt','Best Practices','Feedback'], 'Full control: Appreciation. View-only: Voice of Customer.'],
+        ['admin', 'VCED', ['Project Data Migration','CRISP'], 'Edit: Contacts. View-only: Checklist Assessment, Assessment Findings, Project Data Configuration.'],
+        ['dash', 'VCE', ['Operational Dashboard','Risks','Issues','Action Items'], 'Edit: KPI. View-only tabs: Business Value Dashboard, CSAT Insights, QA Governance, Risk Dashboard.'],
+        ['settings', 'V', ['Customer Details','Reports','SQA Management']],
+        ['sqa', 'VCED', ['Plan','View Planner','Add Event / Task'], 'View-only: SQA Management tab, Setup, Execute, Checklist Based Assessment.'],
+        ['apps', 'V', ['AI Maturity Index']]
+      ],
+      off: ['IT Operations Maturity','Application Access Control','Project Access Control','Manage KPI Products'] },
+    { name: 'Marketing', icon: 'ti-speakerphone', level: 'edit',
+      summary: 'Curates customer stories, highlights, and success content.',
+      scope: D365,
+      mods: [
+        ['project', 'VCE', ['Overview','Project Scope','People','Process','Delivery','Success Goals']],
+        ['engage', 'VCE', ['Lessons Learnt','Best Practices','Feedback']],
+        ['admin', 'VCE', ['Contacts']],
+        ['dash', 'VCE', ['Operational Dashboard','KPI','Risks','Issues','Action Items']],
+        ['settings', 'V', ['Customer Details','Reports']]
+      ],
+      off: ['Integrated Apps','SQA Management','Business Value Dashboard','CSAT Insights','QA Governance','Risk Dashboard','Appreciation'] },
+    { name: 'Read-Only Profile', icon: 'ti-eye', level: 'view',
+      summary: 'Observer access for leadership and auditors — can look, cannot change.',
+      scope: 'View-only everywhere it appears. No create, edit, or delete on any screen.',
+      mods: [
+        ['engage', 'V', ['Voice of Customer','Lessons Learnt','Best Practices','Feedback']],
+        ['admin', 'V', ['CRISP','Checklist Assessment','Assessment Findings','Project Data Configuration']],
+        ['dash', 'V', ['Operational Dashboard','Risks','Issues','Action Items','Business Value Dashboard','CSAT Insights','QA Governance']],
+        ['settings', 'V', ['Customer Details','Customer Satisfaction Survey','Reports','CI LeaderBoard','SQA Management']],
+        ['sqa', 'V', ['SQA Management tab','Plan','View Planner']]
+      ],
+      off: ['Create, edit, delete anywhere','Menu › Project screens','Integrated Apps','Risk Dashboard'] }
+  ];
+  const ROLE_IDS = { 'Customer Success Manager': 1, 'Project Manager': 2, 'Team Member': 3, 'Quality': 7, 'HR': 10, 'Account Manager': 11, 'Marketing': 12, 'Read-Only Profile': 13 };
+
+  (function initRoleExplorer() {
+    const root = document.getElementById('roleExplorer');
+    if (!root) return;
+    const list = root.querySelector('.rx-list');
+    const pane = root.querySelector('.rx-pane');
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const PERMS = [['V', 'View'], ['C', 'Create'], ['E', 'Edit'], ['D', 'Delete']];
+
+    const RX_PIN = { project: 1, engage: 1, admin: 1, dash: 2, premier: 2, apps: 3, settings: 4, sqa: 4 };
+
+    function render(idx) {
+      const r = ROLES[idx];
+      const [lvCls, , lvLabel] = RX_LEVELS[r.level];
+      const pin = key => `<span class="loc-num sm" aria-label="Screen map pin ${RX_PIN[key]}">${RX_PIN[key]}</span>`;
+
+      const matrixRows = r.mods.map(([key, perms]) => `
+            <tr><th scope="row">${pin(key)}${esc(RX_LOC[key][0])}</th>${PERMS.map(([k, label]) => perms.includes(k)
+              ? `<td><span class="rx-yes" role="img" aria-label="${label}: allowed"><i class="ti ti-check" aria-hidden="true"></i></span></td>`
+              : `<td><span class="rx-no" role="img" aria-label="${label}: not allowed"><i class="ti ti-minus" aria-hidden="true"></i></span></td>`).join('')}</tr>`).join('');
+
+      const menuRows = r.mods.map(([key, , menus, note]) => {
+        const [label, , where] = RX_LOC[key];
+        return `
+            <div class="rx-row">
+              <div class="rx-row-head">${pin(key)}<div><p class="rx-row-title">${esc(label)}</p><p class="rx-row-where">${esc(where)}</p></div></div>
+              <div class="rx-row-body">
+                <div class="chips">${menus.map(m => `<span class="chip chip-menu"><i class="ti ti-chevron-right" aria-hidden="true"></i>${esc(m)}</span>`).join('')}</div>
+                ${note ? `<p class="rx-mod-note"><strong>Exceptions:</strong> ${esc(note)}</p>` : ''}
+              </div>
+            </div>`;
+      }).join('');
+
+      const off = r.off.length ? `
+        <div class="rx-off">
+          <p class="rx-off-title"><i class="ti ti-lock" aria-hidden="true"></i>Not available for this role</p>
+          <div class="chips">${r.off.map(m => `<span class="chip chip-muted"><i class="ti ti-lock" aria-hidden="true"></i>${esc(m)}</span>`).join('')}</div>
+        </div>` : '';
+
+      pane.innerHTML = `
+        <div class="rx-hero">
+          <div class="rx-hero-icon"><i class="ti ${r.icon}" aria-hidden="true"></i></div>
+          <div class="rx-hero-body">
+            <div class="rx-hero-top"><h3>${esc(r.name)}</h3><span class="lv ${lvCls}">${lvLabel}</span>${idx === mine ? '<span class="rx-you">Your role</span>' : ''}</div>
+            <p>${esc(r.summary)}</p>
+            <p class="rx-hero-scope"><i class="ti ti-filter" aria-hidden="true"></i><span><strong>What you see:</strong> ${esc(r.scope)}</span></p>
+          </div>
+        </div>
+
+        <p class="rx-sec">Access at a glance <span>Pins match the screen map above</span></p>
+        <div class="rx-matrix-wrap">
+          <table class="rx-matrix">
+            <thead><tr><th scope="col">Where</th>${PERMS.map(([, label]) => `<th scope="col">${label}</th>`).join('')}</tr></thead>
+            <tbody>${matrixRows}
+            </tbody>
+          </table>
+        </div>
+
+        <p class="rx-sec">Menu items you'll see on screen</p>
+        <div class="rx-rows">${menuRows}
+        </div>
+        ${off}`;
+
+      list.querySelectorAll('.rx-tab').forEach((t, i) => {
+        t.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+        t.tabIndex = i === idx ? 0 : -1;
+      });
+    }
+
+    let myRoleId = 0;
+    try { myRoleId = parseInt(localStorage.getItem('role') || '', 10) || 0; } catch (e) { myRoleId = 0; }
+    const mine = ROLES.findIndex(r => ROLE_IDS[r.name] === myRoleId);
+
+    ROLES.forEach((r, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'rx-tab';
+      b.setAttribute('role', 'tab');
+      b.innerHTML = `<i class="ti ${r.icon}" aria-hidden="true"></i><span>${esc(r.name)}</span>${i === mine ? '<span class="rx-you">You</span>' : ''}<span class="rx-dot ${RX_LEVELS[r.level][1]}" aria-hidden="true"></span>`;
+      b.addEventListener('click', () => render(i));
+      b.addEventListener('keydown', e => {
+        const keys = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
+        if (!(e.key in keys)) return;
+        e.preventDefault();
+        const next = (i + keys[e.key] + ROLES.length) % ROLES.length;
+        render(next);
+        list.children[next].focus();
+      });
+      list.appendChild(b);
+    });
+    render(mine >= 0 ? mine : 0);
+  })();
 </script>
 </body>
 </html>
