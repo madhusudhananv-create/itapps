@@ -2,6 +2,7 @@ import { Box, Paper, Typography, Button, Alert } from '@mui/material';
 import { Circle, CloudDownload, RestoreFromTrash } from '@mui/icons-material';
 import { useState, useCallback } from 'react';
 import { CommonSnackbar } from '../../../shared/components/CommonSnackbar';
+import { useAuth } from '@auth/hooks/useAuth';
 import { performClientBackup } from '../utils/backupUtils';
 import { performRestore } from '../utils/restoreUtils';
 import { RestoreModal } from './RestoreModal';
@@ -142,6 +143,7 @@ interface BackupStatus {
 }
 
 export function Backup() {
+  const { isAdmin } = useAuth();
   const [backupStatus, setBackupStatus] = useState<BackupStatus>({
     isBackingUp: false,
     isSuccess: false,
@@ -238,6 +240,15 @@ export function Backup() {
     },
     []
   );
+
+  // Backup and restore read and change every project's data, so they are admin-only
+  if (!isAdmin) {
+    return (
+      <Alert severity="warning" sx={{ mt: 3 }}>
+        Only admins can create or restore backups.
+      </Alert>
+    );
+  }
 
   return (
     <Box>
@@ -373,7 +384,9 @@ export function Backup() {
             restore (all selected by default)
             <br />
             <Circle style={styles.circleIcon} /> <strong>Data Safety:</strong>{' '}
-            Existing collections will be completely cleared before restoration
+            Project and practice information is overwritten for the projects in
+            the file. Activities are restored first, and the current activities
+            are replaced only if everything restored without errors
             <br />
             <Circle style={styles.circleIcon} />{' '}
             <strong>Backup Recommended:</strong> Create a backup before
@@ -383,7 +396,8 @@ export function Backup() {
             Restoration may take several minutes for large datasets
             <br />
             <Circle style={styles.circleIcon} /> <strong>File Format:</strong>{' '}
-            Only JSON backup files created by this system are supported
+            Only JSON backup files created from this screen are supported
+            (old Firebase backups cannot be restored here)
           </Typography>
         </Box>
 

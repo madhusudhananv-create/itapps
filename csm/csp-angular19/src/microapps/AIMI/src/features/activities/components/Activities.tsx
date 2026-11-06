@@ -1,4 +1,14 @@
-import { Box, Paper, Typography, Tabs, Tab, Button } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Typography,
+  Tabs,
+  Tab,
+  //Button,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
 import { useAllocatedAccounts } from '@shared/projects/hooks/useAllocatedAccounts';
 import { ProjectInfoSelection } from './ProjectInfoSelection';
@@ -11,9 +21,13 @@ import {
   Suspense,
 } from 'react';
 import type { ActivityData } from '../types/activityTypes';
+// 'Import Excel' - disabled for the Firebase->SQL migration
+// import { useAimiOptionLists } from '../../../shared/lookups/useAimiOptionLists';
+// import { normalizeImportedRow } from '../utils/importNormalizeUtils';
+// import type { NormalizedImportFields } from '../utils/importNormalizeUtils';
 import { useActivitySubmission } from '../hooks/useActivitySubmission';
 import { useActivityState } from '../hooks/useActivityState';
-import { useProjectPracticeInfo } from '../hooks/useProjectPracticeInfo';
+import { useAcceptedScore } from '../hooks/useAcceptedScore';
 import { CommonSnackbar } from '@shared/components/CommonSnackbar';
 import { useFeatureFlags } from '@shared/hooks/useFeatureFlags';
 import { Loading } from '@shared/components/Loading';
@@ -23,17 +37,14 @@ import {
   preloadComponents,
   type ComponentName,
 } from '@shared/utils/preloadComponents';
-import { ImportActivitiesDialog } from './ImportActivites';
-import {
+// import { ImportActivitiesDialog } from './ImportActivites'; // 'Import Excel' - disabled for the Firebase->SQL migration
+/* import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-} from '@mui/material';
-import {
-  getSDLCPhasesForPractice,
-  getActivitiesForSDLCPhase,
-} from '../../../shared/utils/questionnaireUtils';
+} from '@mui/material'; */
+// import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup'; // used only by the Excel import (disabled)
 
 const ManageActivities = lazy(() =>
   import('./ManageActivities').then((module) => ({
@@ -76,17 +87,11 @@ interface ProjectInfoFormData {
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
   commonAdoptionWorkforceCertification?: string;
-  commonGrossMarginUplift?: string;
-  commonRevenuePerFTE?: string;
-  commonMarginDifferential?: string;
   engineerAIAgents?: string;
   engineerDeliveryCycleTime?: string;
   engineerContractTestCasePassRate?: string;
   engineerPerformanceDefectsPreRelease?: string;
   projectFY?: string;
-  acceptedScore?: number;
-  scoreReviewed?: boolean;
-  acceptedScoreComment?: string;
 }
 // Global styling object
 const styles = {
@@ -186,6 +191,10 @@ export function Activities() {
     getProjectInfo,
     getOriginalProjectData,
   } = useProjectHierarchy();
+  // Used only by the Excel import (disabled for the Firebase->SQL migration):
+  // const { getSDLCPhasesForPractice, getActivitiesForSDLCPhase } =
+  //   useQuestionnaireLookup();
+  // const { aiTools, accelerators, qualitativeBenefits } = useAimiOptionLists();
   const [isLoading] = useState(false);
   const {
     submitSuccess,
@@ -200,6 +209,7 @@ export function Activities() {
   const [activeTab, setActiveTab] = useState(0);
   const featureFlags = useFeatureFlags('dashboard');
 
+/* DISABLED - 'Import Excel' - disabled for the Firebase->SQL migration
   //import excel state
   const [importDialogOpen, setImportDialogOpen] = useState(false);  // Form state
   const [importValidationOpen, setImportValidationOpen] =
@@ -207,6 +217,7 @@ export function Activities() {
 
   const [importValidationMessage, setImportValidationMessage] =
   useState('');
+*/
   const [projectInfoFormData, setProjectInfoFormData] =
   useState<ProjectInfoFormData>({
     businessUnit: '',
@@ -286,42 +297,29 @@ export function Activities() {
     selectedPractice: projectInfoFormData.practice,
   });
 
-  // Fetch project info directly here (in addition to ProjectInfoSelection's own
-  // fetch) so the review-score dialog can save without threading a callback
-  // through the form-data sync effect.
-  const { projectInfo: reviewProjectInfo, saveProjectInfo: saveReviewProjectInfo } =
-    useProjectPracticeInfo({
+  // Admin review of the Overall Score. Stored on the activity rows and saved on its
+  // own, so it never goes through (or overwrites) the project info.
+  const { review: acceptedScoreInfo, saveReview: handleSaveReviewInfo } =
+    useAcceptedScore({
       projectId: projectInfoFormData.projectId,
       practice: projectInfoFormData.practice,
     });
 
-  const handleSaveReviewInfo = useCallback(
-    async (reviewInfo: {
-      acceptedScore?: number;
-      scoreReviewed?: boolean;
-      acceptedScoreComment?: string;
-    }) => {
-      await saveReviewProjectInfo({
-        peopleUsingAI: reviewProjectInfo?.peopleUsingAI ?? 0,
-        isProjectNA: reviewProjectInfo?.isProjectNA,
-        naComments: reviewProjectInfo?.naComments,
-        ...reviewInfo,
-      });
-    },
-    [saveReviewProjectInfo, reviewProjectInfo]
-  );
-
   const handleActivitiesSubmit = useCallback(
     async (activities: ActivityData[]) => {
-      try {
-        // Submit activities (this will handle Firestore saving)
-        await submitActivities(
-          activities,
-          projectInfoFormData,
-          markActivitiesAsSaved
-        );
-      } catch (error) {
-        console.error('Error submitting activities:', error);
+      // submitActivities reports an API failure through its result rather than throwing, so
+      // pass it on: ManageActivities then shows the error toast and keeps the activities
+      // flagged as unsaved, instead of the failed submit passing silently.
+      const result = await submitActivities(
+        activities,
+        projectInfoFormData,
+        markActivitiesAsSaved
+      );
+      if (!result.success) {
+        console.error('Error submitting activities:', result.error);
+        throw result.error instanceof Error
+          ? result.error
+          : new Error('Submitting activities failed');
       }
     },
     [submitActivities, projectInfoFormData, markActivitiesAsSaved]
@@ -373,17 +371,11 @@ export function Activities() {
           newData.presentationDone = false;
           newData.commonDeploymentEngineer = '';
           newData.commonAdoptionWorkforceCertification = '';
-          newData.commonGrossMarginUplift = '';
-          newData.commonRevenuePerFTE = '';
-          newData.commonMarginDifferential = '';
           newData.engineerAIAgents = '';
           newData.engineerDeliveryCycleTime = '';
           newData.engineerContractTestCasePassRate = '';
           newData.engineerPerformanceDefectsPreRelease = '';
           newData.projectFY = '';
-          newData.acceptedScore = undefined;
-          newData.scoreReviewed = false;
-          newData.acceptedScoreComment = '';
 
           // Auto-populate business head when business unit is selected
           if (value) {
@@ -412,9 +404,6 @@ export function Activities() {
           newData.presentationDone = false;
           newData.commonDeploymentEngineer = '';
           newData.commonAdoptionWorkforceCertification = '';
-          newData.commonGrossMarginUplift = '';
-          newData.commonRevenuePerFTE = '';
-          newData.commonMarginDifferential = '';
           newData.engineerAIAgents = '';
           newData.engineerDeliveryCycleTime = '';
           newData.engineerContractTestCasePassRate = '';
@@ -470,17 +459,11 @@ export function Activities() {
           newData.presentationDone = false;
           newData.commonDeploymentEngineer = '';
           newData.commonAdoptionWorkforceCertification = '';
-          newData.commonGrossMarginUplift = '';
-          newData.commonRevenuePerFTE = '';
-          newData.commonMarginDifferential = '';
           newData.engineerAIAgents = '';
           newData.engineerDeliveryCycleTime = '';
           newData.engineerContractTestCasePassRate = '';
           newData.engineerPerformanceDefectsPreRelease = '';
           newData.projectFY = '';
-          newData.acceptedScore = undefined;
-          newData.scoreReviewed = false;
-          newData.acceptedScoreComment = '';
         }
 
         return newData;
@@ -536,7 +519,9 @@ export function Activities() {
       onSubmit: handleActivitiesSubmit,
       onSaveDraft: handleActivitiesSaveDraft,
       projectInfo: projectInfoFormData,
+      acceptedScoreInfo,
       onSaveReviewInfo: handleSaveReviewInfo,
+      // onImportActivities: () => setImportDialogOpen(true), // 'Import Excel' - disabled for the Firebase->SQL migration
     }),
     [
       activities,
@@ -549,6 +534,7 @@ export function Activities() {
       handleActivitiesSubmit,
       handleActivitiesSaveDraft,
       projectInfoFormData,
+      acceptedScoreInfo,
       handleSaveReviewInfo,
     ]
   );
@@ -608,14 +594,20 @@ export function Activities() {
             Manage Activities
           </Typography>
 
-          {/* <Button
-            variant="outlined"
-            startIcon={<UploadFileIcon />}
-            disabled={!projectInfoFormData.practice || !!projectInfoFormData.isProjectNA}
-            onClick={() => setImportDialogOpen(true)}
-          >
-            Import Excel
-          </Button> */}
+          <Tooltip title="User Manual">
+            <IconButton
+              aria-label="Open user manual"
+              onClick={() =>
+                window.open(
+                  `${import.meta.env.BASE_URL}manuals/AIMI_User_Manual.html`,
+                  '_blank',
+                  'noopener,noreferrer'
+                )
+              }
+            >
+              <MenuBookIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
         <Typography variant="body1" sx={styles.headerDescription}>
           Track and manage AI maturity activities for your projects
@@ -674,9 +666,19 @@ export function Activities() {
       )}
 
       {/* Import Activities Dialog */}
+{/* DISABLED - 'Import Excel' - disabled for the Firebase->SQL migration
 <ImportActivitiesDialog
   open={importDialogOpen}
   onClose={() => setImportDialogOpen(false)}
+  selectedPractice={projectInfoFormData.practice}
+  projectInfo={{
+    project: projectInfoFormData.project,
+    manager: projectInfoFormData.manager,
+    account: projectInfoFormData.account,
+    businessUnit: projectInfoFormData.businessUnit,
+    headcount: projectInfoFormData.headcount,
+    peopleUsingAI: projectInfoFormData.peopleUsingAI,
+  }}
   onImport={(rows) => {
     const practice = projectInfoFormData.practice;
     const validPhases = getSDLCPhasesForPractice(practice);
@@ -685,14 +687,31 @@ export function Activities() {
     // questionnaire.json, so imported text must be resolved to the canonical phase/activity.
     const findMatch = (value: unknown, options: string[]) => {
       const trimmed = String(value ?? '').trim();
-      return options.find(
+
+      const exact = options.find(
         (option) => option.toLowerCase() === trimmed.toLowerCase()
       );
+      if (exact) return exact;
+
+      // Some source spreadsheets label a phase with a trailing "Phase" word
+      // (e.g. "Design & Verification Phase") even when this practice's own
+      // canonical name doesn't include it (e.g. "Design & Verification").
+      // Only fall back to this once the exact match has already failed, so a
+      // canonical name that legitimately contains "Phase" (e.g. "Implementation
+      // Phase (DFT &PD)") still matches exactly first and is never touched.
+      const withoutTrailingPhase = trimmed.replace(/\s+phase\s*$/i, '').trim();
+      if (withoutTrailingPhase !== trimmed) {
+        return options.find(
+          (option) => option.toLowerCase() === withoutTrailingPhase.toLowerCase()
+        );
+      }
+
+      return undefined;
     };
 
     const invalidRows: { rowNumber: number; reason: string }[] = [];
     const normalizedRows: Array<{
-      row: Record<string, unknown>;
+      fields: NormalizedImportFields;
       sdlcPhase: string;
       activity: string;
     }> = [];
@@ -729,7 +748,23 @@ export function Activities() {
         return;
       }
 
-      normalizedRows.push({ row, sdlcPhase: matchedPhase, activity: matchedActivity });
+      // Resolve the remaining columns to canonical option values so they bind in the
+      // Add/Edit form; anything that matches no option is reported instead of silently dropped.
+      const { fields, errors } = normalizeImportedRow(row, {
+        aiTools,
+        accelerators,
+        qualitativeBenefits: qualitativeBenefits.map((b) => b.value),
+      });
+      if (errors.length > 0) {
+        invalidRows.push({ rowNumber, reason: errors.join(', ') });
+        return;
+      }
+
+      normalizedRows.push({
+        fields,
+        sdlcPhase: matchedPhase,
+        activity: matchedActivity,
+      });
     });
 
 if (invalidRows.length > 0) {
@@ -742,48 +777,14 @@ if (invalidRows.length > 0) {
   setImportValidationOpen(true);
   return;
 }
-    normalizedRows.forEach(({ row, sdlcPhase, activity }) => {
+    normalizedRows.forEach(({ fields, sdlcPhase, activity }) => {
       addActivity({
         id: crypto.randomUUID(),
         createdAt: new Date(),
         status: 'draft',
-
         sdlcPhase,
         activity,
-        applicability: String(row['Applicability'] || ''),
-        aiAdoptionScore: String(row['AI Adoption Score'] || ''),
-
-        aiToolUsed: row['AI Tools Used']
-          ? String(row['AI Tools Used'])
-              .split(',')
-              .map((x) => x.trim())
-          : [],
-
-        //clientApproved: String(row['Client Approved'] || ''),
-
-        acceleratorsUsed: row['Accelerators Used']
-          ? String(row['Accelerators Used'])
-              .split(',')
-              .map((x) => x.trim())
-          : [],
-
-        workDoneByAI: Number(row['% Work Done by AI']) || 0,
-
-        hoursSaved: Number(row['Hours Saved']) || 0,
-
-        revenueGenerated: String(row['Revenue Generated'] || ''),
-
-        benefitTo: String(row['Benefit To'] || ''),
-
-        qualitativeBenefits: row['Qualitative Benefits']
-          ? String(row['Qualitative Benefits'])
-              .split(',')
-              .map((x) => x.trim())
-          : [],
-
-        comments: String(row['Comments'] || ''),
-
-        //aiToolDetails: {},
+        ...fields,
       });
     });
   }}
@@ -813,6 +814,7 @@ if (invalidRows.length > 0) {
     </Button>
   </DialogActions>
 </Dialog>
+*/}
 {/* Success Message Snackbar */}
 <CommonSnackbar {...snackbarProps} />
 <CommonSnackbar {...draftSnackbarProps} />

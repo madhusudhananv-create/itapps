@@ -16,15 +16,13 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
-  AI_ADOPTION_SCORES,
   REVENUE_GENERATED_OPTIONS,
   BENEFIT_TO_OPTIONS,
   APPLICABILITY_OPTIONS,
   //CLIENT_APPROVED_OPTIONS,
-  COMMON_AI_TOOLS,
-  COMMON_ACCELERATORS,
 } from '../types/activityTypes';
 import type { ActivityData } from '../types/activityTypes';
+import { useAimiOptionLists } from '@shared/lookups/useAimiOptionLists';
 import {
   activityDetailsModalStyles,
   typographyStyles,
@@ -62,6 +60,11 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
   isPendingDraftConfirmation = false,
 }) => {
   const { isAdmin } = useAuth();
+  const {
+    aiAdoptionScores: AI_ADOPTION_SCORES,
+    aiTools: COMMON_AI_TOOLS,
+    accelerators: COMMON_ACCELERATORS,
+  } = useAimiOptionLists();
 
   if (!activity) return null;
 
@@ -399,15 +402,19 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
         {(onEdit || onDelete) && (
           <Box sx={activityDetailsModalStyles.actionButtons}>
             {onEdit && (
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={() => onEdit(activity)}
-                disabled={actionsDisabled}
-                sx={activityDetailsModalStyles.editButton}
-              >
-                Edit
-              </Button>
+              <Tooltip title={!isAdmin ? 'Only admin can edit the activity' : ''}>
+                <span>
+                  <Button
+                    variant="contained"
+                    startIcon={<EditIcon />}
+                    onClick={() => onEdit(activity)}
+                    disabled={actionsDisabled || !isAdmin}
+                    sx={activityDetailsModalStyles.editButton}
+                  >
+                    Edit
+                  </Button>
+                </span>
+              </Tooltip>
             )}
             {onDelete && (
               <Tooltip

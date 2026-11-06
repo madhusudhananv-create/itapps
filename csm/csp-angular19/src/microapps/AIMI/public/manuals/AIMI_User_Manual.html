@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AIMI User Manual</title>
+<style>
+  :root {
+    --navy: #1f3864;
+    --accent: #2e74b5;
+    --light: #eaf1fa;
+    --gray: #595959;
+    --border: #d7e2ef;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Calibri, Roboto, Arial, sans-serif;
+    color: #1a1a1a;
+    background: #f4f7fb;
+    line-height: 1.55;
+  }
+  .titleblock {
+    background: linear-gradient(135deg, var(--navy), var(--accent));
+    color: #fff;
+    padding: 56px 32px 40px;
+    text-align: center;
+  }
+  .titleblock .maintitle { margin: 0 0 4px; font-size: 2.3rem; border: none; color: #fff; padding: 0; }
+  .titleblock .subtitle { font-size: 1.2rem; opacity: 0.9; font-style: italic; margin-bottom: 10px; }
+  .titleblock .doctype { font-size: 1.5rem; font-weight: 700; margin: 14px 0 18px; }
+  .titleblock .tagline { max-width: 640px; margin: 0 auto 18px; opacity: 0.92; }
+  .titleblock .meta { font-size: 0.9rem; opacity: 0.85; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; background: #fff; box-shadow: 0 0 0 1px var(--border); }
+  .layout { display: flex; gap: 0; }
+  nav.toc {
+    flex: 0 0 240px;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 24px 16px;
+    background: var(--light);
+    border-right: 1px solid var(--border);
+  }
+  nav.toc h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--gray); margin: 0 0 12px; border: none; }
+  nav.toc ul { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin-bottom: 8px; }
+  nav.toc a { color: var(--navy); text-decoration: none; font-size: 0.92rem; }
+  nav.toc a:hover { text-decoration: underline; }
+  main { flex: 1; min-width: 0; padding: 24px 40px 60px; }
+  h1 {
+    color: var(--navy);
+    font-size: 1.6rem;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 8px;
+    margin: 40px 0 16px;
+  }
+  main > h1:first-of-type { margin-top: 8px; }
+  h2 { color: var(--accent); font-size: 1.2rem; margin: 28px 0 10px; }
+  h3 { color: var(--navy); font-size: 1.05rem; font-style: italic; margin: 20px 0 8px; }
+  p { margin: 0 0 14px; }
+  ul, ol { margin: 0 0 16px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  strong { color: #111; }
+  .note {
+    background: var(--light);
+    border-left: 4px solid var(--accent);
+    padding: 12px 16px;
+    margin: 14px 0 18px;
+    border-radius: 0 6px 6px 0;
+    font-style: italic;
+    color: var(--gray);
+  }
+  .note-label { font-style: normal; font-weight: 700; color: var(--navy); }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 22px; font-size: 0.92rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--navy); color: #fff; }
+  tr:nth-child(even) td { background: #f6f9fc; }
+  @media (max-width: 800px) {
+    .layout { flex-direction: column; }
+    nav.toc { position: static; max-height: none; flex: none; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 24px 20px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="titleblock">
+  <h1 class="maintitle">AI Maturity Index Platform</h1>
+  <div class="subtitle">(AIMI)</div>
+  <div class="doctype">User Manual</div>
+  <p class="tagline">A guide to tracking and analyzing AI adoption maturity across business units, accounts, and projects</p>
+  <div class="meta">Version 0.0.5-beta &middot; Neurealm &middot; September 2026</div>
+</header>
+
+  <div class="layout">
+    <nav class="toc">
+      <h2>Contents</h2>
+      <ul>
+<li><a href="#1-introduction">1. Introduction</a></li>
+<li><a href="#2-getting-started">2. Getting Started</a></li>
+<li><a href="#3-navigating-aimi">3. Navigating AIMI</a></li>
+<li><a href="#4-setting-up-project-information">4. Setting Up Project Information</a></li>
+<li><a href="#5-ai-adoption-metrics">5. AI Adoption Metrics</a></li>
+<li><a href="#6-managing-activities">6. Managing Activities</a></li>
+<li><a href="#7-configuring-ai-tool-details">7. Configuring AI Tool Details</a></li>
+<li><a href="#8-importing-activities-from-excel">8. Importing Activities from Excel</a></li>
+<li><a href="#9-exporting-reports">9. Exporting Reports</a></li>
+<li><a href="#10-reports-page-cross-project-reporting">10. Reports Page (Cross-Project Reporting)</a></li>
+<li><a href="#11-dashboard">11. Dashboard</a></li>
+<li><a href="#12-data-backup-and-restore">12. Data Backup and Restore</a></li>
+<li><a href="#13-roles-and-permissions">13. Roles and Permissions</a></li>
+<li><a href="#14-troubleshooting-and-messages">14. Troubleshooting and Messages</a></li>
+<li><a href="#15-glossary">15. Glossary</a></li>
+      </ul>
+    </nav>
+    <main>
+<h1 id="1-introduction">1. Introduction</h1>
+<h2 id="1-1-what-is-aimi">1.1 What is AIMI?</h2>
+<p>The AI Maturity Index Platform (AIMI) is a web application used to measure, track, and analyze how AI tools and practices are being adopted across Neurealm's business units, accounts, and projects. It lets project teams record which delivery activities use AI, how mature that usage is, and what benefits (hours saved, revenue generated, qualitative improvements) result — and it rolls this information up into statistics, correlations, and reports for leadership review.</p>
+<p>The platform's stated objective, shown on its sign-in screen, is:</p>
+<div class="note"><span class="note-label">Objective:</span> Accelerate digital transformation by measuring, tracking, and optimizing AI adoption across your enterprise projects and portfolios.</div>
+<p>Core capabilities include:</p>
+<ul>
+<li>Activity Management — record AI-adoption activities for each project, organized by delivery practice and SDLC phase.</li>
+<li>Statistical Analysis — automatic scoring and averages at the phase, project, and portfolio level.</li>
+<li>AI Tools Analysis — which AI tools are used, and how much benefit each delivers.</li>
+<li>Qualitative Benefits — non-numeric benefits (quality, speed, compliance, etc.) associated with AI use.</li>
+<li>Correlation Insights — which tools and practices drive the most hours saved and revenue generation.</li>
+<li>Excel import/export, CSV reporting, and JSON data backup/restore for administrators.</li>
+</ul>
+<h2 id="1-2-who-this-manual-is-for">1.2 Who this manual is for</h2>
+<p>This manual is written for project managers, CSMs (Customer Success Managers), delivery leads, and practice/account admins who record or review AI adoption data in AIMI. Sections that apply only to administrators are clearly marked.</p>
+<h2 id="1-3-how-aimi-fits-into-the-csm-platform">1.3 How AIMI fits into the CSM Platform</h2>
+<p>AIMI is a microapp embedded inside the CSM Platform. It is not intended to be opened as a separate, standalone login — it shares its session with the main CSM Platform. In normal use you do not “log in” to AIMI directly at all; see Section 2 for how to open it.</p>
+<h1 id="2-getting-started">2. Getting Started</h1>
+<h2 id="2-1-opening-aimi">2.1 Opening AIMI</h2>
+<p>AIMI is reached from inside the CSM Platform, not by navigating to it directly:</p>
+<ol>
+<li>Sign in to the CSM Platform as you normally would.</li>
+<li>Open the navbar's “Integrated Apps” menu.</li>
+<li>Select AI Maturity Index (AIMI) from the list of integrated apps.</li>
+</ol>
+<p>AIMI reads your existing CSM Platform session (your employee ID, role, and access token) automatically, so you are taken straight to the Manage Activities screen without a separate sign-in step.</p>
+<h3>If you see a “Login Required” prompt</h3>
+<p>If AIMI cannot find an active CSM Platform session, it shows a dialog:</p>
+<div class="note"><span class="note-label">Login Required:</span> You're not logged in. Click OK to log in to the CSM Platform Home screen, then open this app from Integrated Apps in the navbar.</div>
+<p>Click OK, sign in to the CSM Platform, and reopen AIMI from Integrated Apps.</p>
+<h2 id="2-2-environment-banner">2.2 Environment banner</h2>
+<p>The first time you open AIMI in a session, a banner confirms which environment your data will be saved to:</p>
+<ul>
+<li>“You are in DEV — changes here will not affect live data.” (test/training environment)</li>
+<li>“You are in LIVE — changes here affect production data.” (real, reported data)</li>
+<li>“Unable to determine which environment (dev/live) you are connected to.” (warning — check with your administrator before entering data)</li>
+</ul>
+<div class="note"><span class="note-label">Important:</span> Always confirm you are in the LIVE environment before entering data that should count toward official reporting.</div>
+<h2 id="2-3-roles">2.3 Roles</h2>
+<p>AIMI recognizes two levels of access, based on your CSM Platform role:</p>
+<ul>
+<li>Standard user — can view and enter project information, activities, and metrics for projects they have access to.</li>
+<li>Admin — has all standard-user capabilities, plus the ability to set the Financial Year, review/accept scores, and delete activities. See Section 13 for the full list of admin-only actions.</li>
+</ul>
+<h1 id="3-navigating-aimi">3. Navigating AIMI</h1>
+<h2 id="3-1-the-sidebar">3.1 The sidebar</h2>
+<p>A collapsible navigation rail runs down the left side of the screen, labeled “AI Maturity Index” / “Track and measure AI adoption.” Use the chevron button at the bottom of the sidebar to collapse it to icons only, or expand it again.</p>
+<p>Menu items you may see (some are enabled only in certain environments):</p>
+<ul>
+<li>Manage Activities — the main working screen; always available.</li>
+<li>Dashboard — portfolio-wide statistics and insights; hidden unless enabled for your environment.</li>
+<li>Reports — generate a CSV report across business units, accounts, projects, or practices.</li>
+<li>Data Backup — administrator tool to back up or restore all AIMI data; hidden unless enabled for your environment.</li>
+</ul>
+<p>Your name and avatar appear at the bottom of the sidebar. Selecting it opens a menu showing your name, email, an “Admin” badge if you have admin rights, and a Sign Out option.</p>
+<h2 id="3-2-page-not-found">3.2 Page not found</h2>
+<p>If you follow a broken or outdated link inside AIMI, a “404 — Page Not Found” screen appears with the message “Oops! The page you're looking for doesn't exist. It might have been moved, deleted, or you entered the wrong URL.” Use the “Go to Manage Activities” or “Go Back” button to recover.</p>
+<h1 id="4-setting-up-project-information">4. Setting Up Project Information</h1>
+<p>Before you can record any AI-adoption activities, you must identify which project you are working on. The Manage Activities screen opens with a Project Information panel at the top — this is where that selection happens. Until a project is chosen, the rest of the page shows a placeholder:</p>
+<div class="note"><span class="note-label">Select a Project to Continue:</span> Please complete the project information above to view phases, activities, and project statistics.</div>
+<h2 id="4-1-choosing-your-business-unit-account-and-project">4.1 Choosing your Business Unit, Account, and Project</h2>
+<p>The fields cascade — each one narrows the choices in the next, and picking a new value clears everything that depended on the old one:</p>
+<ul>
+<li><strong>Business Unit:</strong> Choose from: CIT, Tech, Health care, India &amp; GCC, AI&amp;ML, Sead.</li>
+<li><strong>Business Head:</strong> Auto-filled once a Business Unit is chosen (read-only).</li>
+<li><strong>Account:</strong> Enabled once a Business Unit is chosen.</li>
+<li><strong>CSM:</strong> Auto-filled once an Account is chosen (read-only).</li>
+<li><strong>Project:</strong> Enabled once an Account is chosen.</li>
+<li><strong>Manager:</strong> Auto-filled once a Project is chosen (read-only).</li>
+<li><strong>Head Count:</strong> Auto-filled from the project's master data (read-only). This value later limits how many people you can record as using AI.</li>
+</ul>
+<div class="note"><span class="note-label">Important:</span> Changing the Business Unit, Account, or Project resets everything below it — practice, headcount, AI adoption metrics, applicability, presentation status, and the accepted/reviewed score. Selecting a different project always starts with a clean slate for all of these fields.</div>
+<h2 id="4-2-choosing-a-practice">4.2 Choosing a Practice</h2>
+<p>The Practice field determines which SDLC Phases and Activities are available to you later (Section 6). AIMI's eight practices are:</p>
+<ul>
+<li>Digital Product Engineering</li>
+<li>Network Monitoring</li>
+<li>Infrastructure Support</li>
+<li>Security</li>
+<li>End-user Computing &amp; Service Desk</li>
+<li>Data &amp; Analytics</li>
+<li>Semi</li>
+<li>Embedded &amp; Digital SW</li>
+</ul>
+<p>You cannot add activities or import an Excel file until a Practice is selected — the “Add Activity” and “Import Excel” buttons on the Activities tab stay disabled until then.</p>
+<div class="note"><span class="note-label">Unsaved changes:</span> If you have unsaved activity changes and you change the Business Unit, Account, Project, or Practice, a confirmation dialog warns: “You have unsaved changes in your activities. Changing the [field] will cause these changes to be lost. Are you sure you want to continue?” Choose Cancel to keep working, or Continue to discard the changes.</div>
+<h2 id="4-3-marking-a-project-not-applicable">4.3 Marking a project Not Applicable</h2>
+<p>If AI maturity tracking does not apply to a project this cycle, set Project Applicable to “No (Project NA).” This:</p>
+<ul>
+<li>Requires you to enter a Comment explaining why (mandatory — “Comments are mandatory when the project is marked as Not Applicable”).</li>
+<li>Disables adding, editing, importing, or deleting activities for the project.</li>
+<li>Disables every field in the AI Adoption Metrics panel (Section 5).</li>
+<li>Disables the Presentation Status checkbox and the Review Score control.</li>
+<li>Changes the Project Statistics tab to show: “This project is marked as Not Applicable. Project statistics are not calculated.”</li>
+</ul>
+<p>Unlike the other project-info fields, marking a project NA does not trigger the unsaved-changes confirmation dialog — it applies immediately.</p>
+<h2 id="4-4-presentation-status-and-comments">4.4 Presentation Status and Comments</h2>
+<p>The Presentation Status checkbox and the Comments field let you note whether this project's AI maturity data has been presented, and record any general remarks. Both are disabled until a project is selected (and are also disabled if the project is marked NA).</p>
+<h2 id="4-5-financial-year-admin-only">4.5 Financial Year (admin only)</h2>
+<p>Administrators see a Financial Year selector in the Project Information panel header (FY-2026 through FY-2029), used to tag which reporting year the entered data belongs to.</p>
+<h1 id="5-ai-adoption-metrics">5. AI Adoption Metrics</h1>
+<p>Below Project Information, the AI Adoption Metrics panel captures project-level (not per-activity) KPIs. Every field here is disabled until a project is selected, and all are disabled if the project is marked Not Applicable.</p>
+<h2 id="5-1-people-and-licensing">5.1 People and licensing</h2>
+<ul>
+<li><strong># of People using AI:</strong> Enabled only once Head Count is greater than 0. Must be between 0 and the project's Head Count. Entering a negative number shows “The value cannot be negative”; exceeding the headcount shows “Number of people using AI cannot be greater than total headcount ({headcount}).”</li>
+<li><strong>No. of Licenses:</strong> Total number of AI tool licenses held for the project.</li>
+<li><strong>License Provider:</strong> Client or Neurealm — who provides the licenses.</li>
+</ul>
+<h2 id="5-2-runops-adoption-metrics">5.2 RunOps Adoption Metrics</h2>
+<p>Free-text fields (enter a percentage, a number, or “NA”):</p>
+<ul>
+<li>% Tickets Auto-Resolved by AI</li>
+<li>MTTR Reduction vs Traditional Model</li>
+<li># AI Agents in Production (Not Pilots)</li>
+<li># End-to-End Workflows Re-imagined and Automated</li>
+<li># MTTD (Mean Time to Detect)</li>
+<li># MTTR (Mean Time to Respond or Repair)</li>
+</ul>
+<h2 id="5-3-engineering-adoption-metrics">5.3 Engineering Adoption Metrics</h2>
+<ul>
+<li>Delivery cycle-time reduction attributable to AI</li>
+<li># AI agents in production — not pilots / POC</li>
+<li>Contract Test case Pass Rate (%) (Passed Tests / Total Executed Tests) × 100</li>
+<li>Performance Defects Detected Pre-release (%)</li>
+</ul>
+<h2 id="5-4-common-adoption-metrics">5.4 Common Adoption Metrics</h2>
+<ul>
+<li>% workforce with externally validated AI / GenAI / Agentic AI certification</li>
+<li>Efforts saved in hours</li>
+<li># FDE (Forward Deployment Engineer) penetration as % of client-facing headcount</li>
+</ul>
+<h2 id="5-5-saving-metrics">5.5 Saving metrics</h2>
+<p>Click Save Metrics once you have entered values. The button is disabled until a project is selected and at least one value has changed. While saving, the button reads “Saving…”; on success you'll see “AI adoption metrics saved successfully!”</p>
+<h1 id="6-managing-activities">6. Managing Activities</h1>
+<p>Once a Business Unit, Account, Project, and Practice are all selected (Section 4), the “Phases and Activities” tab becomes usable. This is where you record each AI-adoption activity for the project.</p>
+<h2 id="6-1-how-activities-are-organized">6.1 How activities are organized</h2>
+<p>Activities are grouped into collapsible sections, one per SDLC Phase (the phases available depend on the Practice you selected in Section 4.2). Each phase section header shows:</p>
+<ul>
+<li>The phase name</li>
+<li>An average score chip (“Avg: X.XX”), shown once at least one scored activity exists</li>
+<li>A count chip (“N activities”)</li>
+<li>A pulsing warning icon if any activity in that phase has unsaved changes</li>
+</ul>
+<p>Administrators additionally see a “select all in phase” checkbox and a delete icon for bulk-deleting selected activities within that phase (where enabled).</p>
+<h2 id="6-2-adding-an-activity">6.2 Adding an activity</h2>
+<p>Click Add Activity (top of the Phases and Activities tab). This button is disabled until a Practice is selected, and disabled entirely if the project is marked Not Applicable. Fill in the Add Activity dialog:</p>
+<ul>
+<li><strong>SDLC Phase / Services:</strong> Required. Choose the phase this activity belongs to, or choose “NA” if the whole phase does not apply.</li>
+<li><strong>Activity:</strong> Required (unless phase is NA). Only activities not already added for this phase are listed; if none remain, you'll see “All activities for this phase have already been added.”</li>
+<li><strong>Applicability:</strong> Required (unless phase is NA). Choose Yes, No, Activity NA, or Customer NA — click the info icon for the Applicability Guidelines (definitions in Section 15).</li>
+<li><strong>AI Adoption Score:</strong> Required if the activity is applicable. A 0–5 maturity scale — click the info icon for the AI Maturity Scoring Guidelines (Section 15).</li>
+<li><strong>% Work Done by AI:</strong> 0–100. Enabled only when the activity is applicable and the score is greater than 0.</li>
+<li><strong>Hours Saved:</strong> A number ≥0. Same enablement rule as above.</li>
+<li><strong>Revenue / New Opportunity Generated:</strong> Yes or No.</li>
+<li><strong>Benefit To:</strong> Neurealm, Customer, or Both.</li>
+<li><strong>AI Tools Used:</strong> Search or type the AI tool name(s). If a tool isn't listed, type it and press Enter to add it.</li>
+<li><strong>Accelerators Used:</strong> Same free-entry pattern, for supporting tools/frameworks (e.g. Azure DevOps, Terraform, Kubernetes).</li>
+<li><strong>Qualitative Benefits:</strong> Select any non-numeric benefits that apply (e.g. Improved Quality, Faster Delivery).</li>
+<li><strong>Comments:</strong> Optional free text for additional notes.</li>
+</ul>
+<div class="note"><span class="note-label">Required follow-up:</span> If you select one or more AI Tools and the score is above 0, you must also click “Configure AI Tool Details” and complete it before you can save — see Section 7. Until it's complete, the link is shown in red with the helper text “Please configure AI tool details if AI tools are selected.”</div>
+<p>Click Save to add the activity, or Save and Add New to add it and immediately start another. You can only close the dialog with the Cancel button — clicking outside it or pressing Escape does not close it, to avoid losing partially entered data.</p>
+<h3>Marking an entire phase Not Applicable</h3>
+<p>If you choose a phase (not NA) for a new activity, a “Mark all activity as NA” checkbox appears. Checking it opens a confirmation:</p>
+<div class="note"><span class="note-label">Mark Entire Phase as Not Applicable?:</span> All activities under: {phase} will automatically be marked as: Applicability = Activity NA. Any existing activity data under this phase will be overwritten.</div>
+<h3>The Full Adoption / work-done validation</h3>
+<p>If you set AI Adoption Score to “Full Adoption” (4) but leave % Work Done by AI at 0, a warning dialog blocks saving: “% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.”</p>
+<h2 id="6-3-viewing-and-editing-an-activity">6.3 Viewing and editing an activity</h2>
+<p>Each activity is shown as a card with a status chip (Unsaved, Draft, or Saved — see Section 6.6), the activity name, and its date added. Depending on the data entered, the card also shows Applicability, AI Adoption Score, % Work Done by AI, and Hours Saved.</p>
+<p>Use the icons on the card:</p>
+<ul>
+<li>View Details (eye) — opens the Activity Details panel, showing Basic Information, Implementation Details, Qualitative Benefits, and Comments in full.</li>
+<li>Edit Activity (pencil) — reopens the Add/Edit dialog pre-filled with the activity's data. Disabled if the project is marked Not Applicable.</li>
+<li>Delete Activity (trash) — admin only; shows “Only admin can delete the activity” to other users. See Section 6.5.</li>
+</ul>
+<p>If an activity is not applicable, its card and details panel both display: “This activity is not applicable for this project.”</p>
+<h2 id="6-4-copying-an-activity">6.4 Copying an activity</h2>
+<p>The Copy Activity dialog lets you duplicate an existing activity's data onto a different SDLC Phase / Activity combination — useful when the same AI usage applies across multiple activities. Choose a Target SDLC Phase and Target Activity, then Copy. If the target already has data, you're told: “This activity already exists for the selected phase — you can still copy it and adjust the other fields afterward.” On success: “Activity copied successfully!”</p>
+<h2 id="6-5-deleting-activities-admin-only">6.5 Deleting activities (admin only)</h2>
+<p>Individual delete:</p>
+<div class="note"><span class="note-label">Confirm Delete:</span> Are you sure you want to delete the activity "{name}"? This action cannot be undone.</div>
+<p>Bulk delete (select the checkboxes within a phase, then use the phase's delete icon):</p>
+<div class="note"><span class="note-label">Confirm Bulk Delete:</span> Are you sure you want to delete {N} activity/activities from "{phase}"? This action cannot be undone.</div>
+<p>On success you'll see “Activity deleted successfully!” or “{N} activities deleted successfully!”</p>
+<h2 id="6-6-activity-status-unsaved-draft-saved">6.6 Activity status: Unsaved, Draft, Saved</h2>
+<ul>
+<li>Unsaved — you have local edits that have not yet been confirmed with Save as Draft or Submit Activities.</li>
+<li>Draft — saved via Save as Draft (or auto-saved), but not yet finalized.</li>
+<li>Saved — finalized via Submit Activities.</li>
+</ul>
+<h2 id="6-7-saving-and-submitting">6.7 Saving and submitting</h2>
+<p>Once at least one activity exists, two buttons appear at the bottom of the tab:</p>
+<ul>
+<li>Save as Draft — saves your current changes without finalizing them. Requires a Practice to be selected and at least one unsaved/draft change.</li>
+<li>Submit Activities — finalizes all draft/unsaved activities. Same enablement rule.</li>
+</ul>
+<p>Common validation messages when clicking either button:</p>
+<ul>
+<li>“Please add at least one activity before submitting” / “…before saving a draft”</li>
+<li>“Please select a practice before submitting” / “…before saving a draft”</li>
+<li>“No changes to submit” / “No changes to save”</li>
+<li>“Please fill in all required project information: {fields}”</li>
+</ul>
+<p>On success: “Activities submitted successfully!” or “Activities saved as draft!” On failure: “Error submitting activities. Please try again.” or “Error saving draft. Please try again.” If a save fails to reach the server, your data is not lost: “Saved locally. We will retry saving automatically.”</p>
+<h2 id="6-8-overall-score-and-review-score">6.8 Overall score and Review Score</h2>
+<p>Once activities exist, an Overall Score box appears showing the project's average AI Adoption Score (or “N/A” if every activity is non-applicable). Click the Reviews icon to open Review Score:</p>
+<ul>
+<li><strong>Accepted Score:</strong> Numeric; editable by admins only.</li>
+<li><strong>Score Reviewed:</strong> Checkbox; admin only.</li>
+<li><strong>Comments:</strong> Review remarks; admin only.</li>
+</ul>
+<p>Non-admins can open this dialog to view the values (button reads “Close”, no Save option). Admins see “Cancel” and “Save”; saving shows “Review score saved successfully!” or, on failure, “Error saving review score.”</p>
+<h2 id="6-9-project-statistics-tab">6.9 Project Statistics tab</h2>
+<p>Where enabled, this tab shows the same kinds of statistics as the Dashboard (Section 11) but scoped to the currently selected project: Summary Statistics, Correlation Analysis, AI Tools Analysis, Qualitative Benefits Analysis, and Correlation Insights. If there is no data yet: “No project activities found. Add activities to this project to see detailed statistics.” If the project is marked NA: “This project is marked as Not Applicable. Project statistics are not calculated.”</p>
+<h1 id="7-configuring-ai-tool-details">7. Configuring AI Tool Details</h1>
+<p>When an activity's AI Tools Used field has one or more entries, a “Configure AI Tool Details” link appears beneath it in the Add/Edit Activity dialog. Until at least one tool is selected, the link is disabled with the tooltip “Select one or more AI tools to configure details”; once tools are selected, its tooltip reads “Configure access type and license details for selected AI tools.”</p>
+<p>Clicking it opens the Configure AI Tool Details dialog, with one row per selected tool:</p>
+<ul>
+<li><strong>AI Tool:</strong> The tool's name (read-only).</li>
+<li><strong>Access Type:</strong> Licensed or Not-Licensed.</li>
+<li><strong>No. of Licenses:</strong> Enabled only when Access Type is Licensed; must be greater than 0.</li>
+<li><strong>Network Type:</strong> Customer or Neurealm — which environment the tool runs in for this engagement.</li>
+</ul>
+<div class="note"><span class="note-label">Required:</span> Every listed tool must have an Access Type set, and a license count above 0 if Licensed, before you can save the activity. Click Close when finished.</div>
+<h1 id="8-importing-activities-from-excel">8. Importing Activities from Excel</h1>
+<p>If you prefer to prepare activity data offline, or have many activities to enter at once, use the Import Excel button on the Phases and Activities tab (disabled until a Practice is selected, or if the project is marked Not Applicable).</p>
+<h2 id="8-1-downloading-the-template">8.1 Downloading the template</h2>
+<p>In the Import Activities dialog, click Download Template (disabled until a Practice is selected). This downloads an Excel workbook named Activities_Template_{Practice}_{date}.xlsx, containing two sheets:</p>
+<ul>
+<li>Guidelines — reference definitions for Applicability, AI Adoption Score, and sample lists of AI Tools, Qualitative Benefits, and Accelerators.</li>
+<li>A sheet named after your Practice — pre-filled with a row for every SDLC-phase Activity, plus a Project Info block (Project Name, Project Manager, Account Name, Business Unit Name, Reporting Date, Project Headcount, # people using AI). You only need to fill in the data columns: Applicability, Specific AI Tools used, Benefit to, Hours saved, Revenue Generated, Qualitative Benefits, Accelerators Used, Comments, AI Adoption Score, and % of Work done by AI.</li>
+</ul>
+<div class="note"><span class="note-label">Instruction printed on the template:</span> Please refer Guidelines tab when filling Applicability, AI Adoption Score, AI Tools used &amp; Accelarators used. Add comment for Hours saved like (daily/per person/per sprint/overall).</div>
+<h2 id="8-2-uploading-and-reviewing">8.2 Uploading and reviewing</h2>
+<p>Click Choose Excel File and select your completed .xlsx (or .xls) workbook. AIMI reads the sheet matching your Practice's name (or the first non-Guidelines sheet), skips blank rows, and shows a Preview of the parsed rows (the first 10, with a note if more exist).</p>
+<p>If no usable rows are found: “No activity rows found on sheet “{sheetName}”. Make sure the SDLC Activity / Question column is filled in.”</p>
+<h2 id="8-3-validation">8.3 Validation</h2>
+<p>Before anything is imported, every row is checked:</p>
+<ul>
+<li>SDLC Phase and Activity are mandatory — missing either gives “SDLC Phase and Activity are mandatory.”</li>
+<li>The phase must be valid for the selected practice — otherwise: “‘{value}’ is not a valid SDLC Phase for the selected practice.”</li>
+<li>The activity must be valid for the matched phase — otherwise: “‘{value}’ is not a valid Activity for phase ‘{matchedPhase}’.”</li>
+</ul>
+<p>If any row fails, no rows are imported and a dialog lists every problem: “Import Validation Failed — Invalid data found in row(s): {row} ({reason}); {row} ({reason})…” Fix the file and re-upload.</p>
+<p>Click Import once the preview looks correct. Imported rows are added as Draft activities, ready for you to review, edit, and then Save as Draft or Submit (Section 6.7).</p>
+<h1 id="9-exporting-reports">9. Exporting Reports</h1>
+<p>On the Phases and Activities tab, click Generate Report to download a CSV of the current project's activities. The button is disabled if there are no activities, or if you have unsaved changes (save or submit them first).</p>
+<p>The file is named AI_Maturity_Report_{Project}_{Practice}_{date}.csv. On success: “Report generated and downloaded successfully!” On failure: “Error generating report. Please try again.”</p>
+<h2 id="9-1-report-columns">9.1 Report columns</h2>
+<p>Each row in the CSV represents one activity, and includes project context (Business Unit, Business Head, Account, Account Manager, Project, Project ID, Manager, Head Count, Practice), the AI adoption metrics from Section 5, the accepted score and comment, and the activity's own fields (SDLC Phase, Activity, Applicability, AI Adoption Score, AI Tools Used, Accelerators Used, Work Done by AI %, Hours Saved, Revenue Generated, Benefit To, Qualitative Benefits, Comments, Created Date, Last Updated Date).</p>
+<h1 id="10-reports-page-cross-project-reporting">10. Reports Page (Cross-Project Reporting)</h1>
+<p>The Reports page (left sidebar) lets you generate a CSV across many projects at once, filtered by organization level.</p>
+<h2 id="10-1-selecting-filters">10.1 Selecting filters</h2>
+<p>Four searchable, multi-select dropdowns are available, each supporting an “All” select-all option:</p>
+<ul>
+<li>Business Unit</li>
+<li>Account — enabled once at least one Business Unit is selected</li>
+<li>Project — enabled once at least one Account is selected</li>
+<li>Practice</li>
+</ul>
+<p>You need only select one of the four to enable Generate Reports. If you select at more than one level, Project selections take precedence over Account, which takes precedence over Business Unit; Practice always narrows the result further.</p>
+<h2 id="10-2-generating-the-report">10.2 Generating the report</h2>
+<p>Click Generate Reports (label changes to “Generating…”). The downloaded file is named AI_Maturity_Report_{business-units|accounts|projects}_{timestamp}.csv, using the same column layout as the single-project report (Section 9.1).</p>
+<p>Messages you may see:</p>
+<ul>
+<li>“Please select at least one filter option” — if you click Generate Reports with nothing selected.</li>
+<li>“No activities found for the selected filters” — the filters matched no data.</li>
+<li>“Report generated successfully! {N} activities exported.” — success.</li>
+<li>“Failed to generate report” — unexpected error; try again.</li>
+</ul>
+<h1 id="11-dashboard">11. Dashboard</h1>
+<p>The Dashboard (hidden unless enabled for your environment) gives a portfolio-wide view of AI adoption, with a Refresh Data button to recompute it on demand.</p>
+<h2 id="11-1-summary-statistics">11.1 Summary Statistics</h2>
+<ul>
+<li>Overall AI Adoption Score — average score across all activities</li>
+<li>Overall % Work Done by AI — average percentage across all activities</li>
+<li>Total Hours Saved</li>
+<li>Revenue Generating Activities</li>
+</ul>
+<p>If there is no data yet: “No activities data available. Add some activities to see statistics.”</p>
+<h2 id="11-2-statistical-analysis">11.2 Statistical Analysis</h2>
+<p>Correlation cards showing relationships in the data; if none: “No correlation data available. Add some activities to see statistical analysis.”</p>
+<h2 id="11-3-ai-tools-analysis">11.3 AI Tools Analysis</h2>
+<p>A “Most Beneficial AI Tool” card (hours saved, activities, average work done), an “Individual AI Tool Metrics” table (AI Tool, Activities, Hours Saved, Revenue Activities, Avg Work Done), and an “AI Tools by SDLC Phase” breakdown (“No AI tools used in this phase” where empty).</p>
+<h2 id="11-4-qualitative-benefits-analysis">11.4 Qualitative Benefits Analysis</h2>
+<p>A table of Qualitative Benefit, Frequency, Total Hours Saved, Most Frequent Tool, and Associated Tools.</p>
+<h2 id="11-5-correlation-insights">11.5 Correlation Insights</h2>
+<ul>
+<li>Hours Saved Leaders</li>
+<li>Revenue Generation Leaders</li>
+<li>Most Beneficial to Both (Hours Saved &amp; Revenue Generation)</li>
+<li>Most Impactful Qualitative Benefits</li>
+</ul>
+<h2 id="11-6-key-insights">11.6 Key Insights</h2>
+<p>A summary panel of computed statistics: average hours saved per activity, revenue generation rate, high adoption rate, and total efficiency gain.</p>
+<h1 id="12-data-backup-and-restore">12. Data Backup and Restore</h1>
+<p>The Data Backup page (hidden unless enabled for your environment; intended for administrators) lets you back up all AIMI data to a JSON file, and restore it later.</p>
+<h2 id="12-1-creating-a-backup">12.1 Creating a backup</h2>
+<p>Click Create Backup (label “Creating Backup…” while running). This downloads a single, timestamped JSON file containing all activities, project information, and practice data. On success: “Backup completed successfully! Downloaded {N} documents.” On failure: “Backup failed. Please try again.” The page also shows the date/time and per-collection document counts of the last backup.</p>
+<h2 id="12-2-restoring-from-a-backup">12.2 Restoring from a backup</h2>
+<p>Click Restore from Backup to open the Restore Data from Backup dialog, in three steps:</p>
+<ol>
+<li>Upload Backup File — select a .json backup file. A non-JSON file is rejected: “Please select a valid JSON file.”</li>
+<li>Validation Results — AIMI checks the file's structure and reports errors (e.g. “Invalid backup file: Missing metadata section,” “Invalid backup file: Missing collections section,” “Invalid JSON file: {message}”), warnings (e.g. “Backup date not found in metadata,” “Collection '{name}' has errors: {error},” “Collection '{name}' has no documents or invalid structure,” “Unexpected collections found: {list}”), or success: “File Validation Successful — Found {N} collections with {M} total documents.”</li>
+<li>Select Collections to Restore — choose which of activities, projectInfo, and practiceInfo to restore (all selected by default).</li>
+</ol>
+<div class="note"><span class="note-label">Data safety:</span> Restoring completely clears the selected collections before writing the backup data back in. This cannot be undone — take a fresh backup first if you are unsure.</div>
+<p>Click Start Restore Process (label “Restoring…”). A confirmation or “Restore failed. Please try again.” message follows.</p>
+<h1 id="13-roles-and-permissions">13. Roles and Permissions</h1>
+<p>A summary of what changes between a standard user and an admin, and what happens when a project is marked Not Applicable.</p>
+<h2 id="13-1-admin-only-capabilities">13.1 Admin-only capabilities</h2>
+<ul>
+<li>Set the Financial Year in Project Information.</li>
+<li>Edit and save Accepted Score, Score Reviewed, and Comments in the Review Score dialog (non-admins can only view these, read-only, with a Close button).</li>
+<li>Select multiple activities in a phase and bulk-delete them.</li>
+<li>Delete individual activities (non-admins see a disabled delete icon with the tooltip “Only admin can delete the activity”).</li>
+</ul>
+<h2 id="13-2-effects-of-marking-a-project-not-applicable">13.2 Effects of marking a project Not Applicable</h2>
+<p>When a project's Project Applicable field is set to No, the following are disabled for that project, for every user:</p>
+<ul>
+<li>Add Activity and Import Excel</li>
+<li>Editing or bulk-deleting activities</li>
+<li>Review Score</li>
+<li>Presentation Status</li>
+<li>Every field in AI Adoption Metrics (Section 5)</li>
+</ul>
+<p>The Project Statistics tab shows an informational message instead of computed statistics.</p>
+<h2 id="13-3-unauthenticated-access">13.3 Unauthenticated access</h2>
+<p>Anyone who reaches an AIMI page without an active CSM Platform session sees the Login Required dialog (Section 2.1) rather than any application content.</p>
+<h1 id="14-troubleshooting-and-messages">14. Troubleshooting and Messages</h1>
+<p>This section collects the messages you're most likely to encounter, grouped by area, with plain-language explanations.</p>
+<h2 id="14-1-sign-in-and-session">14.1 Sign-in and session</h2>
+<table><thead><tr><th>Message</th><th>What it means / what to do</th></tr></thead><tbody><tr><td>“Login Required”</td><td>No active CSM Platform session was found. Sign in to the CSM Platform and reopen AIMI from Integrated Apps.</td></tr><tr><td>“Unable to determine which environment (dev/live) you are connected to.”</td><td>AIMI could not confirm DEV vs LIVE. Confirm with your administrator before entering reportable data.</td></tr></tbody></table>
+<h2 id="14-2-project-information-and-ai-adoption-metrics">14.2 Project Information and AI Adoption Metrics</h2>
+<table><thead><tr><th>Message</th><th>What it means / what to do</th></tr></thead><tbody><tr><td>“The value cannot be negative”</td><td>Enter a value of 0 or more for # of People using AI.</td></tr><tr><td>“Number of people using AI cannot be greater than total headcount ({headcount})”</td><td>Reduce the number, or verify the project's Head Count is correct.</td></tr><tr><td>“Comments are mandatory when the project is marked as Not Applicable”</td><td>Enter a reason in the Comments field before saving.</td></tr><tr><td>“You have unsaved changes. Are you sure you want to leave?”</td><td>Browser warning when navigating away with unsaved edits. Save or submit first if you don't want to lose them.</td></tr><tr><td>“You have unsaved changes in your activities. Changing the {field} will cause these changes to be lost…”</td><td>Confirms you want to switch Business Unit / Account / Project / Practice and discard unsaved activity edits.</td></tr></tbody></table>
+<h2 id="14-3-adding-saving-and-submitting-activities">14.3 Adding, saving, and submitting activities</h2>
+<table><thead><tr><th>Message</th><th>What it means / what to do</th></tr></thead><tbody><tr><td>“All activities for this phase have already been added”</td><td>Every activity defined for that phase already has a record. Edit the existing one instead, or pick a different phase.</td></tr><tr><td>“Please configure AI tool details if AI tools are selected”</td><td>Open “Configure AI Tool Details” and complete Access Type (and license count, if Licensed) for every listed tool.</td></tr><tr><td>“% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.”</td><td>Enter a value above 0 in % Work Done by AI, or choose a lower AI Adoption Score.</td></tr><tr><td>“Please add at least one activity before submitting / saving a draft”</td><td>Add at least one activity first.</td></tr><tr><td>“Please select a practice before submitting / saving a draft”</td><td>Choose a Practice in Project Information.</td></tr><tr><td>“No changes to submit / No changes to save”</td><td>Nothing has changed since the last save — there's nothing to do.</td></tr><tr><td>“Please fill in all required project information: {fields}”</td><td>Complete the listed Project Information fields before submitting.</td></tr><tr><td>“Saved locally. We will retry saving automatically.”</td><td>Your change was kept on your device because the server couldn't be reached; AIMI will retry. Don't close the tab until it succeeds.</td></tr></tbody></table>
+<h2 id="14-4-import-excel">14.4 Import Excel</h2>
+<table><thead><tr><th>Message</th><th>What it means / what to do</th></tr></thead><tbody><tr><td>“No activity rows found on sheet “{sheetName}”…”</td><td>The Activity column in your worksheet is empty. Use the downloaded template and fill in the Activity rows.</td></tr><tr><td>“SDLC Phase and Activity are mandatory”</td><td>Fill in both columns for that row.</td></tr><tr><td>“‘{value}’ is not a valid SDLC Phase for the selected practice”</td><td>Use one of the phase names listed on the template's tab for your Practice.</td></tr><tr><td>“‘{value}’ is not a valid Activity for phase ‘{matchedPhase}’”</td><td>Use one of the activity names listed for that phase in the template.</td></tr><tr><td>“Import Validation Failed” dialog</td><td>Lists every row with a problem. Fix the file and re-upload — nothing is imported until every row passes.</td></tr></tbody></table>
+<h2 id="14-5-reports">14.5 Reports</h2>
+<table><thead><tr><th>Message</th><th>What it means / what to do</th></tr></thead><tbody><tr><td>“Please select at least one filter option”</td><td>Choose at least one Business Unit, Account, Project, or Practice.</td></tr><tr><td>“No activities found for the selected filters”</td><td>Broaden your filters — no matching activities exist.</td></tr><tr><td>“Failed to generate report”</td><td>Try again; if it persists, contact your administrator.</td></tr></tbody></table>
+<h2 id="14-6-data-backup-and-restore">14.6 Data Backup and Restore</h2>
+<table><thead><tr><th>Message</th><th>What it means / what to do</th></tr></thead><tbody><tr><td>“Please select a valid JSON file.”</td><td>Only .json backup files can be restored.</td></tr><tr><td>“Invalid backup file: Missing metadata section / Missing collections section”</td><td>The file isn't a valid AIMI backup. Use a file produced by Create Backup.</td></tr><tr><td>“Collection '{name}' has errors / has no documents or invalid structure”</td><td>That part of the backup file is damaged or incomplete — the affected collection may not restore correctly.</td></tr><tr><td>“Unexpected collections found: {list}”</td><td>The file contains data AIMI doesn't recognize; those parts will be ignored.</td></tr><tr><td>“Restore failed. Please try again.”</td><td>Retry; if it persists, contact your administrator before trying again.</td></tr></tbody></table>
+<h1 id="15-glossary">15. Glossary</h1>
+<table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody><tr><td>Practice</td><td>The delivery discipline a project belongs to (e.g. Digital Product Engineering, Security). Determines which SDLC Phases and Activities are available.</td></tr><tr><td>SDLC Phase / Services</td><td>A stage or category of delivery work within a practice (e.g. Development, Testing &amp; QA, Incident Management). “NA” marks a phase as not applicable.</td></tr><tr><td>Activity</td><td>A specific, predefined task or question within a phase where AI usage is assessed, e.g. “AI Used for Requirements Elicitation Analysis.”</td></tr><tr><td>Applicability</td><td>Whether an activity applies to the project: Yes (AI-enabled and in use), No (not currently feasible for AI), Activity NA (out of scope), or Customer NA (excluded per customer requirements).</td></tr><tr><td>AI Adoption Score</td><td>A 0–5 maturity scale per activity: 0 No AI Adopted, 1 Basic Awareness, 2 Initial Implementation, 3 Partial Adoption, 4 Full Adoption, 5 Optimized/Automated.</td></tr><tr><td>Overall Score / Phase Average</td><td>The average AI Adoption Score across all activities in a project, or within one phase; shown as N/A if every activity is non-applicable.</td></tr><tr><td>Accepted Score</td><td>A separate, admin-reviewed score for a project (with a Score Reviewed flag and comment), distinct from the automatically computed Overall Score.</td></tr><tr><td>Project NA (Not Applicable)</td><td>A project-level flag meaning AI maturity tracking does not apply this cycle; requires a comment and disables almost all data entry for the project.</td></tr><tr><td>Draft / Submitted / Unsaved</td><td>Draft: saved but not finalized. Submitted (“Saved” on the card): finalized via Submit Activities. Unsaved: local edits not yet confirmed by Save as Draft or Submit.</td></tr><tr><td>Qualitative Benefits</td><td>Non-numeric benefit categories an activity can claim, such as Improved Quality, Faster Delivery, Reduced Cost, or Enhanced Customer Experience.</td></tr><tr><td>Accelerators Used</td><td>Supporting tools or frameworks used alongside AI tools, e.g. Azure DevOps, Terraform, Kubernetes, SonarQube, Jira.</td></tr><tr><td>AI Tools Used</td><td>The actual AI products or models used for an activity, e.g. ChatGPT, GitHub Copilot, Claude.</td></tr><tr><td>Access Type / License Count / Network Type</td><td>Per-tool configuration: Access Type (Licensed / Not-Licensed), License Count (seats, if Licensed), Network Type (Customer / Neurealm environment).</td></tr><tr><td>RunOps / Engineering / Common Adoption Metrics</td><td>Project-level KPI fields captured once per project: RunOps (ticket auto-resolution, MTTR/MTTD, AI agents, automated workflows), Engineering (cycle-time reduction, test pass rate, defect detection), Common (workforce certification %, efforts saved, FDE penetration).</td></tr><tr><td>Business Unit / Account / Project / CSM / Manager / Business Head</td><td>Organizational hierarchy: Business Unit → Account (client) → Project. CSM and Manager are auto-populated contacts; Business Head is auto-populated per business unit.</td></tr><tr><td>Head Count / # of People using AI</td><td>Head Count is the project's total staff (read-only, from master data); # of People using AI is a user-entered subset that cannot exceed Head Count.</td></tr></tbody></table>
+    </main>
+  </div>
+</body>
+</html>
