@@ -1,16 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { ActivityData } from '../types/activityTypes';
 import {
-  calculateSummaryStatistics,
   calculateAIToolSDLCPhaseCorrelation,
   calculateQualitativeBenefitPracticeCorrelation,
   calculateWorkDoneHoursSavedCorrelation,
   calculateRevenueAdoptionCorrelation,
-  calculateAIToolMetrics,
-  getAIToolsBySDLCPhase,
-  analyzeQualitativeBenefits,
   calculateCorrelationInsights,
 } from '../../../shared/utils/statisticalAnalysisUtils';
+import {
+  getAimiDashboardSummary,
+  getAimiAIToolMetrics,
+  getAimiAIToolsBySDLCPhase,
+  getAimiQualitativeBenefitAnalysis,
+} from '../../../shared/services/aimiAnalyticsService';
 import type {
   SummaryStatistics,
   CorrelationData,
@@ -36,18 +38,33 @@ interface ProjectInfo {
   naComments?: string;
 }
 
+const EMPTY_STATS: SummaryStatistics = {
+  totalActivities: 0,
+  totalHoursSaved: 0,
+  revenueGenerated: 0,
+  highAdoption: 0,
+  overallAIAdoptionScore: 0,
+  overallWorkDoneByAI: 0,
+};
+
+const EMPTY_INSIGHTS: CorrelationInsights = {
+  hoursSavedLeaders: [],
+  revenueGenerationLeaders: [],
+  mostBeneficialToBoth: [],
+  mostImpactfulBenefits: [],
+};
+
+// Summary stats / AI tool metrics / phase-tool grouping / qualitative benefit
+// analysis are server-side aggregations scoped to this project+practice (see
+// aimiAnalyticsService.ts). Correlation analysis has no SQL equivalent, so it
+// keeps running client-side over the `activities` already fetched by the
+// caller (SQL-backed transparently via activityService).
 export const useProjectStatistics = (
   projectInfo?: ProjectInfo,
   activities?: ActivityData[]
 ) => {
-  const [projectStats, setProjectStats] = useState<SummaryStatistics>({
-    totalActivities: 0,
-    totalHoursSaved: 0,
-    revenueGenerated: 0,
-    highAdoption: 0,
-    overallAIAdoptionScore: 0,
-    overallWorkDoneByAI: 0,
-  });
+  const [projectStats, setProjectStats] =
+    useState<SummaryStatistics>(EMPTY_STATS);
   const [correlations, setCorrelations] = useState<CorrelationData[]>([]);
   const [aiToolMetrics, setAIToolMetrics] = useState<AIToolMetrics[]>([]);
   const [sdlcPhaseTools, setSdlcPhaseTools] = useState<SDLCPhaseAITools[]>([]);
@@ -55,12 +72,7 @@ export const useProjectStatistics = (
     QualitativeBenefitAnalysis[]
   >([]);
   const [correlationInsights, setCorrelationInsights] =
-    useState<CorrelationInsights>({
-      hoursSavedLeaders: [],
-      revenueGenerationLeaders: [],
-      mostBeneficialToBoth: [],
-      mostImpactfulBenefits: [],
-    });
+    useState<CorrelationInsights>(EMPTY_INSIGHTS);
   const [isLoading, setIsLoading] = useState(false);
 
   // Use the activities passed from parent (already filtered for the project)
@@ -68,82 +80,86 @@ export const useProjectStatistics = (
     return activities || [];
   }, [activities]);
 
-  // Calculate project-specific statistics
   useEffect(() => {
-    if (!projectInfo || !projectActivities.length || projectInfo.isProjectNA) {
-      setProjectStats({
-        totalActivities: 0,
-        totalHoursSaved: 0,
-        revenueGenerated: 0,
-        highAdoption: 0,
-        overallAIAdoptionScore: 0,
-        overallWorkDoneByAI: 0,
-      });
-      setCorrelations([]);
-      setAIToolMetrics([]);
-      setSdlcPhaseTools([]);
-      setQualitativeBenefits([]);
-      setCorrelationInsights({
-        hoursSavedLeaders: [],
-        revenueGenerationLeaders: [],
-        mostBeneficialToBoth: [],
-        mostImpactfulBenefits: [],
-      });
-      return;
-    }
+    let cancelled = false;
 
-    setIsLoading(true);
+    const load = async () => {
+      if (
+        !projectInfo ||
+        !projectActivities.length ||
+        projectInfo.isProjectNA
+      ) {
+        setProjectStats(EMPTY_STATS);
+        setCorrelations([]);
+        setAIToolMetrics([]);
+        setSdlcPhaseTools([]);
+        setQualitativeBenefits([]);
+        setCorrelationInsights(EMPTY_INSIGHTS);
+        return;
+      }
 
-    try {
-      // Convert ActivityData to ActivityWithProjectInfo for statistical analysis
-      const activitiesWithProjectInfo = projectActivities.map((activity) => ({
-        ...activity,
-        projectId: projectInfo.projectId,
-        businessUnit: projectInfo.businessUnit,
-        businessHead: projectInfo.businessHead,
-        account: projectInfo.account,
-        accountManager: projectInfo.accountManager,
-        project: projectInfo.project,
-        practice: projectInfo.practice,
-        manager: projectInfo.manager,
-        currentPhase: projectInfo.currentPhase,
-      }));
+      setIsLoading(true);
 
-      // Calculate summary statistics for the project
-      const stats = calculateSummaryStatistics(activitiesWithProjectInfo);
-      setProjectStats(stats);
+      try {
+        // Annotate with project-level fields for the client-side correlation math.
+        const activitiesWithProjectInfo = projectActivities.map(
+          (activity) => ({
+            ...activity,
+            projectId: projectInfo.projectId,
+            businessUnit: projectInfo.businessUnit,
+            businessHead: projectInfo.businessHead,
+            account: projectInfo.account,
+            accountManager: projectInfo.accountManager,
+            project: projectInfo.project,
+            practice: projectInfo.practice,
+            manager: projectInfo.manager,
+            currentPhase: projectInfo.currentPhase,
+          })
+        );
 
-      // Calculate correlations for the project
-      const correlationData = [
-        calculateAIToolSDLCPhaseCorrelation(activitiesWithProjectInfo),
-        calculateQualitativeBenefitPracticeCorrelation(
-          activitiesWithProjectInfo
-        ),
-        calculateWorkDoneHoursSavedCorrelation(activitiesWithProjectInfo),
-        calculateRevenueAdoptionCorrelation(activitiesWithProjectInfo),
-      ];
-      setCorrelations(correlationData);
+        const [stats, toolMetrics, phaseTools, benefits] = await Promise.all([
+          getAimiDashboardSummary(projectInfo.projectId, projectInfo.practice),
+          getAimiAIToolMetrics(projectInfo.projectId, projectInfo.practice),
+          getAimiAIToolsBySDLCPhase(
+            projectInfo.projectId,
+            projectInfo.practice
+          ),
+          getAimiQualitativeBenefitAnalysis(
+            projectInfo.projectId,
+            projectInfo.practice
+          ),
+        ]);
 
-      // Calculate AI tool metrics for the project
-      const toolMetrics = calculateAIToolMetrics(activitiesWithProjectInfo);
-      setAIToolMetrics(toolMetrics);
+        if (cancelled) return;
 
-      // Get AI tools by SDLC phase for the project
-      const phaseTools = getAIToolsBySDLCPhase(activitiesWithProjectInfo);
-      setSdlcPhaseTools(phaseTools);
+        setProjectStats(stats);
+        setAIToolMetrics(toolMetrics);
+        setSdlcPhaseTools(phaseTools);
+        setQualitativeBenefits(benefits);
 
-      // Analyze qualitative benefits for the project
-      const benefits = analyzeQualitativeBenefits(activitiesWithProjectInfo);
-      setQualitativeBenefits(benefits);
+        setCorrelations([
+          calculateAIToolSDLCPhaseCorrelation(activitiesWithProjectInfo),
+          calculateQualitativeBenefitPracticeCorrelation(
+            activitiesWithProjectInfo
+          ),
+          calculateWorkDoneHoursSavedCorrelation(activitiesWithProjectInfo),
+          calculateRevenueAdoptionCorrelation(activitiesWithProjectInfo),
+        ]);
+        setCorrelationInsights(
+          calculateCorrelationInsights(activitiesWithProjectInfo)
+        );
+      } catch (error) {
+        console.error('Error calculating project statistics:', error);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
 
-      // Calculate correlation insights for the project
-      const insights = calculateCorrelationInsights(activitiesWithProjectInfo);
-      setCorrelationInsights(insights);
-    } catch (error) {
-      console.error('Error calculating project statistics:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [projectInfo, projectActivities]);
 
   return {
