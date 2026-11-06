@@ -91,6 +91,8 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
     </Compile>
+    <Compile Include="CSP\ViewModels\AimiModels.cs" />
+    <Compile Include="CSP\SP\AimiSpRows.cs" />
     <Compile Include="CSP\SP\KPI_REFERENCES_PRODUCT.cs" />
     <Compile Include="CSP\SP\ContractStatusDetails.cs" />
     <Compile Include="CSP\SP\ActionItemsDetails.cs" />
