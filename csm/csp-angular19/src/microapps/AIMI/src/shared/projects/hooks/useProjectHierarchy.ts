@@ -234,28 +234,12 @@ export const useProjectHierarchy = () => {
     (businessUnit: string): string => {
       if (!businessUnit || loading) return '';
 
-      // The BU Head is stored per project in CSM (the project's BU Head), so one BU can carry
-      // more than one name when a few projects have stale/odd data. Use the name most of the
-      // BU's projects carry instead of whichever project happens to be first, and look projects
-      // up by their business unit rather than by project name (names repeat across BUs).
-      const counts = new Map<string, number>();
-      projectData.forEach((p: ProjectData) => {
-        if (normalizeBusinessUnit(p.businessUnit || 'Other') !== businessUnit) return;
-        const head = (p.buHead ?? '').trim();
-        if (head) counts.set(head, (counts.get(head) ?? 0) + 1);
-      });
-
-      let best = '';
-      let bestCount = 0;
-      counts.forEach((count, head) => {
-        if (count > bestCount) {
-          best = head;
-          bestCount = count;
-        }
-      });
-      return best;
+      // The BU Head is stored per project in CSM, so one BU can carry more than one name when a
+      // few projects have stale/odd data. businessUnitHeads (built once with the hierarchy)
+      // holds the name most of the BU's projects carry.
+      return businessUnitHeads[businessUnit] ?? '';
     },
-    [projectData, loading]
+    [businessUnitHeads, loading]
   );
 
   // Get original project data including headcount

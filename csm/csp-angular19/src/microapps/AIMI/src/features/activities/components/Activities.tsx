@@ -409,9 +409,6 @@ export function Activities() {
           newData.engineerContractTestCasePassRate = '';
           newData.engineerPerformanceDefectsPreRelease = '';
           newData.projectFY = '';
-          newData.acceptedScore = undefined;
-          newData.scoreReviewed = false;
-          newData.acceptedScoreComment = '';
           // CSM is per project (an account can have projects with different CSMs), so it is
           // filled in when the project is selected, not here.
         } else if (field === 'project') {
