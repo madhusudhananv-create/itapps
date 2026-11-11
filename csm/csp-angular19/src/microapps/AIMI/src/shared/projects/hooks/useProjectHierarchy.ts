@@ -37,6 +37,7 @@ const ALLOWED_BUSINESS_UNITS = [
   'India & GCC',
   'AI&ML',
   'Sead',
+  'Internal',
 ];
 
 // DB values may differ in casing (e.g. 'SEAD'); map them to the canonical label
