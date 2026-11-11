@@ -769,9 +769,13 @@ section {
 
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 14px;
   margin-bottom: 18px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 
   @media (max-width: 900px) {
     grid-template-columns: repeat(2, 1fr);
@@ -858,6 +862,13 @@ section {
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
     animation: kpi-num-in 420ms 180ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  // "N - Level" (e.g. "2 - Developing") is longer than a bare number - keep it to one
+  // line instead of wrapping onto a second, shrinking just enough to still fit the tile.
+  .num.maturity-level-num {
+    font-size: 17px;
+    white-space: nowrap;
   }
 
   .lbl {

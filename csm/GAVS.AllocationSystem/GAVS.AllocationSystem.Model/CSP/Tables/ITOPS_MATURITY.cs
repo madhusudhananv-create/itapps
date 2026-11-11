@@ -353,6 +353,18 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public DateTime? LAST_MANAGEMENT_UPDATE { get; set; }
         public DateTime? CLOSED_DATE { get; set; }
+
+        // Remediation tracking (V2_36) - OWNER_EMP_ID defaults to ASSESSEE_EMP_ID but can
+        // be reassigned within the project's staffed team; ACTUAL_CLOSURE_DATE is the
+        // owner-reported completion date, distinct from CLOSED_DATE (system timestamp).
+        [Column(TypeName = "varchar"), MaxLength(50)]
+        public string OWNER_EMP_ID { get; set; }
+
+        [Column(TypeName = "varchar"), MaxLength(10)]
+        public string PRIORITY { get; set; } // High | Medium | Low
+
+        [Column(TypeName = "date")]
+        public DateTime? ACTUAL_CLOSURE_DATE { get; set; }
     }
 
     // Free-form activity/audit trail on a finding (comment, escalation, delegation, retarget)

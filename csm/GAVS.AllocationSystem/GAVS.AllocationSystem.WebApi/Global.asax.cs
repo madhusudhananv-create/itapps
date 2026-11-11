@@ -34,5 +34,21 @@ namespace GAVS.AllocationSystem.WebApi
         //        HttpContext.Current.Response.Flush();
         //    }
         //}
+
+        // VAPT-flagged: Information Disclosure via Banner Grabbing. The "Server" header
+        // (e.g. "Microsoft-IIS/10.0") is owned by IIS itself and can't be removed via
+        // Web.config's <httpProtocol><customHeaders> (that only strips headers ASP.NET
+        // itself adds, like X-Powered-By). PreSendRequestHeaders is the one point late
+        // enough in the pipeline that the header collection is mutable and IIS hasn't
+        // already flushed it.
+        protected void Application_PreSendRequestHeaders(object sender, EventArgs e)
+        {
+            var response = HttpContext.Current?.Response;
+            if (response == null) return;
+            response.Headers.Remove("Server");
+            response.Headers.Remove("X-AspNet-Version");
+            response.Headers.Remove("X-AspNetMvc-Version");
+            response.Headers.Remove("X-Powered-By");
+        }
     }
 }

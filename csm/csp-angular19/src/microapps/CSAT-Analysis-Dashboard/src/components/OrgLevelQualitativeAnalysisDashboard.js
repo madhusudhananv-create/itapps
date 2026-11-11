@@ -34,23 +34,22 @@ const Title = styled.h1`
 `;
 
 const BackButton = styled.button`
-  background: transparent;
-  color: #16233D;
-  border: 1px solid #e2e8f0;
-  padding: 0.4rem 0.9rem;
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  color: white;
+  border: none;
   border-radius: 6px;
+  padding: 0.4rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   gap: 0.4rem;
 
   &:hover {
-    border-color: #7c3aed;
-    background: #7c3aed;
-    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
   }
 `;
 
@@ -2172,7 +2171,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
 
       // Define columns
       worksheet.columns = [
-        { header: '#', key: 'id', width: 10 },
+        { header: 'Sr. No', key: 'id', width: 10 },
         { header: 'Business Unit', key: 'businessUnit', width: 20 },
         { header: 'Customer Name', key: 'customerName', width: 25 },
         { header: 'Respondent Name', key: 'respondentName', width: 25 },
@@ -5356,7 +5355,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
               <Table>
                 <thead>
                   <tr>
-                    <TableHeader>#</TableHeader>
+                    <TableHeader>Sr. No</TableHeader>
                     <TableHeader>Business Unit</TableHeader>
                     <TableHeader>Customer Name</TableHeader>
                     <TableHeader>Respondent Name</TableHeader>

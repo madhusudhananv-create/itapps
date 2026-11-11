@@ -16,7 +16,23 @@ import {
   parseExcelDateToMMDDYYYY,
   yearQuarterMatchesCycle,
 } from '../utils/acsatExcelRowUtils';
-import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, normalizeTop10AccountName } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, normalizeTop10AccountName, computeEffectiveTop10AccountNames, isEffectiveTop10AccountName } from '../utils/top10Accounts';
+
+// Loose match against the effective-10 Set: exact normalized match first, then substring-both-ways
+// (same convention as matchesTop10AccountName elsewhere in this codebase). Needed because
+// effectiveTop10AccountNames is built from the first-sheet (ratings) customer name, while
+// otherAccountTotals checks the SECOND sheet's "CUSTOMER NAME" column — minor punctuation/suffix
+// differences between the two sheets (e.g. "Ooma Inc." vs "Ooma Inc") would otherwise make a
+// genuine Top10 account fail an exact match and get miscounted into Other Accounts.
+const isEffectiveTop10AccountNameLoose = (name, effectiveSet) => {
+  if (!name || !effectiveSet || effectiveSet.size === 0) return false;
+  const normalized = normalizeTop10AccountName(name);
+  if (effectiveSet.has(normalized)) return true;
+  for (const effName of effectiveSet) {
+    if (normalized.includes(effName) || effName.includes(normalized)) return true;
+  }
+  return false;
+};
 
 const DashboardContainer = styled.div`
   padding: 2rem;
@@ -45,25 +61,22 @@ const Title = styled.h1`
 `;
 
 const BackButton = styled.button`
-  background: transparent;
-  color: #16233D;
-  border: 1px solid #e2e8f0;
-  padding: 0.4rem 0.9rem;
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  color: white;
+  border: none;
   border-radius: 6px;
+  padding: 0.4rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 
   &:hover {
-    border-color: #7c3aed;
-    background: #7c3aed;
-    color: white;
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
   }
 `;
 
@@ -1122,6 +1135,9 @@ const addSatisfiedTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) =
   if (fileData.otherAccountsRow) {
     appendTop10TrendSummaryRowToSheet(fileData.otherAccountsRow, 'FFFED7AA');
   }
+  if (fileData.overallRow) {
+    appendTop10TrendSummaryRowToSheet(fileData.overallRow, 'FFE4DFEC');
+  }
 
   trendSheet.columns = [
     { width: 10 },
@@ -1875,22 +1891,41 @@ const buildTop10SatisfiedCustomersTrendFromFile = (file, { top10AccountNames = [
 
   const grandTotal = rows.length > 0
     ? {
+        ...mapAccountWiseTrendGroupToRow({ perspectives: top10PerspectiveStats }, perspectives),
         businessUnit: '',
         customerName: 'Top 10 Accounts',
         polled: rows.reduce((sum, r) => sum + (r.polled || 0), 0),
         responded: rows.reduce((sum, r) => sum + (r.responded || 0), 0),
-        ...mapAccountWiseTrendGroupToRow({ perspectives: top10PerspectiveStats }, perspectives),
       }
     : null;
 
   const otherSentReceived = aggregateOtherAccountsSentReceivedFromFile(file);
   const otherAccountsRow = grandTotal
     ? {
+        ...mapAccountWiseTrendGroupToRow({ perspectives: otherPerspectiveStats }, perspectives),
         businessUnit: '',
         customerName: 'Other Accounts',
         polled: otherSentReceived.polled,
         responded: otherSentReceived.responded,
-        ...mapAccountWiseTrendGroupToRow({ perspectives: otherPerspectiveStats }, perspectives),
+      }
+    : null;
+
+  const combinedPerspectiveStats = {};
+  perspectives.forEach((p) => {
+    const top10St = top10PerspectiveStats[p] || { satisfied: 0, input: 0 };
+    const otherSt = otherPerspectiveStats[p] || { satisfied: 0, input: 0 };
+    combinedPerspectiveStats[p] = {
+      satisfied: top10St.satisfied + otherSt.satisfied,
+      input: top10St.input + otherSt.input,
+    };
+  });
+  const overallRow = grandTotal
+    ? {
+        ...mapAccountWiseTrendGroupToRow({ perspectives: combinedPerspectiveStats }, perspectives),
+        businessUnit: '',
+        customerName: 'Overall',
+        polled: (grandTotal.polled || 0) + (otherAccountsRow?.polled || 0),
+        responded: (grandTotal.responded || 0) + (otherAccountsRow?.responded || 0),
       }
     : null;
 
@@ -1900,6 +1935,7 @@ const buildTop10SatisfiedCustomersTrendFromFile = (file, { top10AccountNames = [
     perspectives,
     grandTotal,
     otherAccountsRow,
+    overallRow,
     hasData: rows.length > 0,
     error: rows.length === 0
       ? 'No Top 10 Criteria rows found in CSAT received Report (QUESTION_CATEGORY = Criteria, TYPE OF ACCOUNT = Top 10).'
@@ -2554,9 +2590,33 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     // Calculate Top 10 summary if showTop10 is true
     let top10Summary = null;
     let finalResult = result;
+    let effectiveTop10AccountNamesSet = null;
+    let effectiveTop10CustomerIdsSet = null;
     if (showTop10) {
       console.log('Sorting Top 10 accounts by predefined order:', top10AccountNames);
-      
+
+      // Restrict displayed rows to the "effective 10" roster (the 10 survey slots, with any
+      // zero-Polled slot backfilled per TOP10_BACKFILL_FALLBACK_ORDER) — not the full 15-account
+      // roster that TYPE OF ACCOUNT = 'Top 10' matches. Any extra roster account rolls into
+      // Other Accounts instead of appearing as its own row (see otherAccountTotals below).
+      const polledByAccountName = {};
+      result.forEach((group) => {
+        const name = (group.customerName || '').toString().trim();
+        if (!name) return;
+        const key = normalizeTop10AccountName(name);
+        polledByAccountName[key] = (polledByAccountName[key] || 0) + (group.cssSentCount || 0);
+      });
+      effectiveTop10AccountNamesSet = computeEffectiveTop10AccountNames(polledByAccountName);
+      finalResult = result.filter((group) => isEffectiveTop10AccountName(group.customerName, effectiveTop10AccountNamesSet));
+
+      // `result` is grouped from the first/ratings sheet, but otherAccountTotals below scans the
+      // SECOND sheet, whose "CUSTOMER NAME" spelling can differ (abbreviations, punctuation) from
+      // the first sheet enough that name matching fails entirely. Carry over the customerId of each
+      // displayed (effective-10) row instead — far more reliable for cross-sheet matching than name.
+      effectiveTop10CustomerIdsSet = new Set(
+        finalResult.map((group) => (group.customerId != null ? String(group.customerId).trim() : '')).filter(Boolean)
+      );
+
       // For Top 10 view, filtering is already done during grouping from second sheet
       // Just sort by predefined order
       finalResult.sort((a, b) => {
@@ -2650,8 +2710,13 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     }
     // Top 10: already sorted above, so no additional sorting needed
 
-    return { data: ordered, summary: summaryData, top10Summary };
+    return { data: ordered, summary: summaryData, top10Summary, effectiveTop10AccountNames: effectiveTop10AccountNamesSet, effectiveTop10CustomerIds: effectiveTop10CustomerIdsSet };
   }, [uploadedData, secondSheetData, groupByBU, searchTerm, acsatCycleStartDateFormatted, acsatCycle, showTop10]);
+
+  // The "effective 10" roster Set actually displayed as individual rows in the Top 10 view (see
+  // processedData above) — used by otherAccountTotals so Top 10 Accounts + Other Accounts = Overall.
+  const effectiveTop10AccountNames = processedData?.effectiveTop10AccountNames || null;
+  const effectiveTop10CustomerIds = processedData?.effectiveTop10CustomerIds || null;
 
   // Sort data based on sort configuration
   const sortedData = useMemo(() => {
@@ -2798,29 +2863,25 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
 
   // Calculate "Other Account" totals for Top 10 view (TYPE OF ACCOUNT != 'Top 10')
   const otherAccountTotals = useMemo(() => {
-    if (!showTop10 || !uploadedData) return null;
+    if (!showTop10 || !uploadedData || !effectiveTop10AccountNames) return null;
 
-    // Build sets of Top 10 IDs and Names from first sheet
-    const top10Ids = new Set();
-    const top10Names = new Set();
-    uploadedData.forEach(row => {
-      const typeOfAccount = row['TYPE OF ACCOUNT'] || row['TYPE_OF_ACCOUNT'] || row['Type of Account'] || row['type_of_account'];
-      const customerId = row['CUSTOMER_ID'] || row['CUST_ID'] || row['Customer ID'];
-      const customerName = row['CUSTOMER NAME'] || row['CUSTOMER_NAME'] || row['Customer Name'];
-      if (typeOfAccount && typeOfAccount.toString().trim() === 'Top 10') {
-        if (customerId) top10Ids.add(customerId);
-        if (customerName) top10Names.add(customerName);
-      }
-    });
+    // A row is one of the displayed Top10 rows if its customerId is in the effective-10 id set
+    // (reliable across sheets) or, failing that, its customer name loosely matches the effective-10
+    // roster names. Id-first because the second sheet's "CUSTOMER NAME" spelling can differ from the
+    // first/ratings sheet enough that name matching alone misses genuine Top10 rows.
+    const isDisplayedTop10Row = (customerId, customerName) => {
+      const idKey = customerId != null ? String(customerId).trim() : '';
+      if (idKey && effectiveTop10CustomerIds && effectiveTop10CustomerIds.has(idKey)) return true;
+      return !!(customerName && isEffectiveTop10AccountNameLoose(customerName, effectiveTop10AccountNames));
+    };
 
     // Grand total received count for Other Accounts from second sheet
     let otherReceived = 0;
     let otherSent = 0;
     if (secondSheetData && secondSheetData.length > 0) {
       secondSheetData.forEach(row => {
-        const rowCustomerId = row['CUSTOMER_ID'] || row['CUST_ID'];
+        const rowCustomerId = row['CUSTOMER_ID'] || row['CUST_ID'] || row['Customer ID'];
         const rowCustomerName = row['CUSTOMER NAME'] || row['CUSTOMER_NAME'] || row['Customer Name'];
-        const rowTypeOfAccount = row['TYPE OF ACCOUNT'] || row['TYPE_OF_ACCOUNT'] || row['Type of Account'] || row['type_of_account'];
         const sentDate = getCsatSentDateFromRow(row);
         const receivedDate = getCsatReceivedDateFromRow(row);
         const yearQuarter = getYearQuarterFromRow(row);
@@ -2831,16 +2892,11 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
         const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
         const isCompletedStatus = statusVal === 'completed';
 
-        // Determine if this row is an Other Account row (not Top 10)
-        let isOtherAccount = true;
-        if (rowTypeOfAccount !== undefined && rowTypeOfAccount !== null && rowTypeOfAccount !== '') {
-          isOtherAccount = rowTypeOfAccount.toString().trim() !== 'Top 10';
-        } else {
-          // Fallback: if present in top10 ids/names, it's not Other
-          if ((rowCustomerId && top10Ids.has(rowCustomerId)) || (rowCustomerName && top10Names.has(rowCustomerName))) {
-            isOtherAccount = false;
-          }
-        }
+        // "Other Account" = NOT one of the accounts actually displayed in the Top 10 Accounts table
+        // (the effective-10 roster). Any Top10-roster account that isn't in the displayed effective-10
+        // (e.g. an unused backfill candidate) rolls into Other Accounts here, so displayed Top 10 rows
+        // always sum exactly to Top 10 Accounts, and Other Accounts + Top 10 Accounts = Overall.
+        const isOtherAccount = !isDisplayedTop10Row(rowCustomerId, rowCustomerName);
 
         if (matchesYearQuarter && isOtherAccount) {
           if (hasValidSentDate) otherSent++;
@@ -2855,8 +2911,9 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
 
     uploadedData.forEach((row) => {
       const rowPerspective = getPerspectiveFromRow(row);
-      const rowTypeOfAccount = row['TYPE OF ACCOUNT'] || row['TYPE_OF_ACCOUNT'] || row['Type of Account'] || row['type_of_account'];
-      const isOther = rowTypeOfAccount ? rowTypeOfAccount.toString().trim() !== 'Top 10' : true;
+      const rowCustomerId = row['CUSTOMER_ID'] || row['CUST_ID'] || row['Customer ID'];
+      const rowCustomerName = row['CUSTOMER NAME'] || row['CUSTOMER_NAME'] || row['Customer Name'];
+      const isOther = !isDisplayedTop10Row(rowCustomerId, rowCustomerName);
 
       if (!isOther) return;
       if (!targetPerspectives.includes(rowPerspective)) return;
@@ -2885,7 +2942,34 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
       perspectives,
       perspectiveInputTotals: perspectiveInputCounts,
     };
-  }, [showTop10, uploadedData, secondSheetData, acsatCycle, isDateOnOrAfterCsatStart]);
+  }, [showTop10, uploadedData, secondSheetData, acsatCycle, isDateOnOrAfterCsatStart, effectiveTop10AccountNames, effectiveTop10CustomerIds]);
+
+  // Combined "Overall" totals (Top 10 Accounts + Other Accounts) for Top 10 view
+  const overallTotals = useMemo(() => {
+    if (!showTop10 || !grandTotals || !otherAccountTotals) return null;
+
+    const targetPerspectives = ACSAT_SATISFIED_TARGET_PERSPECTIVES;
+    const perspectives = {};
+    const perspectiveInputTotals = {};
+
+    targetPerspectives.forEach((p) => {
+      const combinedInputTotal = (grandTotals.perspectiveInputTotals?.[p] || 0) + (otherAccountTotals.perspectiveInputTotals?.[p] || 0);
+      const combinedSatisfiedCount =
+        Math.round(((grandTotals.perspectives?.[p] || 0) / 100) * (grandTotals.perspectiveInputTotals?.[p] || 0)) +
+        Math.round(((otherAccountTotals.perspectives?.[p] || 0) / 100) * (otherAccountTotals.perspectiveInputTotals?.[p] || 0));
+      perspectiveInputTotals[p] = combinedInputTotal;
+      perspectives[p] = combinedInputTotal > 0
+        ? Math.round((combinedSatisfiedCount / combinedInputTotal) * 10000) / 100
+        : 0;
+    });
+
+    return {
+      cssSentCount: grandTotals.cssSentCount + otherAccountTotals.cssSentCount,
+      cssReceivedCount: grandTotals.cssReceivedCount + otherAccountTotals.cssReceivedCount,
+      perspectives,
+      perspectiveInputTotals,
+    };
+  }, [showTop10, grandTotals, otherAccountTotals]);
 
   const isAccountWiseSatisfiedView = !groupByBU && !showTop10;
   const isTop10SatisfiedView = !groupByBU && showTop10;
@@ -3130,6 +3214,17 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     const current = parseSatisfiedTrendPercent(otherAccountTotals.perspectives?.[perspective]);
     const trend = parseSatisfiedTrendPercent(
       top10MainTrendSource.otherAccountsRow.perspectivePercentages?.[perspective]
+    );
+    return formatSatisfiedPerspectiveTrendDiff(current, trend);
+  };
+
+  const getOverallTrendDiffDisplay = (perspective) => {
+    if (!top10MainTrendSource?.overallRow || !overallTotals) {
+      return { diffText: '-', arrow: '', diffColor: '#6b7280', arrowColor: '#6b7280', excelColor: 'FF6B7280' };
+    }
+    const current = parseSatisfiedTrendPercent(overallTotals.perspectives?.[perspective]);
+    const trend = parseSatisfiedTrendPercent(
+      top10MainTrendSource.overallRow.perspectivePercentages?.[perspective]
     );
     return formatSatisfiedPerspectiveTrendDiff(current, trend);
   };
@@ -3511,9 +3606,9 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             ...(groupByBU ? [] : ['-']),
             grandTotals.cssSentCount,
             grandTotals.cssReceivedCount,
-            `${grandTotals.perspectives['Meeting Delivery Commitments']}%`,
-            `${grandTotals.perspectives['Customer Engagement and Relationship']}%`,
-            `${grandTotals.perspectives['Partner adding value to Customer Business']}%`,
+            `${(grandTotals.perspectives['Meeting Delivery Commitments'] ?? 0).toFixed(2)}%`,
+            `${(grandTotals.perspectives['Customer Engagement and Relationship'] ?? 0).toFixed(2)}%`,
+            `${(grandTotals.perspectives['Partner adding value to Customer Business'] ?? 0).toFixed(2)}%`,
             ...(showMainTrendColumns
               ? ACSAT_SATISFIED_TARGET_PERSPECTIVES.map((p) => {
                   const display = getMainGrandTotalTrendDiffDisplay(p);
@@ -3659,9 +3754,9 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
               ...(groupByBU ? [] : ['-']),
               otherAccountTotals.cssSentCount,
               otherAccountTotals.cssReceivedCount,
-              `${otherAccountTotals.perspectives['Meeting Delivery Commitments']}%`,
-              `${otherAccountTotals.perspectives['Customer Engagement and Relationship']}%`,
-              `${otherAccountTotals.perspectives['Partner adding value to Customer Business']}%`,
+              `${(otherAccountTotals.perspectives['Meeting Delivery Commitments'] ?? 0).toFixed(2)}%`,
+              `${(otherAccountTotals.perspectives['Customer Engagement and Relationship'] ?? 0).toFixed(2)}%`,
+              `${(otherAccountTotals.perspectives['Partner adding value to Customer Business'] ?? 0).toFixed(2)}%`,
               ...(showTop10MainTrendColumns
                 ? ACSAT_SATISFIED_TARGET_PERSPECTIVES.map((p) => {
                     const display = getTop10OtherAccountsTrendDiffDisplay(p);
@@ -3770,6 +3865,83 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
               });
             }
             otherRow.height = 60;
+          }
+
+          // Add Overall row (Top 10 + Other Accounts, only for Top 10 view)
+          if (showTop10 && overallTotals) {
+            const overallRowValues = [
+              '',
+              'Overall',
+              ...(groupByBU ? [] : ['-']),
+              overallTotals.cssSentCount,
+              overallTotals.cssReceivedCount,
+              `${(overallTotals.perspectives['Meeting Delivery Commitments'] ?? 0).toFixed(2)}%`,
+              `${(overallTotals.perspectives['Customer Engagement and Relationship'] ?? 0).toFixed(2)}%`,
+              `${(overallTotals.perspectives['Partner adding value to Customer Business'] ?? 0).toFixed(2)}%`,
+              ...(showTop10MainTrendColumns
+                ? ACSAT_SATISFIED_TARGET_PERSPECTIVES.map((p) => {
+                    const display = getOverallTrendDiffDisplay(p);
+                    return display.excelValue || display.diffText;
+                  })
+                : []),
+            ];
+            const overallExcelRow = worksheet.addRow(overallRowValues);
+            overallExcelRow.eachCell((cell, colNumber) => {
+              cell.font = { bold: true, color: { argb: 'FF000000' } };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE4DFEC' } };
+
+              const isNumericColumn = colNumber > (groupByBU ? 2 : 3);
+
+              if (isNumericColumn && colNumber <= (groupByBU ? 5 : 6)) {
+                cell.numFmt = '0';
+              }
+
+              cell.alignment = {
+                horizontal: isNumericColumn ? 'center' : 'left',
+                vertical: 'middle',
+                wrapText: !isNumericColumn,
+                indent: !isNumericColumn ? 1 : 0,
+                readingOrder: 'left-to-right'
+              };
+              cell.border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } }
+              };
+            });
+
+            const percentageColumnIndicesOverall = groupByBU ? [5, 6, 7] : [6, 7, 8];
+            const perspectivesListOverall = ['Meeting Delivery Commitments', 'Customer Engagement and Relationship', 'Partner adding value to Customer Business'];
+            perspectivesListOverall.forEach((perspective, index) => {
+              const cellIndex = percentageColumnIndicesOverall[index];
+              const cell = overallExcelRow.getCell(cellIndex);
+
+              cell.alignment = {
+                horizontal: 'center',
+                vertical: 'middle',
+                wrapText: false,
+                indent: 0,
+                readingOrder: 'left-to-right'
+              };
+            });
+
+            if (showTop10MainTrendColumns) {
+              const trendStartColOverall = groupByBU ? 8 : 9;
+              ACSAT_SATISFIED_TARGET_PERSPECTIVES.forEach((perspective, trendIndex) => {
+                const cell = overallExcelRow.getCell(trendStartColOverall + trendIndex);
+                const display = getOverallTrendDiffDisplay(perspective);
+                applySatisfiedTrendDiffExcelCellStyle(cell, display);
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE4DFEC' } };
+                cell.border = {
+                  top: { style: 'thin', color: { argb: 'FF000000' } },
+                  left: { style: 'thin', color: { argb: 'FF000000' } },
+                  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                  right: { style: 'thin', color: { argb: 'FF000000' } },
+                };
+              });
+            }
+            overallExcelRow.height = 60;
           }
         }
 
@@ -4578,14 +4750,14 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
                 {!groupByBU && <TableCell style={{ fontWeight: 'bold', color: '#000000' }}>-</TableCell>}
                 <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{grandTotals.cssSentCount}</TableCell>
                 <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{grandTotals.cssReceivedCount}</TableCell>
-                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Meeting Delivery Commitments']} responded={grandTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
-                  {grandTotals.perspectives['Meeting Delivery Commitments']}%
+                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Meeting Delivery Commitments']} responded={grandTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', }}>
+                  {(grandTotals.perspectives['Meeting Delivery Commitments'] ?? 0).toFixed(2)}%
                 </TableCell>
-                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Customer Engagement and Relationship']} responded={grandTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
-                  {grandTotals.perspectives['Customer Engagement and Relationship']}%
+                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Customer Engagement and Relationship']} responded={grandTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', }}>
+                  {(grandTotals.perspectives['Customer Engagement and Relationship'] ?? 0).toFixed(2)}%
                 </TableCell>
-                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Partner adding value to Customer Business']} responded={grandTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
-                  {grandTotals.perspectives['Partner adding value to Customer Business']}%
+                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Partner adding value to Customer Business']} responded={grandTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', }}>
+                  {(grandTotals.perspectives['Partner adding value to Customer Business'] ?? 0).toFixed(2)}%
                 </TableCell>
                 {showMainTrendColumns &&
                   ACSAT_SATISFIED_TARGET_PERSPECTIVES.map((perspective) => {
@@ -4614,14 +4786,14 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             {!groupByBU && <TableCell style={{ fontWeight: 'bold', color: '#000000' }}>-</TableCell>}
             <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{otherAccountTotals.cssSentCount}</TableCell>
             <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{otherAccountTotals.cssReceivedCount}</TableCell>
-            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Meeting Delivery Commitments']} responded={otherAccountTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
-              {otherAccountTotals.perspectives['Meeting Delivery Commitments']}%
+            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Meeting Delivery Commitments']} responded={otherAccountTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', }}>
+              {(otherAccountTotals.perspectives['Meeting Delivery Commitments'] ?? 0).toFixed(2)}%
             </TableCell>
-            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Customer Engagement and Relationship']} responded={otherAccountTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
-              {otherAccountTotals.perspectives['Customer Engagement and Relationship']}%
+            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Customer Engagement and Relationship']} responded={otherAccountTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', }}>
+              {(otherAccountTotals.perspectives['Customer Engagement and Relationship'] ?? 0).toFixed(2)}%
             </TableCell>
-            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Partner adding value to Customer Business']} responded={otherAccountTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
-              {otherAccountTotals.perspectives['Partner adding value to Customer Business']}%
+            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Partner adding value to Customer Business']} responded={otherAccountTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', }}>
+              {(otherAccountTotals.perspectives['Partner adding value to Customer Business'] ?? 0).toFixed(2)}%
             </TableCell>
             {showTop10MainTrendColumns &&
               ACSAT_SATISFIED_TARGET_PERSPECTIVES.map((perspective) => {
@@ -4638,6 +4810,38 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
               })}
               </TableRow>
             )}
+        {/* Overall Row (Top 10 + Other Accounts) - only for Top 10 view */}
+        {showTop10 && overallTotals && (
+          <TableRow style={{ backgroundColor: '#E4DFEC', fontWeight: 'bold', borderTop: '2px solid #8064A2' }}>
+            <TableCell isFirstColumn style={{ fontWeight: 'bold', color: '#000000' }}></TableCell>
+            <TableCell style={{ fontWeight: 'bold', color: '#000000' }}>Overall</TableCell>
+            {!groupByBU && <TableCell style={{ fontWeight: 'bold', color: '#000000' }}>-</TableCell>}
+            <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{overallTotals.cssSentCount}</TableCell>
+            <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{overallTotals.cssReceivedCount}</TableCell>
+            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Meeting Delivery Commitments']} responded={overallTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', }}>
+              {(overallTotals.perspectives['Meeting Delivery Commitments'] ?? 0).toFixed(2)}%
+            </TableCell>
+            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Customer Engagement and Relationship']} responded={overallTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', }}>
+              {(overallTotals.perspectives['Customer Engagement and Relationship'] ?? 0).toFixed(2)}%
+            </TableCell>
+            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Partner adding value to Customer Business']} responded={overallTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', }}>
+              {(overallTotals.perspectives['Partner adding value to Customer Business'] ?? 0).toFixed(2)}%
+            </TableCell>
+            {showTop10MainTrendColumns &&
+              ACSAT_SATISFIED_TARGET_PERSPECTIVES.map((perspective) => {
+                const display = getOverallTrendDiffDisplay(perspective);
+                return (
+                  <TableCell
+                    key={`overall-trend-${perspective}`}
+                    isNumeric
+                    style={{ textAlign: 'center', fontWeight: 'bold', background: '#E4DFEC' }}
+                  >
+                    {renderSatisfiedTrendDiffContent(display)}
+                  </TableCell>
+                );
+              })}
+          </TableRow>
+        )}
             {showTop10 && notPolledTop10Caption && (
               <TableRow>
                 <TableCell
@@ -5026,6 +5230,33 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
                                   style={{ fontWeight: 'bold' }}
                                 >
                                   {`${fileData.otherAccountsRow.perspectivePercentages?.[perspective] || '0.00'}%`}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          )}
+                          {fileData.overallRow && (
+                            <TableRow style={{ backgroundColor: '#E4DFEC', fontWeight: 'bold', borderTop: '2px solid #8064A2' }}>
+                              <TableCell isFirstColumn></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell style={{ fontWeight: 'bold' }}>
+                                {fileData.overallRow.customerName || 'Overall'}
+                              </TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>
+                                {fileData.overallRow.polled ?? 0}
+                              </TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>
+                                {fileData.overallRow.responded ?? 0}
+                              </TableCell>
+                              {(fileData.perspectives || ACSAT_SATISFIED_TARGET_PERSPECTIVES).map((perspective) => (
+                                <TableCell
+                                  key={`top10-overall-${perspective}`}
+                                  isPercentage
+                                  isNumeric
+                                  value={fileData.overallRow.perspectivePercentages?.[perspective] || '0.00'}
+                                  responded={fileData.overallRow.perspectiveInputCounts?.[perspective] || 0}
+                                  style={{ fontWeight: 'bold' }}
+                                >
+                                  {`${fileData.overallRow.perspectivePercentages?.[perspective] || '0.00'}%`}
                                 </TableCell>
                               ))}
                             </TableRow>

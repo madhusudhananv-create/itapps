@@ -592,6 +592,11 @@ $soft-slate: #f1f5f9;
   margin-right: 4px;
 }
 
+// In the footer note the * sits inside brackets, "(*)", so it needs no gap after it
+.footer-info .required {
+  margin-right: 0;
+}
+
 // ============================================
 // Tooltip Styling
 // ============================================

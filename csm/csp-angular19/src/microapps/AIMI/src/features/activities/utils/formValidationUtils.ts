@@ -12,6 +12,14 @@ export const isNotApplicable = (applicability: string): boolean => {
   );
 };
 
+// Comments explain why an activity is not applicable, so they are mandatory for these two
+export const requiresComments = (applicability: string): boolean => {
+  return applicability === 'Activity NA' || applicability === 'Customer NA';
+};
+
+export const COMMENTS_REQUIRED_MESSAGE =
+  'Comments are mandatory when Applicability is Activity NA or Customer NA';
+
 export const isNoAIAdoption = (aiAdoptionScore: string): boolean => {
   return aiAdoptionScore === '0';
 };
@@ -31,7 +39,12 @@ export const validateRequiredFields = (formData: ActivityFormData): boolean => {
     return basicFieldsValid && !!formData.aiAdoptionScore;
   }
 
-  // When not applicable, only basic fields are required
+  // Activity NA / Customer NA also need a comment saying why
+  if (requiresComments(formData.applicability) && !formData.comments?.trim()) {
+    return false;
+  }
+
+  // Otherwise only the basic fields are required
   return basicFieldsValid;
 };
 
@@ -89,6 +102,13 @@ export const getActivityValidationErrors = (
   if (!activity.applicability) {
     errors.push('Applicability is required');
     return errors;
+  }
+
+  if (
+    requiresComments(activity.applicability) &&
+    !activity.comments?.trim()
+  ) {
+    errors.push(COMMENTS_REQUIRED_MESSAGE);
   }
 
   if (!isApplicable(activity.applicability)) return errors;

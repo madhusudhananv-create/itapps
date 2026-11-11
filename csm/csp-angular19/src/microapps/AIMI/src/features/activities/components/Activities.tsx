@@ -187,7 +187,6 @@ export function Activities() {
     getAccounts,
     getProjects,
     getManagerForProject,
-    getCSMForAccount,
     getBUHeadForBusinessUnit,
     getProjectInfo,
     getOriginalProjectData,
@@ -305,21 +304,19 @@ export function Activities() {
 
   const handleActivitiesSubmit = useCallback(
     async (activities: ActivityData[]) => {
-      try {
-        // The project manager is copied on the "Activities submitted" mail
-        const projectData = getOriginalProjectData(
-          projectInfoFormData.businessUnit,
-          projectInfoFormData.account,
-          projectInfoFormData.project
-        );
-        await submitActivities(
-          activities,
-          projectInfoFormData,
-          markActivitiesAsSaved,
-          [projectData?.pmMailId ?? '']
-        );
-      } catch (error) {
-        console.error('Error submitting activities:', error);
+      // submitActivities reports an API failure through its result rather than throwing, so
+      // pass it on: ManageActivities then shows the error toast and keeps the activities
+      // flagged as unsaved, instead of the failed submit passing silently.
+      const result = await submitActivities(
+        activities,
+        projectInfoFormData,
+        markActivitiesAsSaved
+      );
+      if (!result.success) {
+        console.error('Error submitting activities:', result.error);
+        throw result.error instanceof Error
+          ? result.error
+          : new Error('Submitting activities failed');
       }
     },
     [
@@ -416,11 +413,8 @@ export function Activities() {
           newData.engineerContractTestCasePassRate = '';
           newData.engineerPerformanceDefectsPreRelease = '';
           newData.projectFY = '';
-          // Auto-populate account manager when account is selected
-          if (value) {
-            const csm = getCSMForAccount(newData.businessUnit, value as string);
-            newData.accountManager = csm;
-          }
+          // CSM is per project (an account can have projects with different CSMs), so it is
+          // filled in when the project is selected, not here.
         } else if (field === 'project') {
           // Auto-populate manager and projectId
           const manager = getManagerForProject(
@@ -437,6 +431,7 @@ export function Activities() {
             newData.project
           );
           newData.projectId = projectInfo?.projectId ?? '';
+          newData.accountManager = projectInfo?.csm ?? '';
 
           // Get original project data to set headcount
           const originalProjectData = getOriginalProjectData(
@@ -478,7 +473,6 @@ export function Activities() {
     },
     [
       getBUHeadForBusinessUnit,
-      getCSMForAccount,
       getManagerForProject,
       getProjectInfo,
       getOriginalProjectData,

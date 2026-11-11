@@ -34,6 +34,7 @@ import {
 } from '../../services/itops-admin-setup.service';
 import { ItOpsMaturityApiService } from '../../services/itops-maturity-api.service';
 import { hasAppResourceViewAccess } from '../../utils/app-access.util';
+import { errorText } from '../../utils/error-text.util';
 
 type StepKey = 'roles' | 'cycle' | 'scope' | 'assessment' | 'team' | 'usage';
 
@@ -991,7 +992,7 @@ export class AdminSetupComponent implements OnInit {
   }
 
   private errorText(err: any, fallback: string): string {
-    return typeof err?.error === 'string' && err.error ? err.error : err?.error?.Message || fallback;
+    return errorText(err, fallback);
   }
 
   // ==================================================================

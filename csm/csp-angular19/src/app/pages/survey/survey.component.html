@@ -206,7 +206,7 @@ The insights we gain from your feedback will guide the strategic actions we take
         </td>
 
         <td class="star-rating-cell" data-label="Rating">
-          <div class="perspective-label" *ngIf="proj != '' && proj != null">
+          <div class="perspective-label">
             {{criteria.perspective}}
           </div>
           <app-star-rating [disabled]="IsCompleted" [Scale]="criteria.ratinG_SCALE ?? 1" [rating]="criteria.rating ?? 0"

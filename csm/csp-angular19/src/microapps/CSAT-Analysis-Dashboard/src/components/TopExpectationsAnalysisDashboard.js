@@ -107,20 +107,22 @@ const DownloadButton = styled.button`
 `;
 
 const BackButton = styled.button`
-  background: transparent;
-  color: #16233D;
-  border: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  color: white;
+  border: none;
   border-radius: 6px;
   padding: 0.4rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 
   &:hover {
-    border-color: #7c3aed;
-    background: #7c3aed;
-    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
   }
 `;
 
@@ -1801,8 +1803,8 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
 
        // Add headers
        const headers = firstSheetData.length > 0
-         ? ['SNO', 'Business Unit', 'Customer Name', 'RESPONDENT NAME', 'Please list your top expectations where Neurealm is doing well.', 'Please list your top expectations where Neurealm can do better.', 'Top Expectations - Can do Better', 'Top Expectations - Doing Well']
-         : ['SNO', 'Business Unit', 'Customer Name', 'RESPONDENT NAME'];
+         ? ['Sr. No', 'Business Unit', 'Customer Name', 'RESPONDENT NAME', 'Please list your top expectations where Neurealm is doing well.', 'Please list your top expectations where Neurealm can do better.', 'Top Expectations - Can do Better', 'Top Expectations - Doing Well']
+         : ['Sr. No', 'Business Unit', 'Customer Name', 'RESPONDENT NAME'];
       
       worksheet.addRow(headers);
 
@@ -3398,8 +3400,8 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
         <Table>
           <TableHeader>
             <tr>
-              <TableHeaderCell>SNO</TableHeaderCell>
-              <TableHeaderCell>{processedData.headers.businessUnit || 'BUSINESS UNIT'}</TableHeaderCell>
+              <TableHeaderCell>Sr. No</TableHeaderCell>
+              <TableHeaderCell>Business Unit</TableHeaderCell>
               <TableHeaderCell>{processedData.headers.customerName || 'CUSTOMER NAME'}</TableHeaderCell>
               <TableHeaderCell>RESPONDENT NAME</TableHeaderCell>
               {firstSheetData.length > 0 && (

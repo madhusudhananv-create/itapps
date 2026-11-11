@@ -480,20 +480,22 @@ const Title = styled.h1`
 `;
 
 const BackButton = styled.button`
-  background: transparent;
-  color: ${NPS_INK};
-  border: 1px solid ${NPS_HAIRLINE};
-  padding: 0.4rem 0.9rem;
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  color: white;
+  border: none;
   border-radius: 6px;
+  padding: 0.4rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 
   &:hover {
-    border-color: #7c3aed;
-    background: #7c3aed;
-    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
   }
 `;
 
@@ -1530,8 +1532,20 @@ const computeOtherAccountTotalsFromSheets = (
   acsatCycleStartDateFormatted,
   blankTypeCustomerIds,
   otherNpsScoreSum,
-  otherNpsScoreCount
+  otherNpsScoreCount,
+  effectiveTop10AccountNames = []
 ) => {
+  // "Other" = blank/empty TYPE OF ACCOUNT, OR a raw TYPE OF ACCOUNT = "Top 10" account that isn't
+  // actually displayed in the Top 10 Accounts table (not in the effective-10 roster — e.g. an unused
+  // backfill candidate). Without the second half of this check, those extra roster accounts are
+  // excluded from both the Top 10 total (filtered to the displayed effective-10) and Other Accounts
+  // (filtered to blank-type only), vanishing from the Overall total entirely.
+  const isTop10RowNotDisplayed = (row) => {
+    const typeRaw = getTypeOfAccountFromRow(row);
+    if (!isTop10TypeOfAccount(typeRaw)) return false;
+    const customerName = getCustomerNameFromRow(row, getCustomerIdFromRow(row));
+    return !effectiveTop10AccountNames.some((name) => matchesTop10AccountName(customerName, name));
+  };
   let polled = 0;
   let responded = 0;
   let predictedPromoters = 0;
@@ -1547,7 +1561,7 @@ const computeOtherAccountTotalsFromSheets = (
 
   const isOtherFirstSheetRow = (row) => {
     if (firstSheetHasTypeCol) {
-      return isBlankOrEmptyTypeOfAccount(getTypeOfAccountFromRow(row));
+      return isBlankOrEmptyTypeOfAccount(getTypeOfAccountFromRow(row)) || isTop10RowNotDisplayed(row);
     }
     const idKey = getCustomerIdFromRow(row);
     return idKey ? blankTypeCustomerIds.has(String(idKey).trim()) : false;
@@ -1555,7 +1569,7 @@ const computeOtherAccountTotalsFromSheets = (
 
   if (Array.isArray(secondSheetData)) {
     secondSheetData.forEach((row) => {
-      if (!isBlankOrEmptyTypeOfAccount(getTypeOfAccountFromRow(row))) return;
+      if (!isBlankOrEmptyTypeOfAccount(getTypeOfAccountFromRow(row)) && !isTop10RowNotDisplayed(row)) return;
 
       const sentDate = getCsatSentDateFromRow(row);
       const receivedDate = getCsatReceivedDateFromRow(row);
@@ -1607,9 +1621,10 @@ const computeOtherAccountTotalsFromSheets = (
     secondSheetRespondedCount > 0
       ? ((predictedPromoters - predictedDetractors) / secondSheetRespondedCount) * 100
       : 0;
+  const actualNpsRatingCount = actualPromoters + actualPassives + actualDetractors;
   const npsScore =
-    firstSheetRespondedCount > 0
-      ? ((actualPromoters - actualDetractors) / firstSheetRespondedCount) * 100
+    actualNpsRatingCount > 0
+      ? ((actualPromoters - actualDetractors) / actualNpsRatingCount) * 100
       : 0;
 
   return {
@@ -2013,6 +2028,21 @@ const buildNpsTrendFromSentReceivedFile = (file, { mode = 'account' } = {}) => {
   );
 
   const groups = new Map();
+  // Top 10 mode only: raw tally for rows whose TYPE OF ACCOUNT is not Top 10
+  // (blank/empty/N/A/other), aggregated into the "Other Accounts" row.
+  const otherAccountsTally = {
+    businessUnit: '',
+    customerId: '',
+    customerName: 'Other Accounts',
+    polled: 0,
+    responded: 0,
+    predictedPromoters: 0,
+    predictedDetractors: 0,
+    predictedPassives: 0,
+    actualPromoters: 0,
+    actualDetractors: 0,
+    actualPassives: 0,
+  };
 
   const ensureGroup = (key, meta) => {
     if (!groups.has(key)) {
@@ -2034,6 +2064,7 @@ const buildNpsTrendFromSentReceivedFile = (file, { mode = 'account' } = {}) => {
   };
 
   data.forEach((row) => {
+    let aggForOtherAccounts = false;
     if (top10Only) {
       const typeOfAccount = getNpsTrendRowValue(
         row,
@@ -2042,7 +2073,34 @@ const buildNpsTrendFromSentReceivedFile = (file, { mode = 'account' } = {}) => {
         'TYPE_OF_ACCOUNT',
         'Type of Account'
       );
-      if (!isTop10TypeOfAccount(typeOfAccount)) return;
+      if (!isTop10TypeOfAccount(typeOfAccount)) {
+        aggForOtherAccounts = true;
+      }
+    }
+
+    if (aggForOtherAccounts) {
+      if (hasNpsTrendSheetDateValue(row, sentDateCol, 'CSAT SENT DATE')) {
+        otherAccountsTally.polled += 1;
+      }
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const hasReceived = isCompletedStatus && hasNpsTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE');
+      if (hasReceived) {
+        otherAccountsTally.responded += 1;
+        const predictedScore = parseNpsTrendScoreValue(row, predictedScoreCol, 'PREDICTED SCORE', 'PREDICTED_SCORE');
+        if (predictedScore !== null) {
+          if (predictedScore === 9 || predictedScore === 10) otherAccountsTally.predictedPromoters += 1;
+          else if (predictedScore < 7) otherAccountsTally.predictedDetractors += 1;
+          else if (predictedScore === 7 || predictedScore === 8) otherAccountsTally.predictedPassives += 1;
+        }
+        const actualScore = parseNpsTrendScoreValue(row, actualScoreCol, 'ACTUAL SCORE', 'ACTUAL_SCORE');
+        if (actualScore !== null) {
+          if (actualScore === 9 || actualScore === 10) otherAccountsTally.actualPromoters += 1;
+          else if (actualScore < 7) otherAccountsTally.actualDetractors += 1;
+          else if (actualScore === 7 || actualScore === 8) otherAccountsTally.actualPassives += 1;
+        }
+      }
+      return;
     }
 
     const businessUnit = normalizeBusinessUnitDisplay(
@@ -2137,10 +2195,15 @@ const buildNpsTrendFromSentReceivedFile = (file, { mode = 'account' } = {}) => {
 
   const grandTotal = aggregateNpsAccountTrendGrandTotal(rows);
 
+  const otherAccountsRow = top10Only
+    ? mapNpsAccountTrendGroupToRow({ ...otherAccountsTally, npsRatingSum: 0, npsRatingCount: 0 })
+    : null;
+
   return {
     saveName: file.saveName || file.originalName || 'Trend file',
     rows,
     grandTotal,
+    otherAccountsRow,
     hasData: rows.length > 0,
     error: rows.length === 0
       ? top10Only
@@ -2264,14 +2327,41 @@ const addNpsTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) => {
       } else if (colNumber === 2 || colNumber === 3) {
         cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
       } else if (colNumber === 6) {
-        cell.value = `${Number(rowData[5] ?? 0).toFixed(1)}%`;
+        const responded = Number(rowData[4] ?? 0);
+        const rate = Number(rowData[5] ?? 0);
+        cell.value = `${rate.toFixed(1)}%`;
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      } else if (colNumber === 10) {
-        cell.value = Number(rowData[9] ?? 0).toFixed(2);
+        if (responded === 0 || rate === 0) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+          cell.font = { bold, color: { argb: 'FFFFFFFF' } };
+        } else if (rate >= 75) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else if (rate >= 50) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+          cell.font = { bold, color: { argb: 'FFFFFFFF' } };
+        }
+      } else if (colNumber === 10 || colNumber === 14) {
+        const rawScore = colNumber === 10 ? rowData[9] : rowData[13];
+        const score = rawScore === '-' || rawScore === null || rawScore === undefined ? NaN : Number(rawScore);
+        cell.value = isNaN(score) ? '-' : score.toFixed(2);
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      } else if (colNumber === 14) {
-        cell.value = Number(rowData[13] ?? 0).toFixed(2);
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (isNaN(score)) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else if (score >= 75) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else if (score >= 0) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+          cell.font = { bold, color: { argb: 'FFFFFFFF' } };
+        }
       } else if (colNumber >= 4) {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         if ([4, 5, 7, 8, 9, 11, 12, 13].includes(colNumber)) {
@@ -2320,6 +2410,52 @@ const addNpsTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) => {
         gt.actualNps ?? 0,
       ],
       { bold: true, fill: 'FFE2E8F0' }
+    );
+  }
+
+  if (fileData.otherAccountsRow) {
+    const oa = fileData.otherAccountsRow;
+    appendTrendDataRow(
+      [
+        '',
+        '',
+        oa.customerName || 'Other Accounts',
+        oa.polled ?? 0,
+        oa.responded ?? 0,
+        oa.responseRatePct ?? 0,
+        oa.predictedPromoters ?? 0,
+        oa.predictedDetractors ?? 0,
+        oa.predictedPassives ?? 0,
+        oa.predictedNps ?? 0,
+        oa.actualPromoters ?? 0,
+        oa.actualDetractors ?? 0,
+        oa.actualPassives ?? 0,
+        oa.actualNps ?? 0,
+      ],
+      { bold: true, fill: 'FFBDD7EE' }
+    );
+  }
+
+  if (fileData.overallRow) {
+    const ov = fileData.overallRow;
+    appendTrendDataRow(
+      [
+        '',
+        '',
+        ov.customerName || 'Overall',
+        ov.polled ?? 0,
+        ov.responded ?? 0,
+        ov.responseRatePct ?? 0,
+        ov.predictedPromoters ?? 0,
+        ov.predictedDetractors ?? 0,
+        ov.predictedPassives ?? 0,
+        ov.predictedNps ?? 0,
+        ov.actualPromoters ?? 0,
+        ov.actualDetractors ?? 0,
+        ov.actualPassives ?? 0,
+        ov.actualNps ?? 0,
+      ],
+      { bold: true, fill: 'FFE4DFEC' }
     );
   }
 
@@ -3127,12 +3263,32 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const built = buildTop10NpsTrendFromFile(file);
       const rows = sortTop10NpsTrendRows(built.rows, top10AccountNames);
       const grandTotal = aggregateNpsAccountTrendGrandTotal(rows);
+      const namedGrandTotal = grandTotal ? { ...grandTotal, customerName: 'Top 10 Accounts' } : null;
+      const otherAccountsRow = built.otherAccountsRow || null;
+      const overallRow =
+        namedGrandTotal && otherAccountsRow
+          ? mapNpsAccountTrendGroupToRow({
+              businessUnit: '',
+              customerId: '',
+              customerName: 'Overall',
+              polled: (namedGrandTotal.polled || 0) + (otherAccountsRow.polled || 0),
+              responded: (namedGrandTotal.responded || 0) + (otherAccountsRow.responded || 0),
+              predictedPromoters: (namedGrandTotal.predictedPromoters || 0) + (otherAccountsRow.predictedPromoters || 0),
+              predictedDetractors: (namedGrandTotal.predictedDetractors || 0) + (otherAccountsRow.predictedDetractors || 0),
+              predictedPassives: (namedGrandTotal.predictedPassives || 0) + (otherAccountsRow.predictedPassives || 0),
+              actualPromoters: (namedGrandTotal.actualPromoters || 0) + (otherAccountsRow.actualPromoters || 0),
+              actualDetractors: (namedGrandTotal.actualDetractors || 0) + (otherAccountsRow.actualDetractors || 0),
+              actualPassives: (namedGrandTotal.actualPassives || 0) + (otherAccountsRow.actualPassives || 0),
+              npsRatingSum: 0,
+              npsRatingCount: 0,
+            })
+          : null;
       return {
         ...built,
         rows,
-        grandTotal: grandTotal
-          ? { ...grandTotal, customerName: 'Top 10 Accounts' }
-          : null,
+        grandTotal: namedGrandTotal,
+        otherAccountsRow,
+        overallRow,
       };
     });
   }, [
@@ -3804,20 +3960,25 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 overallNpsScoreCount += 1;
                 if (showTop10) {
                   const idKey = String(customerId).trim();
+                  // "Other" = blank/empty TYPE OF ACCOUNT, OR a raw TYPE OF ACCOUNT = "Top 10" account
+                  // that isn't actually displayed (not in the effective-10 roster) — otherwise those
+                  // extra roster accounts are excluded from both Top10 and Other NPS averages.
                   const isBlankTypeById = blankTypeCustomerIds.size > 0 ? blankTypeCustomerIds.has(idKey) : false;
-                  if (isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames, top10CustomerIds)) {
+                  const isRawTop10NotDisplayed = top10CustomerIds.has(idKey) &&
+                    !isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames);
+                  if (isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames)) {
                     top10NpsScoreSum += ratingNumForAvg;
                     top10NpsScoreCount += 1;
-                  } else if (isBlankTypeById) {
+                  } else if (isBlankTypeById || isRawTop10NotDisplayed) {
                     otherNpsScoreSum += ratingNumForAvg;
                     otherNpsScoreCount += 1;
                   }
                 }
               }
 
-              // Top 10 view: individual rows should include only Top 10 accounts
+              // Top 10 view: individual rows should include only the displayed effective-10 accounts
               if (showTop10) {
-                if (!isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames, top10CustomerIds)) return;
+                if (!isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames)) return;
               }
               customersWithNPSData.add(customerKey);
               if (!npsRecordsByCustomer[customerKey]) {
@@ -3860,18 +4021,25 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           // Try to find existing group by customer name if ID doesn't match
           let key = groupByBU ? businessUnit : customerId;
           let existingGroup = groupedData[key];
-          
-          // If no group found by ID, try to find by customer name
-          if (!existingGroup && !groupByBU) {
+
+          // If no group found by exact key (ID or Business Unit), fall back to a
+          // whitespace/case-normalized match by customer name (account-wise) or
+          // business unit (BU-wise). Without this, BU-wise had NO fallback at all,
+          // so any formatting mismatch between the two sheets left every group's
+          // npsRatingCount at 0, making Achieved NPS Score show 0.00.
+          if (!existingGroup) {
+            const normalizeJoinText = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+            const normalizedTarget = groupByBU ? normalizeJoinText(businessUnit) : normalizeJoinText(customerName);
             const matchingKey = Object.keys(groupedData).find(k => {
               const group = groupedData[k];
-              return group.customerName && group.customerName.toLowerCase() === customerName.toLowerCase();
+              const candidate = groupByBU ? group.businessUnit : group.customerName;
+              return candidate && normalizeJoinText(candidate) === normalizedTarget;
             });
-            
+
             if (matchingKey) {
               key = matchingKey;
               existingGroup = groupedData[key];
-              console.log('Found existing group by name for:', customerName, 'using key:', key);
+              console.log('Found existing group by normalized match for:', groupByBU ? businessUnit : customerName, 'using key:', key);
             }
           }
           
@@ -4117,7 +4285,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       // Convert to array and calculate response rate and NPS score
       let result = Object.values(groupedData).map(group => {
         const responseRate = group.sentCount > 0 ? (group.receivedCount / group.sentCount) * 100 : 0;
-        const npsScore = group.receivedCount > 0 ? ((group.promotersCount - group.detractorsCount) / group.receivedCount) * 100 : 0;
+        const npsScore = group.npsRatingCount > 0 ? ((group.promotersCount - group.detractorsCount) / group.npsRatingCount) * 100 : 0;
         const npsAvgRating = (group.npsRatingCount && Number(group.npsRatingCount) > 0)
           ? (Number(group.npsRatingSum || 0) / Number(group.npsRatingCount))
           : null;
@@ -4249,11 +4417,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           grandTotal.responseRate = (grandTotal.receivedCount / grandTotal.sentCount) * 100;
         }
 
-        // Calculate grand total NPS score
-        if (grandTotal.receivedCount > 0) {
+        // Calculate grand total NPS score (denominator = actual answered NPS ratings, not survey completions)
+        if (grandTotal.npsRatingCount > 0) {
           const totalPromoters = grandTotal.promotersCount;
           const totalDetractors = grandTotal.detractorsCount;
-          grandTotal.npsScore = ((totalPromoters - totalDetractors) / grandTotal.receivedCount) * 100;
+          grandTotal.npsScore = ((totalPromoters - totalDetractors) / grandTotal.npsRatingCount) * 100;
         }
 
         // Calculate grand total predicted NPS score using percentage formula
@@ -4357,8 +4525,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             passivesCount: receivedCount > 0 ? ((passivesCount / receivedCount) * 100).toFixed(1) + '%' : '0.0%',
             // Grand total Detractors % = #Detractors/Responded*100
             detractorsCount: receivedCount > 0 ? ((detractorsCount / receivedCount) * 100).toFixed(1) + '%' : '0.0%',
-            // Grand total NPS = Grand total Promoters % - Grand total Detractors %
-            npsScore: receivedCount > 0 ? (((promotersCount / receivedCount) * 100) - ((detractorsCount / receivedCount) * 100)).toFixed(2) : '0.00',
+            // Grand total NPS = Grand total Promoters % - Grand total Detractors % (denominator = actual answered NPS ratings)
+            npsScore: (() => {
+              const actualRespondentCount = promotersCount + passivesCount + detractorsCount;
+              return actualRespondentCount > 0 ? (((promotersCount / actualRespondentCount) * 100) - ((detractorsCount / actualRespondentCount) * 100)).toFixed(2) : '0.00';
+            })(),
             isOrgLevelPercentageRow: true
           };
           
@@ -4384,7 +4555,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             promotersCount: ((grandTotal.promotersCount / grandTotal.receivedCount) * 100).toFixed(1) + '%',
             passivesCount: ((grandTotal.passivesCount / grandTotal.receivedCount) * 100).toFixed(1) + '%',
             detractorsCount: ((grandTotal.detractorsCount / grandTotal.receivedCount) * 100).toFixed(1) + '%',
-            npsScore: (((grandTotal.promotersCount - grandTotal.detractorsCount) / grandTotal.receivedCount) * 100).toFixed(2),
+            npsScore: (((grandTotal.promotersCount - grandTotal.detractorsCount) / grandTotal.npsRatingCount) * 100).toFixed(2),
             isGrandTotalPercentageRow: true
           };
           result.push(grandTotalPercentageRow);
@@ -4433,9 +4604,13 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         const grandTotalRow = result.find(row => row.isGrandTotal);
         const regularData = result.filter(row => !row.isGrandTotal);
 
-        // Filter regular data by predefined list + TYPE OF ACCOUNT = Top 10 from upload
+        // Restrict displayed rows to the effective-10 roster by name only. Do NOT pass
+        // top10CustomerIds here — those ids come from the raw TYPE OF ACCOUNT = "Top 10" column
+        // (the full 15-account roster), and the id-shortcut inside isTop10NpsAccount would bypass
+        // the effective-10 name filter entirely, showing every roster account instead of just the
+        // displayed effective 10 (the extra roster accounts belong in Other Accounts instead).
         const filteredRegularData = regularData.filter((row) =>
-          isTop10NpsAccount(row.customerName, row.customerId, effectiveTop10AccountNames, top10CustomerIds)
+          isTop10NpsAccount(row.customerName, row.customerId, effectiveTop10AccountNames)
         );
 
         filteredRegularData.sort((a, b) => {
@@ -4468,11 +4643,12 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             top10GrandTotal.responseRate = (top10GrandTotal.receivedCount / top10GrandTotal.sentCount) * 100;
           }
           
-          // Calculate NPS score
-          if (top10GrandTotal.receivedCount > 0) {
+          // Calculate NPS score (denominator = actual answered NPS ratings, not survey completions)
+          const top10NpsRatingCount = (top10GrandTotal.promotersCount || 0) + (top10GrandTotal.passivesCount || 0) + (top10GrandTotal.detractorsCount || 0);
+          if (top10NpsRatingCount > 0) {
             const totalPromoters = top10GrandTotal.promotersCount;
             const totalDetractors = top10GrandTotal.detractorsCount;
-            top10GrandTotal.npsScore = ((totalPromoters - totalDetractors) / top10GrandTotal.receivedCount) * 100;
+            top10GrandTotal.npsScore = ((totalPromoters - totalDetractors) / top10NpsRatingCount) * 100;
           }
           
           // Calculate predicted NPS score
@@ -4494,7 +4670,8 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           acsatCycleStartDateFormatted,
           blankTypeCustomerIds,
           otherNpsScoreSum,
-          otherNpsScoreCount
+          otherNpsScoreCount,
+          effectiveTop10AccountNames
         );
 
         // Calculate percentage row for Top10 (relative to Top10 + Other Account totals)
@@ -5656,8 +5833,9 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const passives = respondent.passivesCount;
       const detractors = respondent.detractorsCount;
       
-      // Calculate NPS: (Promoters - Detractors) / Responded × 100
-      const nps = csatReceivedDateCount > 0 ? ((promoters - detractors) / csatReceivedDateCount) * 100 : 0;
+      // Calculate NPS: (Promoters - Detractors) / actual answered NPS ratings × 100 (not survey completions)
+      const npsRatingCount = promoters + passives + detractors;
+      const nps = npsRatingCount > 0 ? ((promoters - detractors) / npsRatingCount) * 100 : 0;
       
       if (index < 3) {
         console.log(`Respondent ${respondent.respondentName} NPS calculation:`, {
@@ -5712,9 +5890,10 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     const totalDetractors = grandTotal.detractorsCount;
     const totalPassives = grandTotal.passivesCount;
     const totalReceivedCount = grandTotal.csatReceivedDateCount;
-    
-    grandTotal.npsScore = totalReceivedCount > 0 
-      ? ((totalPromoters - totalDetractors) / totalReceivedCount) * 100 
+    const totalNpsRatingCount = totalPromoters + totalPassives + totalDetractors;
+
+    grandTotal.npsScore = totalNpsRatingCount > 0
+      ? ((totalPromoters - totalDetractors) / totalNpsRatingCount) * 100
       : 0;
     
     grandTotal.promotersPercent = totalReceivedCount > 0 ? (totalPromoters / totalReceivedCount) * 100 : 0;
@@ -9251,7 +9430,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             <TableHeader>
               <tr>
                 <TableHeaderCell isFirstColumn style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: 'bold', textAlign: 'center', width: '80px' }}>
-                  SNO
+                  Sr. No
                 </TableHeaderCell>
                 <TableHeaderCell style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: 'bold', textAlign: 'center', width: '200px' }}>
                   RESPONDENT CATEGORY
@@ -10659,6 +10838,70 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                               <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.grandTotal.actualPassives ?? 0}</TableCell>
                               <NPSCell score={fileData.grandTotal.actualNps ?? 0} style={{ fontWeight: 'bold' }}>
                                 {(fileData.grandTotal.actualNps ?? 0).toFixed(2)}
+                              </NPSCell>
+                            </TableRow>
+                          )}
+                          {fileData.otherAccountsRow && (
+                            <TableRow style={{ backgroundColor: '#BDD7EE', fontWeight: 'bold' }}>
+                              <TableCell isFirstColumn />
+                              <TableCell />
+                              <TableCell style={{ fontWeight: 'bold' }}>
+                                {fileData.otherAccountsRow.customerName || 'Other Accounts'}
+                              </TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.polled ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.responded ?? 0}</TableCell>
+                              <ResponseRateCell
+                                rate={fileData.otherAccountsRow.responseRatePct || 0}
+                                surveysReceived={fileData.otherAccountsRow.responded || 0}
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {(fileData.otherAccountsRow.responded || 0) === 0
+                                  ? '0%'
+                                  : `${(fileData.otherAccountsRow.responseRatePct || 0).toFixed(1)}%`}
+                              </ResponseRateCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.predictedPromoters ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.predictedDetractors ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.predictedPassives ?? 0}</TableCell>
+                              <NPSCell score={fileData.otherAccountsRow.predictedNps ?? 0} style={{ fontWeight: 'bold' }}>
+                                {(fileData.otherAccountsRow.predictedNps ?? 0).toFixed(2)}
+                              </NPSCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.actualPromoters ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.actualDetractors ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.actualPassives ?? 0}</TableCell>
+                              <NPSCell score={fileData.otherAccountsRow.actualNps ?? 0} style={{ fontWeight: 'bold' }}>
+                                {(fileData.otherAccountsRow.actualNps ?? 0).toFixed(2)}
+                              </NPSCell>
+                            </TableRow>
+                          )}
+                          {fileData.overallRow && (
+                            <TableRow style={{ backgroundColor: '#E4DFEC', fontWeight: 'bold' }}>
+                              <TableCell isFirstColumn />
+                              <TableCell />
+                              <TableCell style={{ fontWeight: 'bold' }}>
+                                {fileData.overallRow.customerName || 'Overall'}
+                              </TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.polled ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.responded ?? 0}</TableCell>
+                              <ResponseRateCell
+                                rate={fileData.overallRow.responseRatePct || 0}
+                                surveysReceived={fileData.overallRow.responded || 0}
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {(fileData.overallRow.responded || 0) === 0
+                                  ? '0%'
+                                  : `${(fileData.overallRow.responseRatePct || 0).toFixed(1)}%`}
+                              </ResponseRateCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.predictedPromoters ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.predictedDetractors ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.predictedPassives ?? 0}</TableCell>
+                              <NPSCell score={fileData.overallRow.predictedNps ?? 0} style={{ fontWeight: 'bold' }}>
+                                {(fileData.overallRow.predictedNps ?? 0).toFixed(2)}
+                              </NPSCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.actualPromoters ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.actualDetractors ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.actualPassives ?? 0}</TableCell>
+                              <NPSCell score={fileData.overallRow.actualNps ?? 0} style={{ fontWeight: 'bold' }}>
+                                {(fileData.overallRow.actualNps ?? 0).toFixed(2)}
                               </NPSCell>
                             </TableRow>
                           )}

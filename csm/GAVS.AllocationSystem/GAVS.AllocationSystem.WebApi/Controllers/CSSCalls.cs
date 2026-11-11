@@ -333,7 +333,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 csmMails += "," + additionlCC;
             string buCcMailQP = helper.GetCcQPMailsByBusinessUnit(project);
 
-            ccmail = helper.ConcatEmails(new List<string>() { csmMails, pm, qualitySpoc, cust.SPOC , buCcMailQP });
+            ccmail = helper.ConcatEmails(new List<string>() { csmMails, pm, am, qualitySpoc, cust.SPOC , buCcMailQP });
             string bcc = string.Empty;
             bcc = helper.GetDBConfig("CSS_BCC", "-1");
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
@@ -473,8 +473,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             if (batch == null)
                 return "Invalid Batch. Unable to trigger.";
-            if (_isProd && batch != null && batch.END_DATE > DateTime.Today)
-                return "CSS Period not ended yet. Could not trigger CSS.";
+            //if (_isProd && batch != null && batch.END_DATE > DateTime.Today)
+            //    return "CSS Period not ended yet. Could not trigger CSS.";
             if (batch.STATUS.ToLower() == "COMPLETED")
                 return "CSS is closed. Could not trigger CSS.";
 

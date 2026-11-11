@@ -53,6 +53,10 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         // True once every finding raised on this domain's assessment(s) is Closed - drives
         // showing "Completed" instead of "Approved" once genuinely nothing is left to act on.
         public bool AllFindingsResolved { get; set; }
+        // Count of still-open (Accepted, not yet Closed) findings on this domain's
+        // assessment(s) whose TARGET_DATE has passed - feeds the dashboard's "Findings
+        // past due" KPI tile.
+        public int PastDueFindingsCount { get; set; }
     }
 
     public class ITOPS_ParameterScoreRow
@@ -85,6 +89,17 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         // (reopening the finding) - the assessee's own REJECTION_COMMENT is preserved as-is
         // through a dispute so the original reason is never lost, this is the assessor's reply.
         public string DisputeComment { get; set; }
+        // Remediation tracking on an Accepted finding - OwnerEmpId defaults to
+        // AssesseeEmpId but can be reassigned (SetITOpsFindingRemediationPlan).
+        // RemediationStatus is derived, never stored: Open (no owner/target yet),
+        // InProgress (owner + target date set), Completed (actual closure date set).
+        public string OwnerEmpId { get; set; }
+        public string OwnerName { get; set; }
+        public DateTime? TargetDate { get; set; }
+        public string Priority { get; set; }
+        public DateTime? ActualClosureDate { get; set; }
+        public string RemediationStatus { get; set; }
+        public bool PastDue { get; set; }
     }
 
     public class ITOPS_UpsertScoreRequest
@@ -278,6 +293,20 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
     public class ITOPS_UpdateFindingActionRequest
     {
         public string ActionTaken { get; set; }
+        // Owner-reported completion date, distinct from FINDING.CLOSED_DATE (the system
+        // audit timestamp set to DateTime.Now when this submit closes the finding).
+        public DateTime? ActualClosureDate { get; set; }
+    }
+
+    // Sets/changes an Accepted finding's remediation plan before it's closed - owner,
+    // target date and priority. Separate from the Accept/Reject decision itself
+    // (ITOPS_FindingDecisionRequest) so the owner can be reassigned later without
+    // re-running the one-time accept/reject call.
+    public class ITOPS_FindingRemediationPlanRequest
+    {
+        public string OwnerEmpId { get; set; }
+        public DateTime? TargetDate { get; set; }
+        public string Priority { get; set; }
     }
 
     public class ITOPS_SetCloudProviderRequest
