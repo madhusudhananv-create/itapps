@@ -14,7 +14,7 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: '#f5f5f5',
     marginLeft: isOpen ? '300px' : '90px',
-    transition: 'margin-left 0.2s ease-in-out',
+    transition: 'margin-left 0.5s cubic-bezier(0.32, 0.72, 0, 1)',
   }),
   contentContainer: {
     flexGrow: 1,

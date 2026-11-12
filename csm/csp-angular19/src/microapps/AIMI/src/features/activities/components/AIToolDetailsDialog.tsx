@@ -14,6 +14,10 @@ import {
 
 import { SelectField, NumberField } from './FormFieldComponents';
 import type { AIToolDetails } from '../types/activityTypes';
+import {
+  ACCESS_TYPE_OPTIONS,
+  NETWORK_TYPE_OPTIONS,
+} from '../types/activityTypes';
 import { validateAIToolDetails } from '../utils/formValidationUtils';
 
 interface AIToolDetailsDialogProps {
@@ -23,28 +27,6 @@ interface AIToolDetailsDialogProps {
   aiToolDetails: AIToolDetails;
   onChange: (value: AIToolDetails) => void;
 }
-
-const ACCESS_TYPE_OPTIONS = [
-  {
-    value: 'Licensed',
-    label: 'Licensed',
-  },
-  {
-    value: 'Not-Licensed',
-    label: 'Not-Licensed',
-  }
-];
-
-const NETWORK_TYPE_OPTIONS = [
-  {
-    value: 'Customer',
-    label: 'Customer',
-  },
-  {
-    value: 'Neurealm',
-    label: 'Neurealm',
-  }
-];
 
 export const AIToolDetailsDialog: React.FC<
   AIToolDetailsDialogProps

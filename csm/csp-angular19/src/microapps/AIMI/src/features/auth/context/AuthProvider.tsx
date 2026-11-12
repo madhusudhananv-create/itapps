@@ -10,6 +10,11 @@ import type { User } from './authTypes';
 import { authStorage } from '@auth/utils';
 import { mockAuthService } from '@auth/services';
 import { isAdminUser } from '@shared/utils/accessControl';
+import {
+  fetchCurrentUserEmail,
+  getCachedUserEmail,
+  getCurrentRoleName,
+} from '@shared/utils/userProfile';
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -40,7 +45,18 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         if (csmEmpId && csmToken) {
           const displayName = localStorage.getItem('displayname') || csmEmpId;
           setIsAuthenticated(true);
-          setUser({ name: displayName, email: csmEmpId });
+          // Show name / e-mail / role in the UI - the emp id stays in localStorage for
+          // access control and API headers only. E-mail is resolved asynchronously.
+          setUser({
+            name: displayName,
+            email: getCachedUserEmail(),
+            role: getCurrentRoleName(),
+          });
+          void fetchCurrentUserEmail().then((email) => {
+            if (email) {
+              setUser((prev) => (prev ? { ...prev, email } : prev));
+            }
+          });
 
           // DEV-ONLY: dump every value the CSM login bridge has available so admin
           // rules can be based on the field that actually holds the O365 email/UPN.

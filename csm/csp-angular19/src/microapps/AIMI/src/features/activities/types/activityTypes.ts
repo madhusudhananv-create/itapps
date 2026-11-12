@@ -78,6 +78,17 @@ export const BENEFIT_TO_OPTIONS = [
   { value: 'Both', label: 'Both' },
 ];
 
+// Per-AI-tool details (Configure AI Tool Details pop-up and the Excel template/import)
+export const ACCESS_TYPE_OPTIONS = [
+  { value: 'Licensed', label: 'Licensed' },
+  { value: 'Not-Licensed', label: 'Not-Licensed' },
+];
+
+export const NETWORK_TYPE_OPTIONS = [
+  { value: 'Customer', label: 'Customer' },
+  { value: 'Neurealm', label: 'Neurealm' },
+];
+
 export const REVENUE_GENERATED_OPTIONS = [
   { value: 'No', label: 'No' },
   { value: 'Yes', label: 'Yes' },

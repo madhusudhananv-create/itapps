@@ -56,6 +56,9 @@ const mapTemplateRow = (row: unknown[]): Record<string, unknown> => ({
   Comments: row[9] ?? '',
   'AI Adoption Score': row[10] ?? '',
   '% Work Done by AI': row[11] ?? '',
+  'Access Type': row[12] ?? '',
+  'No. of Licenses': row[13] ?? '',
+  'Network Type': row[14] ?? '',
 });
 
 const isRowBlank = (row: unknown[]): boolean =>

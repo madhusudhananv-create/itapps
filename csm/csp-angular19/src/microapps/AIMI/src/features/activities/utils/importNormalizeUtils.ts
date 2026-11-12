@@ -1,7 +1,9 @@
 import type { AIToolDetails } from '../types/activityTypes';
 import {
+  ACCESS_TYPE_OPTIONS,
   APPLICABILITY_OPTIONS,
   BENEFIT_TO_OPTIONS,
+  NETWORK_TYPE_OPTIONS,
   REVENUE_GENERATED_OPTIONS,
 } from '../types/activityTypes';
 
@@ -128,13 +130,56 @@ export const normalizeImportedRow = (
     errors.push('Hours Saved must be a positive number');
   }
 
-  // The template has no columns for per-tool access type / licenses / network, so
-  // imported tools start with empty details; they are mandatory and checked on submit.
+  // Per-tool details (Configure AI Tool Details pop-up). Each column holds either one value
+  // applied to every tool, or a comma-separated list in the same order as "AI Tools Used".
+  // Blank is allowed here - it is flagged at submit time like every other mandatory field.
+  const accessTypes = splitList(row['Access Type']);
+  const licenseCounts = splitList(row['No. of Licenses']);
+  const networkTypes = splitList(row['Network Type']);
+  const valueAt = (list: string[], index: number): string =>
+    list.length <= 1 ? list[0] ?? '' : list[index] ?? '';
+
+  const reported = new Set<string>();
+  const reportOnce = (message: string) => {
+    if (!reported.has(message)) {
+      reported.add(message);
+      errors.push(message);
+    }
+  };
+  const accessOptions = ACCESS_TYPE_OPTIONS.map((o) => o.value);
+  const networkOptions = NETWORK_TYPE_OPTIONS.map((o) => o.value);
+
   const aiToolDetails: AIToolDetails = Object.fromEntries(
-    aiToolUsed.map((tool) => [
-      tool,
-      { accessType: '', licenseCount: 0, networkType: '' },
-    ])
+    aiToolUsed.map((tool, index) => {
+      const accessText = valueAt(accessTypes, index);
+      let accessType = '';
+      if (accessText) {
+        accessType = matchOption(accessText, accessOptions) ?? '';
+        if (!accessType) {
+          reportOnce(`Access Type "${accessText}" is not valid (use: ${accessOptions.join(', ')})`);
+        }
+      }
+
+      const networkText = valueAt(networkTypes, index);
+      let networkType = '';
+      if (networkText) {
+        networkType = matchOption(networkText, networkOptions) ?? '';
+        if (!networkType) {
+          reportOnce(`Network Type "${networkText}" is not valid (use: ${networkOptions.join(', ')})`);
+        }
+      }
+
+      const licenseText = valueAt(licenseCounts, index);
+      let licenseCount = licenseText === '' ? 0 : Number(licenseText);
+      if (Number.isNaN(licenseCount) || licenseCount < 0) {
+        reportOnce(`No. of Licenses "${licenseText}" must be a positive number`);
+        licenseCount = 0;
+      }
+      // The pop-up only collects a license count for Licensed tools
+      if (accessType !== 'Licensed') licenseCount = 0;
+
+      return [tool, { accessType, licenseCount, networkType }];
+    })
   );
 
   return {

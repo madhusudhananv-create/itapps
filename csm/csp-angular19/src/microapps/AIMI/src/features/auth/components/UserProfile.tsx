@@ -94,9 +94,12 @@ const styles = {
     mt: 1,
     minWidth: 240,
     maxWidth: 280,
-    boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08)',
-    borderRadius: 2,
-    border: '1px solid rgba(0,0,0,0.08)',
+    boxShadow: '0 18px 48px rgba(30,20,70,0.22), 0 4px 16px rgba(0,0,0,0.08)',
+    borderRadius: '18px',
+    border: '1px solid rgba(255,255,255,0.6)',
+    background: 'rgba(255,255,255,0.82)',
+    backdropFilter: 'saturate(180%) blur(24px)',
+    WebkitBackdropFilter: 'saturate(180%) blur(24px)',
     overflow: 'hidden',
   },
   logoutText: {
@@ -229,9 +232,20 @@ export function UserProfile({
               <Typography variant="subtitle2" sx={styles.userName}>
                 {user.name}
               </Typography>
-              <Typography variant="caption" sx={styles.userEmail}>
-                {user.email}
-              </Typography>
+              {user.email && (
+                <Typography variant="caption" sx={styles.userEmail}>
+                  {user.email}
+                </Typography>
+              )}
+              {user.role && (
+                <Typography
+                  variant="caption"
+                  display="block"
+                  color="text.secondary"
+                >
+                  {user.role}
+                </Typography>
+              )}
               {isAdmin && (
                 <Chip label="Admin" size="small" color="primary" sx={{ mt: 0.5 }} />
               )}

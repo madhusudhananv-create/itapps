@@ -3,9 +3,10 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { AuthProvider } from '@auth/context/AuthProvider';
 import { useAuth } from '@auth/hooks/useAuth';
 import { ProjectDataProvider } from '@shared/context/ProjectDataProvider';
@@ -98,6 +99,27 @@ const theme = createTheme({
   },
 });
 
+// When the CSM host app receives a refreshed /aimi/<route> URL it forwards to /aimi/ and
+// stores the route here; restore it so a refresh keeps the user on the same AIMI page.
+function DeepLinkRestorer() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    try {
+      const link = sessionStorage.getItem('aimiDeepLink');
+      if (!link) return;
+      sessionStorage.removeItem('aimiDeepLink');
+      const route = link.replace(/^\/aimi(?=\/|$)/, '');
+      // Only same-app, path-style routes - never an external or malformed target
+      if (route.startsWith('/') && !route.startsWith('//') && route !== '/') {
+        navigate(route, { replace: true });
+      }
+    } catch {
+      // sessionStorage unavailable - stay on the default route
+    }
+  }, [navigate]);
+  return null;
+}
+
 function AppRoutes() {
   const dashboardFlags = useFeatureFlags('dashboard');
   const activitiesFlags = useFeatureFlags('activities');
@@ -163,6 +185,7 @@ function App() {
         <ProjectDataProvider>
           <AimiLookupProvider>
             <Router basename="/aimi">
+              <DeepLinkRestorer />
               <AppRoutes />
             </Router>
           </AimiLookupProvider>
