@@ -2584,6 +2584,22 @@ namespace GAVS.AllocationSystem.Data
                 param1, param2, param3, param4, param5, param6).Single();
         }
 
+        // Saves the per-activity Accepted Score review in one transaction; returns how many activity
+        // rows were updated. The proc validates the score range and the comment rule.
+        public int AimiUpdateActivityAcceptedScores(DataTable items, string empId)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@Table", SqlDbType.Structured)
+            {
+                TypeName = "dbo.AIMI_ACTIVITY_ACCEPTED_SCORE_TYPE",
+                Value = items
+            };
+            var param2 = new SqlParameter("@EMP_ID", empId);
+
+            return dbContext.Database.SqlQuery<int>(
+                "[dbo].[usp_AIMI_UpdateActivityAcceptedScores] @Table, @EMP_ID", param1, param2).Single();
+        }
+
         // The proc resolves the user's e-mail from EMP_INFO using the CSM employee id.
         public void AimiInsertUserActivityLog(string empId, string module, string action, string projectId, string practice, string requestUrl, string ipAddress)
         {

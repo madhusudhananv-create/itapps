@@ -271,6 +271,42 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(new AimiIdResult { ID = updatedCount });
         }
 
+        // Admin review of individual activities (Review Score page). All entries are saved in one
+        // transaction; the stored procedure rejects the whole batch if any entry breaks a rule.
+        [POST("UpdateAimiActivityAcceptedScores")]
+        [ActionName("UpdateAimiActivityAcceptedScores")]
+        [HttpPost]
+        public IHttpActionResult UpdateAimiActivityAcceptedScores([FromBody] AimiActivityAcceptedScoresUpdateRequest request)
+        {
+            RequireAimiAdmin();
+            if (request?.ITEMS == null || request.ITEMS.Count == 0) return BadRequest("At least one activity is required.");
+            if (request.ITEMS.Count > 1000) return BadRequest("Too many activities in one request.");
+            if (request.ITEMS.GroupBy(i => i.ID).Any(g => g.Count() > 1)) return BadRequest("Duplicate activity in request.");
+
+            var table = new System.Data.DataTable();
+            table.Columns.Add("ID", typeof(int));
+            table.Columns.Add("ACCEPTED_SCORE", typeof(decimal));
+            table.Columns.Add("ACCEPTED_SCORE_COMMENT", typeof(string));
+            foreach (var item in request.ITEMS)
+            {
+                table.Rows.Add(item.ID,
+                    item.ACCEPTED_SCORE.HasValue ? (object)item.ACCEPTED_SCORE.Value : DBNull.Value,
+                    (object)item.ACCEPTED_SCORE_COMMENT ?? DBNull.Value);
+            }
+
+            var empId = GetHeaderDetails_String("empId");
+            try
+            {
+                var updatedCount = CSPdb.AppRepo.AimiUpdateActivityAcceptedScores(table, empId);
+                return Ok(new AimiIdResult { ID = updatedCount });
+            }
+            catch (Exception ex) when (ex.ToString().Contains("Accepted score must be") || ex.ToString().Contains("A comment is required"))
+            {
+                // Rule violations raised by the proc (THROW 50001/50002) are the client's to fix.
+                return BadRequest(ex.GetBaseException().Message);
+            }
+        }
+
         // ------------------------------------------------------------------
         // Analytics dashboard: monthly score history (AIMI_SCORE_HISTORY)
         // ------------------------------------------------------------------

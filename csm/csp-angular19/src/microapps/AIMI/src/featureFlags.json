@@ -26,6 +26,9 @@
   "analytics": {
     "enabled": true
   },
+  "scoreReview": {
+    "enabled": true
+  },
   "backup": {
     "enabled": false
   }

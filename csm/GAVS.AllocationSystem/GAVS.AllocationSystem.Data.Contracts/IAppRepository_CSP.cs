@@ -317,6 +317,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
             string commonAdoptionEffortsSaved, string commonDeploymentEngineer, bool pptStatus, bool presentationDone,
             string projectFy, string empId);
         int AimiUpdateAcceptedScore(string projectId, string practice, decimal? acceptedScore, bool scoreReviewed, string acceptedScoreComment, string empId);
+        int AimiUpdateActivityAcceptedScores(DataTable items, string empId);
 
         void AimiInsertUserActivityLog(string empId, string module, string action, string projectId, string practice, string requestUrl, string ipAddress);
         void AimiInsertErrorLog(string empId, string module, string action, string requestUrl, string errorMessage, string exceptionType, string stackTrace);

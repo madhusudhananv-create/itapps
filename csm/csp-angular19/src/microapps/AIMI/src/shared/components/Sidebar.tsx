@@ -14,6 +14,7 @@ import {
   Dashboard,
   Assignment,
   Assessment,
+  RateReview,
   Insights,
   Backup,
   ChevronLeft,
@@ -273,6 +274,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
   const reportsFlags = useFeatureFlags('reports');
   const backupFlags = useFeatureFlags('backup');
   const analyticsFlags = useFeatureFlags('analytics');
+  const scoreReviewFlags = useFeatureFlags('scoreReview');
 
   const navItems = [
     {
@@ -295,6 +297,13 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       icon: <Assessment />,
       badge: null,
       enabled: reportsFlags.enabled,
+    },
+    {
+      label: 'Review Score',
+      path: '/score-review',
+      icon: <RateReview />,
+      badge: null,
+      enabled: scoreReviewFlags.enabled && isAdmin,
     },
     {
       label: 'Analytics',

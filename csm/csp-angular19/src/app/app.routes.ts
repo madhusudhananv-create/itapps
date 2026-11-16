@@ -938,6 +938,25 @@ export const routes: Routes = [
     title: 'Release Notes'
   },
 
+  // AIMI microapp deep links (e.g. refreshing /aimi/activities). IIS rewrites these to
+  // aimi/index.html (web.config), but a dev server can hand them to this app instead, where the
+  // wildcard below would bounce them to /login. Hand them back to AIMI (which does its own
+  // session check / Login Required popup), remembering the route so AIMI can restore it.
+  {
+    matcher: (segments) =>
+      segments.length > 0 && segments[0].path === 'aimi' ? { consumed: segments } : null,
+    canActivate: [(_route: unknown, state: { url: string }) => {
+      try {
+        sessionStorage.setItem('aimiDeepLink', state.url);
+      } catch {
+        // storage unavailable - AIMI will just open on its default route
+      }
+      window.location.replace('/aimi/');
+      return false;
+    }],
+    children: []
+  },
+
   // Wildcard - 404 redirect (must be last)
   {
     path: '**',

@@ -57,6 +57,12 @@ const Analytics = lazy(() =>
   }))
 );
 
+const ScoreReview = lazy(() =>
+  import('@features/scoreReview/components/ScoreReview').then((module) => ({
+    default: module.ScoreReview,
+  }))
+);
+
 const Backup = lazy(() =>
   import('@backup/components/Backup').then((module) => ({
     default: module.Backup,
@@ -126,6 +132,7 @@ function AppRoutes() {
   const reportsFlags = useFeatureFlags('reports');
   const backupFlags = useFeatureFlags('backup');
   const analyticsFlags = useFeatureFlags('analytics');
+  const scoreReviewFlags = useFeatureFlags('scoreReview');
   const { isAdmin } = useAuth();
 
   // Determine default route based on feature flags
@@ -155,6 +162,9 @@ function AppRoutes() {
                   )}
                   {reportsFlags.enabled && (
                     <Route path="/reports" element={<Reports />} />
+                  )}
+                  {scoreReviewFlags.enabled && isAdmin && (
+                    <Route path="/score-review" element={<ScoreReview />} />
                   )}
                   {analyticsFlags.enabled && isAdmin && (
                     <Route path="/analytics" element={<Analytics />} />

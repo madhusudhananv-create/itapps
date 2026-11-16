@@ -177,7 +177,8 @@ GO
 --
 -- CURRENT_SCORE uses the same rule as the client's calculateAverageAIAdoptionScore():
 -- average AI_ADOPTION_SCORE of the practice's activities, skipping SDLC_PHASE 'NA' and
--- activities with no score. ACCEPTED_SCORE is the admin-reviewed score stored on those rows.
+-- activities with no score. ACCEPTED_SCORE is the same average over each activity's admin-reviewed
+-- accepted score (falling back to its entered score where not reviewed).
 IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_CaptureScoreSnapshot' AND TYPE='P')
 BEGIN
        DROP PROCEDURE [dbo].[usp_AIMI_CaptureScoreSnapshot]
@@ -205,7 +206,12 @@ BEGIN
             ISNULL(MAX(a.BUSINESS_UNIT), 'Unassigned') AS BUSINESS_UNIT,
             CAST(ROUND(AVG(CASE WHEN a.SDLC_PHASE <> 'NA' AND a.AI_ADOPTION_SCORE IS NOT NULL
                                 THEN CAST(a.AI_ADOPTION_SCORE AS DECIMAL(9,4)) END), 2) AS DECIMAL(4,2)) AS CURRENT_SCORE,
-            MAX(a.ACCEPTED_SCORE) AS ACCEPTED_SCORE,
+            -- Accepted overall = same average, but each activity counts its accepted score when the admin
+            -- has set one, otherwise its entered score. NULL until at least one activity is reviewed.
+            CASE WHEN COUNT(a.ACCEPTED_SCORE) = 0 THEN NULL
+                 ELSE CAST(ROUND(AVG(CASE WHEN a.SDLC_PHASE <> 'NA' AND COALESCE(a.ACCEPTED_SCORE, a.AI_ADOPTION_SCORE) IS NOT NULL
+                                          THEN CAST(COALESCE(a.ACCEPTED_SCORE, a.AI_ADOPTION_SCORE) AS DECIMAL(9,4)) END), 2) AS DECIMAL(4,2))
+            END AS ACCEPTED_SCORE,
             COUNT(*) AS ACTIVITY_COUNT,
             SUM(CASE WHEN a.SDLC_PHASE <> 'NA' AND a.AI_ADOPTION_SCORE IS NOT NULL THEN 1 ELSE 0 END) AS SCORED_ACTIVITY_COUNT
         FROM AIMI_ACTIVITY a
