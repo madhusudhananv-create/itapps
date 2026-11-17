@@ -35,10 +35,13 @@ export const activityStorageUtils = {
    * Updates existing activities and creates new ones efficiently
    */
   upsertActivitiesForProject: async (
-    activities: ActivityWithProjectInfo[]
+    activities: ActivityWithProjectInfo[],
+    deletedIds: string[] = []
   ): Promise<ActivityWithProjectInfo[]> => {
-    if (activities.length === 0) return [];
-    return await activityService.upsertActivitiesForProject(activities);
+    return await activityService.upsertActivitiesForProject(
+      activities,
+      deletedIds
+    );
   },
 
   /**

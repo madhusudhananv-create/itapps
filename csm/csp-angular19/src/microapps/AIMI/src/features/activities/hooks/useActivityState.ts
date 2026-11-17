@@ -292,8 +292,17 @@ export const useActivityState = ({
     }
   }, [projectId, selectedPractice, loadActivitiesForProject, clearActivities]);
 
+  // IDs of persisted activities that were removed locally and still need deleting from Firestore
+  const getDeletedIds = useCallback(() => {
+    const currentIds = new Set(activities.map((a) => a.id));
+    return originalActivities
+      .filter((a) => !currentIds.has(a.id))
+      .map((a) => a.id);
+  }, [activities, originalActivities]);
+
   return {
     activities,
+    getDeletedIds,
     hasUnsavedChanges,
     addActivity,
     updateActivity,

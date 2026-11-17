@@ -274,6 +274,7 @@ export function Activities() {
   // Activity state management - lifted to parent component
   const {
     activities,
+    getDeletedIds,
     hasUnsavedChanges,
     addActivity,
     updateActivity,
@@ -318,13 +319,14 @@ export function Activities() {
         await submitActivities(
           activities,
           projectInfoFormData,
-          markActivitiesAsSaved
+          markActivitiesAsSaved,
+          getDeletedIds()
         );
       } catch (error) {
         console.error('Error submitting activities:', error);
       }
     },
-    [submitActivities, projectInfoFormData, markActivitiesAsSaved]
+    [submitActivities, projectInfoFormData, markActivitiesAsSaved, getDeletedIds]
   );
 
   const handleActivitiesSaveDraft = useCallback(
@@ -334,13 +336,14 @@ export function Activities() {
         await saveActivitiesAsDraft(
           activities,
           projectInfoFormData,
-          markActivitiesAsSaved
+          markActivitiesAsSaved,
+          getDeletedIds()
         );
       } catch (error) {
         console.error('Error saving draft activities:', error);
       }
     },
-    [saveActivitiesAsDraft, projectInfoFormData, markActivitiesAsSaved]
+    [saveActivitiesAsDraft, projectInfoFormData, markActivitiesAsSaved, getDeletedIds]
   );
 
   const handleProjectInfoFormChange = useCallback(
