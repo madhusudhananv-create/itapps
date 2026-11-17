@@ -1723,7 +1723,7 @@
   };
   const D365 = 'Projects and customers you are allocated to, or assigned to as PM, BU Head, CSM, or DP, in D365.';
   const ROLES = [
-    { name: 'Customer Success Manager', icon: 'ti-user-star', level: 'full',
+    { name: 'Project Owner', icon: 'ti-user-star', level: 'full',
       summary: 'Owns the customer relationship end to end — project health, KPIs, and findings.',
       scope: D365,
       mods: [
@@ -1816,7 +1816,7 @@
       ],
       off: ['Create, edit, delete anywhere','Menu › Project screens','Integrated Apps','Risk Dashboard'] }
   ];
-  const ROLE_IDS = { 'Customer Success Manager': 1, 'Project Manager': 2, 'Team Member': 3, 'Quality': 7, 'HR': 10, 'Account Manager': 11, 'Marketing': 12, 'Read-Only Profile': 13 };
+  const ROLE_IDS = { 'Project Owner': 1, 'Project Manager': 2, 'Team Member': 3, 'Quality': 7, 'HR': 10, 'Account Manager': 11, 'Marketing': 12, 'Read-Only Profile': 13 };
 
   (function initRoleExplorer() {
     const root = document.getElementById('roleExplorer');

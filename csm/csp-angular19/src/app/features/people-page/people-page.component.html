@@ -100,7 +100,7 @@
           <ng-container *ngFor="let rec of input.resource; let i=index;">
             <mat-card *ngFor="let emp of rec.resource; let j=index;" 
                       class="person-card"
-                      [class.csm-card]="emp.title=='Customer Success Managers'">
+                      [class.csm-card]="emp.title=='Project Owner'">
               
               <!-- Profile Image -->
               <div class="card-image">
@@ -120,7 +120,7 @@
                 <mat-form-field appearance="outline" class="title-select">
                   <mat-label>Title</mat-label>
                   <mat-select name='titleSelected' [(ngModel)]="emp.csM_TITLE_ID" required>
-                    <mat-option [value]="1">Customer Success Managers</mat-option>
+                    <mat-option [value]="1">Project Owner</mat-option>
                     <mat-option [value]="2">Project Manager</mat-option>
                     <mat-option [value]="3">Team Members</mat-option>
                     <mat-option [value]="6">PMO</mat-option>

@@ -132,7 +132,7 @@ export class AccessControlProjectComponent implements OnInit {
 
   LoadRolesLookup() {
     this.rolesList = [
-      { id: 1, name: 'Customer Success Manager' },
+      { id: 1, name: 'Project Owner' },
       { id: 2, name: 'Project Manager' },
       { id: 3, name: 'Team Member' },
       { id: 4, name: 'BU – Head IMS' },
