@@ -41,8 +41,9 @@ BEGIN
                                 THEN CAST(a.AI_ADOPTION_SCORE AS DECIMAL(9,4)) END), 2) AS DECIMAL(4,2)) AS CURRENT_SCORE,
             -- Accepted overall = same average, but each activity counts its accepted score when the admin
             -- has set one, otherwise its entered score. NULL until at least one activity is reviewed.
-            CASE WHEN COUNT(a.ACCEPTED_SCORE) = 0 THEN NULL
-                 ELSE CAST(ROUND(AVG(CASE WHEN a.SDLC_PHASE <> 'NA' AND COALESCE(a.ACCEPTED_SCORE, a.AI_ADOPTION_SCORE) IS NOT NULL
+            -- Only activities with an entered score take part, exactly as in CURRENT_SCORE.
+            CASE WHEN COUNT(CASE WHEN a.SDLC_PHASE <> 'NA' AND a.AI_ADOPTION_SCORE IS NOT NULL THEN a.ACCEPTED_SCORE END) = 0 THEN NULL
+                 ELSE CAST(ROUND(AVG(CASE WHEN a.SDLC_PHASE <> 'NA' AND a.AI_ADOPTION_SCORE IS NOT NULL
                                           THEN CAST(COALESCE(a.ACCEPTED_SCORE, a.AI_ADOPTION_SCORE) AS DECIMAL(9,4)) END), 2) AS DECIMAL(4,2))
             END AS ACCEPTED_SCORE,
             COUNT(*) AS ACTIVITY_COUNT,

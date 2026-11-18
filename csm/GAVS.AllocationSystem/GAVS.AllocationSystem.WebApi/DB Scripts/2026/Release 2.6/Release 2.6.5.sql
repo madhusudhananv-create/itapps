@@ -8,11 +8,22 @@
 -- Existing rows hold the old project-level accepted value copied onto every activity. Those copies
 -- are not per-activity reviews, so they are cleared here (run once; the guard below keeps a re-run
 -- from wiping reviews saved afterwards).
+-- Each column is checked on its own, so a half-finished earlier run is repaired, not repeated.
+DECLARE @FIRST_RUN BIT = 0;
+
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AIMI_ACTIVITY') AND name = 'ACCEPTED_SCORE_REVIEWED_BY')
 BEGIN
     ALTER TABLE AIMI_ACTIVITY ADD ACCEPTED_SCORE_REVIEWED_BY VARCHAR(10) NULL;
-    ALTER TABLE AIMI_ACTIVITY ADD ACCEPTED_SCORE_REVIEWED_DATE DATETIME NULL;
+    SET @FIRST_RUN = 1;
+END
 
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AIMI_ACTIVITY') AND name = 'ACCEPTED_SCORE_REVIEWED_DATE')
+BEGIN
+    ALTER TABLE AIMI_ACTIVITY ADD ACCEPTED_SCORE_REVIEWED_DATE DATETIME NULL;
+END
+
+IF @FIRST_RUN = 1
+BEGIN
     EXEC('UPDATE AIMI_ACTIVITY SET ACCEPTED_SCORE = NULL, SCORE_REVIEWED = 0, ACCEPTED_SCORE_COMMENT = NULL
           WHERE ACCEPTED_SCORE IS NOT NULL OR SCORE_REVIEWED = 1 OR ACCEPTED_SCORE_COMMENT IS NOT NULL');
 END
@@ -35,7 +46,8 @@ GO
 
 -- Saves the admin review of several activities in one transaction. Touches only the review
 -- columns. Rules (enforced here so no client can bypass them):
---   * ACCEPTED_SCORE must be a whole number from 0 to 5, or NULL (= not reviewed).
+--   * ACCEPTED_SCORE must be from 0 to 5 with at most 2 decimals, or NULL (= not reviewed).
+--   * Activity NA / Customer NA activities take a comment only, never a score.
 --   * A comment is required when the accepted score differs from the entered score.
 -- Returns the number of activity rows updated. Any broken rule rolls the whole batch back.
 CREATE PROCEDURE [dbo].[usp_AIMI_UpdateActivityAcceptedScores]
@@ -47,8 +59,15 @@ BEGIN
     SET XACT_ABORT ON;
 
     IF EXISTS (SELECT 1 FROM @Table WHERE ACCEPTED_SCORE IS NOT NULL
-               AND (ACCEPTED_SCORE < 0 OR ACCEPTED_SCORE > 5 OR ACCEPTED_SCORE <> FLOOR(ACCEPTED_SCORE)))
-        THROW 50001, 'Accepted score must be a whole number from 0 to 5.', 1;
+               AND (ACCEPTED_SCORE < 0 OR ACCEPTED_SCORE > 5))
+        THROW 50001, 'Accepted score must be between 0 and 5.', 1;
+
+    IF EXISTS (SELECT 1
+               FROM @Table t
+               JOIN AIMI_ACTIVITY a ON a.ID = t.ID AND a.ISACTIVE = 1
+               WHERE t.ACCEPTED_SCORE IS NOT NULL
+                 AND a.APPLICABILITY IN ('Activity NA', 'Customer NA'))
+        THROW 50003, 'Activity NA / Customer NA activities cannot be given an accepted score.', 1;
 
     IF EXISTS (SELECT 1
                FROM @Table t

@@ -300,9 +300,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var updatedCount = CSPdb.AppRepo.AimiUpdateActivityAcceptedScores(table, empId);
                 return Ok(new AimiIdResult { ID = updatedCount });
             }
-            catch (Exception ex) when (ex.ToString().Contains("Accepted score must be") || ex.ToString().Contains("A comment is required"))
+            catch (Exception ex) when (ex.ToString().Contains("Accepted score must be") || ex.ToString().Contains("A comment is required")
+                || ex.ToString().Contains("cannot be given an accepted score"))
             {
-                // Rule violations raised by the proc (THROW 50001/50002) are the client's to fix.
+                // Rule violations raised by the proc (THROW 50001/50002/50003) are the client's to fix.
                 return BadRequest(ex.GetBaseException().Message);
             }
         }

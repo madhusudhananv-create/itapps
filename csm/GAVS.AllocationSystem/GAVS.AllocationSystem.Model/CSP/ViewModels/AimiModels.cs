@@ -201,6 +201,22 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         [JsonProperty("ACCEPTED_SCORE_COMMENT")] public string ACCEPTED_SCORE_COMMENT { get; set; }
     }
 
+    // Admin review of individual activities: one entry per activity. A null ACCEPTED_SCORE clears
+    // that activity's review.
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiActivityAcceptedScoreItem
+    {
+        [JsonProperty("ID")] public int ID { get; set; }
+        [JsonProperty("ACCEPTED_SCORE")] public decimal? ACCEPTED_SCORE { get; set; }
+        [JsonProperty("ACCEPTED_SCORE_COMMENT")] public string ACCEPTED_SCORE_COMMENT { get; set; }
+    }
+
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiActivityAcceptedScoresUpdateRequest
+    {
+        [JsonProperty("ITEMS")] public System.Collections.Generic.List<AimiActivityAcceptedScoreItem> ITEMS { get; set; }
+    }
+
     [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
     public class AimiPracticeInfoUpsertRequest
     {

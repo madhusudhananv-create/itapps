@@ -14,6 +14,7 @@ import { keyframes } from '@mui/material/styles';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
 import {
   averageScore,
+  isScorable,
   scoreReviewService,
   type ReviewActivity,
 } from '../services/scoreReviewService';
@@ -286,8 +287,74 @@ const OverallTile = ({
   );
 };
 
-type RowStatus = 'edited' | 'pending' | 'accepted' | 'changed';
+/** Accepted score as text: 0-5 with up to two decimals. Quick buttons set whole numbers. */
+const parseScore = (text: string): number | null | 'invalid' => {
+  const t = text.trim();
+  if (t === '') return null;
+  if (!/^\d(\.\d{1,2})?$|^\d\.$/.test(t)) return 'invalid';
+  const n = Number(t);
+  return n >= 0 && n <= 5 ? n : 'invalid';
+};
+
+const ScoreInput = ({
+  value,
+  onCommit,
+}: {
+  value: number | null;
+  onCommit: (v: number | null) => void;
+}) => {
+  const [text, setText] = useState(value === null ? '' : String(value));
+  const invalid = parseScore(text) === 'invalid';
+
+  // Follow outside changes (quick buttons, accept, discard) without fighting the typing.
+  useEffect(() => {
+    const parsed = parseScore(text);
+    if (parsed !== value) setText(value === null ? '' : String(value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <Box
+      component="input"
+      inputMode="decimal"
+      aria-label="Accepted score, 0 to 5, up to two decimals"
+      aria-invalid={invalid}
+      placeholder="0.00"
+      value={text}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value;
+        if (!/^\d*\.?\d{0,2}$/.test(raw)) return; // ignore anything that is not a number
+        setText(raw);
+        const parsed = parseScore(raw);
+        if (parsed !== 'invalid') onCommit(parsed);
+      }}
+      onBlur={() => setText(value === null ? '' : String(value))}
+      sx={{
+        width: 74,
+        height: 34,
+        borderRadius: '10px',
+        border: `1px solid ${invalid ? RED : 'rgba(0,0,0,.12)'}`,
+        background: '#fff',
+        textAlign: 'center',
+        fontFamily: FONT,
+        fontWeight: 600,
+        fontSize: '0.9rem',
+        color: INK,
+        outline: 'none',
+        fontVariantNumeric: 'tabular-nums',
+        transition: `box-shadow .3s ${EASE}, border-color .3s ${EASE}`,
+        '&:focus': {
+          borderColor: invalid ? RED : BLUE,
+          boxShadow: `0 0 0 4px ${invalid ? 'rgba(215,0,21,.14)' : 'rgba(0,113,227,.18)'}`,
+        },
+      }}
+    />
+  );
+};
+
+type RowStatus = 'edited' | 'pending' | 'accepted' | 'changed' | 'notscored';
 const STATUS_STYLE: Record<RowStatus, { bg: string; fg: string; label: string }> = {
+  notscored: { bg: 'rgba(120,120,128,.14)', fg: MUTED, label: 'Not scored' },
   edited: { bg: 'rgba(0,113,227,.12)', fg: BLUE, label: 'Edited' },
   pending: { bg: 'rgba(255,159,10,.16)', fg: ORANGE, label: 'Pending' },
   accepted: { bg: 'rgba(52,199,89,.16)', fg: GREEN, label: 'Accepted' },
@@ -330,22 +397,28 @@ interface RowProps {
 }
 
 const ActivityRow = ({ activity, draft, index, showErrors, onScore, onComment }: RowProps) => {
-  const accepted = draft ? draft.acceptedScore : activity.acceptedScore;
+  const scorable = isScorable(activity);
+  const accepted = scorable ? (draft ? draft.acceptedScore : activity.acceptedScore) : null;
   const comment = draft ? draft.comment : activity.comment;
   const entered = activity.enteredScore;
   const differs = accepted !== null && accepted !== entered;
   const [commentOpen, setCommentOpen] = useState(false);
   const needsComment = differs;
-  const commentVisible = needsComment || !!comment || commentOpen;
+  // Out-of-scope activities only take a comment, so their box is always there.
+  const commentVisible = !scorable || needsComment || !!comment || commentOpen;
   const missingComment = needsComment && !comment.trim();
 
-  const status: RowStatus = draft
-    ? 'edited'
-    : accepted === null
-      ? 'pending'
-      : differs
-        ? 'changed'
-        : 'accepted';
+  const status: RowStatus = !scorable
+    ? draft
+      ? 'edited'
+      : 'notscored'
+    : draft
+      ? 'edited'
+      : accepted === null
+        ? 'pending'
+        : differs
+          ? 'changed'
+          : 'accepted';
 
   return (
     <Box
@@ -420,6 +493,11 @@ const ActivityRow = ({ activity, draft, index, showErrors, onScore, onComment }:
           >
             Accepted
           </Typography>
+          {!scorable ? (
+            <Typography sx={{ fontFamily: FONT, color: '#8e8e93', fontStyle: 'italic', fontSize: '0.88rem', py: 0.5 }}>
+              {activity.applicability} · comment only
+            </Typography>
+          ) : (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
             {SCORES.map((s) => {
               const on = accepted === s;
@@ -450,6 +528,7 @@ const ActivityRow = ({ activity, draft, index, showErrors, onScore, onComment }:
                 </ButtonBase>
               );
             })}
+            <ScoreInput value={accepted} onCommit={(v) => onScore(activity, v)} />
             {entered !== null && accepted !== entered && (
               <ButtonBase
                 onClick={() => onScore(activity, entered)}
@@ -471,6 +550,7 @@ const ActivityRow = ({ activity, draft, index, showErrors, onScore, onComment }:
               </ButtonBase>
             )}
           </Box>
+          )}
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, justifyContent: { lg: 'flex-end' } }}>
@@ -493,7 +573,11 @@ const ActivityRow = ({ activity, draft, index, showErrors, onScore, onComment }:
           value={comment}
           onChange={(e) => onComment(activity, e.target.value)}
           placeholder={
-            needsComment ? 'Why was the score changed? (required)' : 'Review comment (optional)'
+            needsComment
+              ? 'Why was the score changed? (required)'
+              : scorable
+                ? 'Review comment (optional)'
+                : `Review comment for ${activity.applicability} (optional)`
           }
           error={showErrors && missingComment}
           helperText={showErrors && missingComment ? 'A comment is required when the score differs.' : ' '}
@@ -546,8 +630,9 @@ const PhaseSection = ({
   isReviewed: (a: ReviewActivity) => boolean;
 }) => {
   const [open, setOpen] = useState(true);
-  const reviewed = rows.filter(isReviewed).length;
-  const pct = rows.length ? (reviewed / rows.length) * 100 : 0;
+  const scorableRows = rows.filter(isScorable);
+  const reviewed = scorableRows.filter(isReviewed).length;
+  const pct = scorableRows.length ? (reviewed / scorableRows.length) * 100 : 0;
   return (
     <Box
       sx={{
@@ -588,7 +673,9 @@ const PhaseSection = ({
           {phase === 'NA' ? 'Not applicable' : phase}
         </Typography>
         <Typography sx={{ fontFamily: FONT, color: MUTED, fontSize: '0.82rem' }}>
-          {reviewed} of {rows.length} reviewed
+          {scorableRows.length === 0
+            ? 'Comments only'
+            : `${reviewed} of ${scorableRows.length} reviewed`}
         </Typography>
         <Box
           sx={{
@@ -744,7 +831,8 @@ export const ScoreReview = () => {
   );
 
   const effAccepted = useCallback(
-    (a: ReviewActivity) => (drafts[a.id] ? drafts[a.id].acceptedScore : a.acceptedScore),
+    (a: ReviewActivity) =>
+      !isScorable(a) ? null : drafts[a.id] ? drafts[a.id].acceptedScore : a.acceptedScore,
     [drafts]
   );
   const isReviewed = useCallback((a: ReviewActivity) => effAccepted(a) !== null, [effAccepted]);
@@ -755,6 +843,7 @@ export const ScoreReview = () => {
       c.all++;
       if (a.enteredScore === null) c.unscored++;
       else c.scored++;
+      if (!isScorable(a)) return; // comment-only activities are never pending
       if (isReviewed(a)) c.reviewed++;
       else c.pending++;
     });
@@ -770,7 +859,7 @@ export const ScoreReview = () => {
           case 'unscored':
             return a.enteredScore === null;
           case 'pending':
-            return !isReviewed(a);
+            return isScorable(a) && !isReviewed(a);
           case 'reviewed':
             return isReviewed(a);
           default:
@@ -796,10 +885,13 @@ export const ScoreReview = () => {
     () => averageScore(practiceActivities, (a) => a.enteredScore),
     [practiceActivities]
   );
+  // Only activities that have an entered score take part, exactly as in the entered overall.
   const acceptedOverall = useMemo(
     () =>
-      practiceActivities.some((a) => effAccepted(a) !== null)
-        ? averageScore(practiceActivities, (a) => effAccepted(a) ?? a.enteredScore)
+      practiceActivities.some((a) => a.enteredScore !== null && effAccepted(a) !== null)
+        ? averageScore(practiceActivities, (a) =>
+            a.enteredScore === null ? null : (effAccepted(a) ?? a.enteredScore)
+          )
         : null,
     [practiceActivities, effAccepted]
   );
@@ -807,10 +899,11 @@ export const ScoreReview = () => {
   // ----- editing -----
   const updateDraft = useCallback((a: ReviewActivity, patch: Partial<Draft>) => {
     setDrafts((prev) => {
-      const current: Draft = prev[a.id] ?? { acceptedScore: a.acceptedScore, comment: a.comment };
-      const next = { ...current, ...patch };
-      const same =
-        next.acceptedScore === a.acceptedScore && next.comment.trim() === a.comment.trim();
+      // Out-of-scope activities never carry a score, whatever an old row still holds.
+      const savedScore = isScorable(a) ? a.acceptedScore : null;
+      const current: Draft = prev[a.id] ?? { acceptedScore: savedScore, comment: a.comment };
+      const next = { ...current, ...patch, ...(isScorable(a) ? {} : { acceptedScore: null }) };
+      const same = next.acceptedScore === savedScore && next.comment.trim() === a.comment.trim();
       const copy = { ...prev };
       if (same) delete copy[a.id];
       else copy[a.id] = next;
@@ -828,7 +921,9 @@ export const ScoreReview = () => {
   );
 
   const acceptAllEntered = () => {
-    const targets = practiceActivities.filter((a) => a.enteredScore !== null && !isReviewed(a));
+    const targets = practiceActivities.filter(
+      (a) => isScorable(a) && a.enteredScore !== null && !isReviewed(a)
+    );
     if (targets.length === 0) {
       setToast({ msg: 'Every activity with an entered score is already reviewed.', severity: 'warning' });
       return;
@@ -903,7 +998,7 @@ export const ScoreReview = () => {
   };
 
   const pendingEnteredCount = practiceActivities.filter(
-    (a) => a.enteredScore !== null && !isReviewed(a)
+    (a) => isScorable(a) && a.enteredScore !== null && !isReviewed(a)
   ).length;
 
   return (
@@ -1021,7 +1116,7 @@ export const ScoreReview = () => {
               sub={
                 acceptedOverall === null
                   ? 'Not reviewed yet'
-                  : `${counts.reviewed} of ${counts.all} activities reviewed`
+                  : `${counts.reviewed} of ${counts.reviewed + counts.pending} activities reviewed`
               }
               accent={BLUE}
             />
