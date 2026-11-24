@@ -25,7 +25,8 @@ interface FormData {
 const persistActivities = async (
   activities: ActivityData[],
   formData: FormData,
-  status: ActivityStatus
+  status: ActivityStatus,
+  deletedIds: string[] = []
 ) => {
   const projectId = formData.projectId;
 
@@ -62,7 +63,8 @@ const persistActivities = async (
 
   const updatedActivities =
     await activityStorageUtils.upsertActivitiesForProject(
-      activitiesWithProjectInfo
+      activitiesWithProjectInfo,
+      deletedIds
     );
 
   const updatedActivityData: ActivityData[] = updatedActivities.map(
@@ -98,11 +100,12 @@ export const useActivitySubmission = () => {
   const submitActivities = async (
     activities: ActivityData[],
     formData: FormData,
-    onSuccess?: (updatedActivities?: ActivityData[]) => void
+    onSuccess?: (updatedActivities?: ActivityData[]) => void,
+    deletedIds: string[] = []
   ) => {
     try {
       const { projectId, activities: updatedActivityData } =
-        await persistActivities(activities, formData, 'submitted');
+        await persistActivities(activities, formData, 'submitted', deletedIds);
 
       // Show success message
       setSubmitSuccess(true);
@@ -125,11 +128,12 @@ export const useActivitySubmission = () => {
   const saveActivitiesAsDraft = async (
     activities: ActivityData[],
     formData: FormData,
-    onSuccess?: (updatedActivities?: ActivityData[]) => void
+    onSuccess?: (updatedActivities?: ActivityData[]) => void,
+    deletedIds: string[] = []
   ) => {
     try {
       const { projectId, activities: updatedActivityData } =
-        await persistActivities(activities, formData, 'draft');
+        await persistActivities(activities, formData, 'draft', deletedIds);
 
       setDraftSaveSuccess(true);
       setTimeout(() => setDraftSaveSuccess(false), 5000);

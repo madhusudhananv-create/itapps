@@ -904,7 +904,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (activities.length === 0) {
+    if (activities.length === 0 && !hasUnsavedChanges) {
       showSnackbar(
         'Please add at least one activity before submitting',
         'error'
@@ -980,7 +980,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   };
 
   const handleSaveDraftClick = async () => {
-    if (activities.length === 0) {
+    if (activities.length === 0 && !hasUnsavedChanges) {
       showSnackbar(
         'Please add at least one activity before saving a draft',
         'error'

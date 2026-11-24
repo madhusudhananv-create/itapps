@@ -285,6 +285,7 @@ export function Activities() {
   // Activity state management - lifted to parent component
   const {
     activities,
+    getDeletedIds,
     hasUnsavedChanges,
     addActivity,
     updateActivity,
@@ -307,22 +308,19 @@ export function Activities() {
 
   const handleActivitiesSubmit = useCallback(
     async (activities: ActivityData[]) => {
-      // submitActivities reports an API failure through its result rather than throwing, so
-      // pass it on: ManageActivities then shows the error toast and keeps the activities
-      // flagged as unsaved, instead of the failed submit passing silently.
-      const result = await submitActivities(
-        activities,
-        projectInfoFormData,
-        markActivitiesAsSaved
-      );
-      if (!result.success) {
-        console.error('Error submitting activities:', result.error);
-        throw result.error instanceof Error
-          ? result.error
-          : new Error('Submitting activities failed');
+      try {
+        // Submit activities (this will handle Firestore saving)
+        await submitActivities(
+          activities,
+          projectInfoFormData,
+          markActivitiesAsSaved,
+          getDeletedIds()
+        );
+      } catch (error) {
+        console.error('Error submitting activities:', error);
       }
     },
-    [submitActivities, projectInfoFormData, markActivitiesAsSaved]
+    [submitActivities, projectInfoFormData, markActivitiesAsSaved, getDeletedIds]
   );
 
   const handleActivitiesSaveDraft = useCallback(
@@ -332,13 +330,14 @@ export function Activities() {
         await saveActivitiesAsDraft(
           activities,
           projectInfoFormData,
-          markActivitiesAsSaved
+          markActivitiesAsSaved,
+          getDeletedIds()
         );
       } catch (error) {
         console.error('Error saving draft activities:', error);
       }
     },
-    [saveActivitiesAsDraft, projectInfoFormData, markActivitiesAsSaved]
+    [saveActivitiesAsDraft, projectInfoFormData, markActivitiesAsSaved, getDeletedIds]
   );
 
   const handleProjectInfoFormChange = useCallback(
