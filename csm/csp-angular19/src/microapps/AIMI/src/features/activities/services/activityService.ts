@@ -296,9 +296,19 @@ export const activityService = {
    * Updates existing activities and creates new ones efficiently
    */
   upsertActivitiesForProject: async (
-    activities: ActivityWithProjectInfo[]
+    activities: ActivityWithProjectInfo[],
+    deletedIds: string[] = []
   ): Promise<ActivityWithProjectInfo[]> => {
     try {
+      // Delete only the records the user explicitly removed in the UI
+      for (let i = 0; i < deletedIds.length; i += 25) {
+        await Promise.all(
+          deletedIds
+            .slice(i, i + 25)
+            .map((id) => activityService.deleteActivity(id))
+        );
+      }
+
       if (activities.length === 0) return [];
 
       const projectId = activities[0].projectId;

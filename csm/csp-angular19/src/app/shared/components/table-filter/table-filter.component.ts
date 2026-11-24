@@ -337,7 +337,7 @@ export class TableFilterComponent implements OnInit, OnChanges {
         { id: 'On-hold', name: 'On-hold' }
       ]));
       this.filterPref.push(new FilterPreferenceModel('owner', 'Owner', 'string', [
-        { id: 'Customer Success Manager', name: 'Customer Success Manager' },
+        { id: 'Project Owner', name: 'Project Owner' },
         { id: 'Project Manager', name: 'Project Manager' },
         { id: 'Team Member', name: 'Team Member' },
         { id: 'BU-Head IMS', name: 'BU-Head IMS' },

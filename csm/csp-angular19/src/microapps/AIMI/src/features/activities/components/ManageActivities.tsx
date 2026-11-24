@@ -728,7 +728,7 @@ const hasAcceptedScoreChanges =
   };
 
   const handleSubmit = async () => {
-    if (activities.length === 0) {
+    if (activities.length === 0 && !hasUnsavedChanges) {
       showSnackbar(
         'Please add at least one activity before submitting',
         'error'
@@ -785,7 +785,7 @@ const hasAcceptedScoreChanges =
   };
 
   const handleSaveDraftClick = async () => {
-    if (activities.length === 0) {
+    if (activities.length === 0 && !hasUnsavedChanges) {
       showSnackbar(
         'Please add at least one activity before saving a draft',
         'error'
