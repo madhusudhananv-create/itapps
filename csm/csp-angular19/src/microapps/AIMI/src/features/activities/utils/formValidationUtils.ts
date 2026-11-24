@@ -12,6 +12,14 @@ export const isNotApplicable = (applicability: string): boolean => {
   );
 };
 
+// Comments explain why an activity is not applicable, so they are mandatory for these two
+export const requiresComments = (applicability: string): boolean => {
+  return applicability === 'Activity NA' || applicability === 'Customer NA';
+};
+
+export const COMMENTS_REQUIRED_MESSAGE =
+  'Comments are mandatory when Applicability is Activity NA or Customer NA';
+
 export const isNoAIAdoption = (aiAdoptionScore: string): boolean => {
   return aiAdoptionScore === '0';
 };
@@ -31,7 +39,12 @@ export const validateRequiredFields = (formData: ActivityFormData): boolean => {
     return basicFieldsValid && !!formData.aiAdoptionScore;
   }
 
-  // When not applicable, only basic fields are required
+  // Activity NA / Customer NA also need a comment saying why
+  if (requiresComments(formData.applicability) && !formData.comments?.trim()) {
+    return false;
+  }
+
+  // Otherwise only the basic fields are required
   return basicFieldsValid;
 };
 
@@ -76,6 +89,57 @@ export const validateAIToolDetails = (
     }
     return true;
   });
+};
+
+// Lists everything that stops an activity from being submitted, using the same rules
+// as the Add/Edit Activity modal. Used to validate activities that never went through
+// that modal (e.g. imported from Excel) before they are submitted.
+export const getActivityValidationErrors = (
+  activity: ActivityFormData
+): string[] => {
+  const errors: string[] = [];
+
+  if (!activity.applicability) {
+    errors.push('Applicability is required');
+    return errors;
+  }
+
+  if (
+    requiresComments(activity.applicability) &&
+    !activity.comments?.trim()
+  ) {
+    errors.push(COMMENTS_REQUIRED_MESSAGE);
+  }
+
+  if (!isApplicable(activity.applicability)) return errors;
+
+  if (!activity.aiAdoptionScore) {
+    errors.push('AI Adoption Score is required');
+    return errors;
+  }
+
+  if (isNoAIAdoption(activity.aiAdoptionScore)) return errors;
+
+  if (!validateAIToolsOrAccelerators(activity)) {
+    errors.push('Select at least one AI tool or accelerator');
+  }
+
+  // 'Configure AI Tool Details' is disabled for the Firebase->SQL migration, so the
+  // details are not required to submit. Re-enable together with the dialog.
+  // if (!validateAIToolDetails(activity.aiToolUsed, activity.aiToolDetails)) {
+  //   errors.push(
+  //     'Configure AI tool details (access type, and number of licenses when Licensed)'
+  //   );
+  // }
+
+  if (
+    activity.aiAdoptionScore === '4' &&
+    !(Number(activity.workDoneByAI) > 0)
+  ) {
+    errors.push('% Work Done by AI must be greater than 0 for Full Adoption');
+  }
+
+  return errors;
 };
 
 export const validateOptionalFields = (formData: ActivityFormData): boolean => {

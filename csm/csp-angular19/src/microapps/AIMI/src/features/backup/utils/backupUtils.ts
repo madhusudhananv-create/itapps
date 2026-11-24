@@ -1,106 +1,44 @@
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '@shared/config/firebaseConfig';
+import { aimiApiClient } from '@shared/services/aimiApiClient';
 
-// Collection names from your codebase
-const COLLECTIONS = {
-  ACTIVITIES: 'activities',
-  PROJECT_INFO: 'projectInfo',
-  PRACTICE_INFO: 'practiceInfo',
-};
+// Backup of the AIMI data, read from SQL through the AllSys API (the usp_AIMI_Get* procs)
+// instead of straight from Firestore. The file keeps the same overall shape the Backup /
+// Restore screens already understand - metadata + collections.{activities, projectInfo,
+// practiceInfo}.documents[] with an `id` on every document - but each document is now the
+// SQL row as the API returns it (UPPER_SNAKE column names). Activities carry their AI tools,
+// accelerators and qualitative benefits plus the Accepted Score review.
 
-interface FirestoreTimestamp {
-  toDate: () => Date;
+/** Backup file format version. 2.x = SQL rows; the old Firestore backups had no version. */
+export const BACKUP_FORMAT_VERSION = '2.0.0';
+
+// Collection name (kept from the Firestore days, so the UI and old file names still line up)
+// -> endpoint returning every active row of that table when called without filters.
+const COLLECTION_ENDPOINTS = {
+  activities: '/api/AllSys/GetAimiActivities',
+  projectInfo: '/api/AllSys/GetAimiProjectInfo',
+  practiceInfo: '/api/AllSys/GetAimiPracticeInfo',
+} as const;
+
+type CollectionName = keyof typeof COLLECTION_ENDPOINTS;
+
+interface SqlRow {
+  ID: number;
+  [column: string]: unknown;
 }
 
 /**
- * Convert Firestore timestamp to ISO string
+ * Backup a single collection (all active rows of its table)
  */
-const convertTimestamp = (timestamp: unknown): string | null => {
-  if (!timestamp) return null;
-
-  // Handle Firestore Timestamps
-  if (
-    typeof timestamp === 'object' &&
-    timestamp !== null &&
-    'toDate' in timestamp &&
-    typeof (timestamp as FirestoreTimestamp).toDate === 'function'
-  ) {
-    return (timestamp as FirestoreTimestamp).toDate().toISOString();
-  }
-
-  // Handle native Date objects
-  if (timestamp instanceof Date) {
-    return timestamp.toISOString();
-  }
-
-  // Handle numbers (milliseconds or seconds since epoch)
-  if (typeof timestamp === 'number') {
-    // If too small, assume it's in seconds
-    return new Date(
-      timestamp < 1e12 ? timestamp * 1000 : timestamp
-    ).toISOString();
-  }
-
-  // Handle strings that could be ISO dates
-  if (typeof timestamp === 'string') {
-    const date = new Date(timestamp);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString();
-    }
-  }
-
-  return null;
-};
-
-/**
- * Convert Firestore document to plain object
- */
-const convertDocument = (doc: {
-  id: string;
-  data: () => Record<string, unknown>;
-}) => {
-  const data = doc.data();
-  const converted: Record<string, unknown> = {
-    id: doc.id,
-    ...data,
-  };
-
-  // Convert timestamps
-  if (data.createdAt) {
-    converted.createdAt = convertTimestamp(data.createdAt);
-  }
-
-  if (data.updatedAt) {
-    converted.updatedAt = convertTimestamp(data.updatedAt);
-  }
-
-  return converted;
-};
-
-/**
- * Backup a single collection
- */
-const backupCollection = async (collectionName: string) => {
+const backupCollection = async (
+  collectionName: CollectionName
+): Promise<Record<string, unknown>[]> => {
   try {
-    console.log(`📦 Backing up collection: ${collectionName}`);
-
-    const q = query(
-      collection(db, collectionName),
-      orderBy('createdAt', 'desc')
+    const rows = await aimiApiClient.get<SqlRow[]>(
+      COLLECTION_ENDPOINTS[collectionName]
     );
-    const querySnapshot = await getDocs(q);
-
-    const documents: Record<string, unknown>[] = [];
-    querySnapshot.forEach((doc) => {
-      documents.push(convertDocument(doc));
-    });
-
-    console.log(
-      `✅ Successfully backed up ${documents.length} documents from ${collectionName}`
-    );
-    return documents;
+    // `id` is what the Restore screen's validation expects on every document
+    return rows.map((row) => ({ id: String(row.ID), ...row }));
   } catch (error) {
-    console.error(`❌ Error backing up collection ${collectionName}:`, error);
+    console.error(`Error backing up ${collectionName}:`, error);
     throw error;
   }
 };
@@ -147,15 +85,14 @@ export const performClientBackup = async (): Promise<{
   collections: Record<string, { count: number; error?: string }>;
 }> => {
   try {
-    console.log('🚀 Starting client-side Firestore backup...');
+    const collectionNames = Object.keys(COLLECTION_ENDPOINTS) as CollectionName[];
 
-    // Backup all collections
     const backupData = {
       metadata: {
         backupDate: new Date().toISOString(),
-        collections: Object.keys(COLLECTIONS),
-        version: '1.0.0',
-        source: 'AI Maturity Index Platform',
+        collections: collectionNames as string[],
+        version: BACKUP_FORMAT_VERSION,
+        source: 'AI Maturity Index Platform (SQL)',
       },
       collections: {} as Record<
         string,
@@ -166,55 +103,46 @@ export const performClientBackup = async (): Promise<{
     const collectionStats: Record<string, { count: number; error?: string }> =
       {};
 
-    // Backup each collection
-    for (const [, collectionName] of Object.entries(COLLECTIONS)) {
+    for (const collectionName of collectionNames) {
       try {
         const documents = await backupCollection(collectionName);
         backupData.collections[collectionName] = {
           count: documents.length,
-          documents: documents,
+          documents,
         };
         collectionStats[collectionName] = { count: documents.length };
       } catch (error) {
-        console.error(`Failed to backup collection ${collectionName}:`, error);
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
         backupData.collections[collectionName] = {
           count: 0,
           documents: [],
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: message,
         };
-        collectionStats[collectionName] = {
-          count: 0,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        };
+        collectionStats[collectionName] = { count: 0, error: message };
       }
     }
 
-    // Calculate total documents
     const totalDocuments = Object.values(collectionStats).reduce(
       (total, collection) => total + collection.count,
       0
     );
 
-    // Generate filename and download backup
-    const filename = generateBackupFilename();
-    downloadJSON(backupData, filename);
-
-    console.log('\n🎉 Backup completed successfully!');
-    console.log(`📁 Backup downloaded as: ${filename}`);
-    console.log(`📊 Total documents backed up: ${totalDocuments}`);
-    console.log(
-      `📋 Collections backed up: ${Object.keys(COLLECTIONS).join(', ')}`
+    // A backup with a failed collection would silently lose that data on restore, so
+    // don't hand out a file when anything failed.
+    const failed = Object.entries(collectionStats).filter(
+      ([, stats]) => stats.error
     );
-
-    // Print collection statistics
-    console.log('\n📈 Collection Statistics:');
-    for (const [collectionName, stats] of Object.entries(collectionStats)) {
-      if (stats.error) {
-        console.log(`  ❌ ${collectionName}: ${stats.error}`);
-      } else {
-        console.log(`  ✅ ${collectionName}: ${stats.count} documents`);
-      }
+    if (failed.length > 0) {
+      return {
+        success: false,
+        message: `Backup failed for: ${failed.map(([name]) => name).join(', ')}. No file was created.`,
+        totalDocuments,
+        collections: collectionStats,
+      };
     }
+
+    downloadJSON(backupData, generateBackupFilename());
 
     return {
       success: true,
@@ -223,7 +151,7 @@ export const performClientBackup = async (): Promise<{
       collections: collectionStats,
     };
   } catch (error) {
-    console.error('💥 Backup failed:', error);
+    console.error('Backup failed:', error);
     return {
       success: false,
       message:

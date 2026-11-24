@@ -579,6 +579,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controllers\AimiController.cs" />
     <Compile Include="ActionFilters\ActivityLogger.cs" />
     <Compile Include="ActionFilters\BearerTokenAuthorization.cs" />
     <Compile Include="ActionFilters\ExceptionFilter.cs" />
