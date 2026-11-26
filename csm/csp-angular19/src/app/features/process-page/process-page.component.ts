@@ -438,7 +438,7 @@ export class ProcessPageComponent implements OnInit, OnChanges {
       xhr.open('GET', apiuri, true);
       xhr.setRequestHeader('Content-type', 'application/json');
       xhr.setRequestHeader('FILE_NAME_SERVER', filename);
-      xhr.setRequestHeader('token', this._util.AppSettings.token);
+      xhr.setRequestHeader('token', localStorage.getItem('token') || this._util.AppSettings.token);
       xhr.responseType = 'blob';
 
       xhr.onreadystatechange = function () {
@@ -471,7 +471,7 @@ export class ProcessPageComponent implements OnInit, OnChanges {
     else {
       var url = window.URL.createObjectURL(blob);
       a.href = url;
-      a.download = file;
+      a.download = ext && !file.toLowerCase().endsWith('.' + ext.toLowerCase()) ? file + '.' + ext.replace(/^\./, '') : file;
       a.click();
       window.URL.revokeObjectURL(url);
     }
