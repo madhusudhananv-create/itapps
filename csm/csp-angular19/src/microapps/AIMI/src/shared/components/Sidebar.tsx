@@ -162,7 +162,7 @@ const styles = {
 const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   // Get feature flags for navigation
   const dashboardFlags = useFeatureFlags('dashboard');
@@ -197,7 +197,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       path: '/backup',
       icon: <Backup />,
       badge: null,
-      enabled: backupFlags.enabled,
+      enabled: backupFlags.enabled && isAdmin,
     },
   ].filter((item) => item.enabled);
 

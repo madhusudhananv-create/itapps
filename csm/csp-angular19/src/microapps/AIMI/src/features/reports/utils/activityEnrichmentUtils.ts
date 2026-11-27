@@ -95,8 +95,8 @@ export const enrichActivitiesWithProjectInfo = (
         projectInfo?.commonAdoptionWorkforceCertification,
       commonAdoptionEffortsSaved: projectInfo?.commonAdoptionEffortsSaved,
       commonDeploymentEngineer: projectInfo?.commonDeploymentEngineer,
-      acceptedScore: projectInfo?.acceptedScore,
-      acceptedScoreComment: projectInfo?.acceptedScoreComment,
+      // acceptedScore / acceptedScoreComment come from the activity rows themselves
+      // (see reportService), not from the project info.
     };
   });
 };

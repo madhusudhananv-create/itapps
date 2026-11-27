@@ -27,11 +27,16 @@ import {
   Warning as WarningIcon,
   Delete as DeleteIcon,
   Reviews,
+  // UploadFile as UploadFileIcon, // 'Import Excel' - disabled for the Firebase->SQL migration
 } from '@mui/icons-material';
-import { generateAndDownloadReport } from '../../reports/utils/csvExportUtils';
+import { generateAndDownloadProjectReport } from '../../reports/utils/csvExportUtils';
+import { reportService } from '../../reports/services/reportService';
+import { getActivityValidationErrors } from '../utils/formValidationUtils';
+import { activityService } from '../services/activityService';
 import { AddActivityModal } from './AddActivityModal';
 import { ActivityCard } from './ActivityCard';
 import { CopyActivityDialog } from './CopyActivityDialog';
+import type { AcceptedScoreInfo } from '../services/activityService';
 import type {
   ActivityFormData,
   ActivityData,
@@ -46,6 +51,7 @@ import {
 import { CommonSnackbar } from '../../../shared/components/CommonSnackbar';
 import { useAuth } from '@auth/hooks/useAuth';
 import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
+// import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup'; // used only by 'Mark all activity as NA' (disabled)
 //import ScoreIcon from '@mui/icons-material/Score';
 
 interface ManageActivitiesProps {
@@ -71,15 +77,11 @@ interface ManageActivitiesProps {
     currentPhase: string;
     isProjectNA?: boolean;
     naComments?: string;
-    acceptedScore?: number;
-    scoreReviewed?: boolean;
-    acceptedScoreComment?: string;
+    headcount?: number;
   };
-  onSaveReviewInfo?: (reviewInfo: {
-  acceptedScore?: number;
-  scoreReviewed?: boolean;
-  acceptedScoreComment?: string;
-}) => Promise<void>;
+  acceptedScoreInfo?: AcceptedScoreInfo;
+  onSaveReviewInfo?: (reviewInfo: AcceptedScoreInfo) => Promise<void>;
+  // onImportActivities?: () => void; // 'Import Excel' - disabled for the Firebase->SQL migration
 }
 
 
@@ -95,7 +97,9 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   onSubmit,
   onSaveDraft,
   projectInfo,
+  acceptedScoreInfo,
   onSaveReviewInfo,
+  // onImportActivities, // 'Import Excel' - disabled for the Firebase->SQL migration
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{
@@ -126,30 +130,22 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [submitValidationIssues, setSubmitValidationIssues] = useState<
+    string[]
+  >([]);
   const [acceptedScore, setAcceptedScore] = useState('');
-const [scoreReviewed, setScoreReviewed] = useState(false);
-const [acceptedScoreComment, setAcceptedScoreComment] = useState('');
-const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [scoreReviewed, setScoreReviewed] = useState(false);
+  const [acceptedScoreComment, setAcceptedScoreComment] = useState('');
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
 
-useEffect(() => {
-  if (projectInfo) {
-    setAcceptedScore(
-      String(projectInfo.acceptedScore ?? '')
-    );
-
-    setScoreReviewed(
-      projectInfo.scoreReviewed ?? false
-    );
-
-    setAcceptedScoreComment(
-      projectInfo.acceptedScoreComment ?? ''
-    );
-  }
-}, [projectInfo]);
-const hasAcceptedScoreChanges =
-  acceptedScore !== String(projectInfo?.acceptedScore ?? '') ||
-  scoreReviewed !== (projectInfo?.scoreReviewed ?? false) ||
-  acceptedScoreComment !== (projectInfo?.acceptedScoreComment ?? '');
+  // Seed the review dialog from the saved review each time it opens (or the saved
+  // review changes), so cancelled edits don't linger.
+  useEffect(() => {
+    setAcceptedScore(String(acceptedScoreInfo?.acceptedScore ?? ''));
+    setScoreReviewed(acceptedScoreInfo?.scoreReviewed ?? false);
+    setAcceptedScoreComment(acceptedScoreInfo?.acceptedScoreComment ?? '');
+  }, [acceptedScoreInfo, commentDialogOpen]);
 
   // Ids of activities auto-saved as drafts (on add/edit/copy) that haven't been
   // explicitly confirmed via the "Save as Draft" button yet - these still show as Unsaved
@@ -158,6 +154,7 @@ const hasAcceptedScoreChanges =
   );
 
   const { isAdmin, isAuthenticated } = useAuth();
+  // const { getActivitiesForSDLCPhase } = useQuestionnaireLookup(); // used only by 'Mark all activity as NA' (disabled)
   const featureFlags = useFeatureFlags('activities');
   const canBulkDelete = isAdmin && featureFlags.showDeleteButton;
 
@@ -195,10 +192,7 @@ const hasAcceptedScoreChanges =
     () => activities.some((activity) => activity.status !== 'submitted'),
     [activities]
   );
-  const canSubmitOrSaveDraft =
-  hasUnsavedChanges ||
-  hasDraftActivities ||
-  hasAcceptedScoreChanges;
+  const canSubmitOrSaveDraft = hasUnsavedChanges || hasDraftActivities;
   const isProjectNA = !!projectInfo?.isProjectNA;
 
   // Group activities by SDLC Phase
@@ -297,6 +291,17 @@ const hasAcceptedScoreChanges =
       fontWeight: 600,
       bgcolor: '#4caf50',
       color: 'white',
+      px: 1.5,
+      py: 0.25,
+      borderRadius: 1,
+      minWidth: '50px',
+      textAlign: 'center',
+      fontSize: '0.9rem',
+    },
+    enteredScoreValue: {
+      fontWeight: 600,
+      bgcolor: '#ffc107',
+      color: '#212529',
       px: 1.5,
       py: 0.25,
       borderRadius: 1,
@@ -502,17 +507,32 @@ const hasAcceptedScoreChanges =
     });
   };
 
-  const handleConfirmDelete = () => {
-    if (deleteConfirmation.activityId) {
-      onDeleteActivity(deleteConfirmation.activityId);
+  // Only activities already saved to SQL have a database id (a plain int). Unsaved ones
+  // (Date.now() / uuid ids) exist only in the browser, so there is nothing to delete server-side.
+  const deleteFromDatabase = async (activityIds: string[]) => {
+    await activityService.deleteActivities(
+      activityIds.filter((id) => /^\d{1,9}$/.test(id))
+    );
+  };
+
+  const handleConfirmDelete = async () => {
+    const activityId = deleteConfirmation.activityId;
+    setDeleteConfirmation({ open: false, activityId: null, activityName: '' });
+    if (!activityId) return;
+
+    try {
+      await deleteFromDatabase([activityId]);
+      onDeleteActivity(activityId);
       setPendingAutoSaveIds((prev) => {
         const next = new Set(prev);
-        next.delete(deleteConfirmation.activityId!);
+        next.delete(activityId);
         return next;
       });
       showSnackbar('Activity deleted successfully!', 'success');
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      showSnackbar('Error deleting activity. Please try again.', 'error');
     }
-    setDeleteConfirmation({ open: false, activityId: null, activityName: '' });
   };
 
   const handleCancelDelete = () => {
@@ -556,8 +576,18 @@ const hasAcceptedScoreChanges =
     setBulkDeleteConfirmation({ open: true, phase, activityIds });
   };
 
-  const handleConfirmBulkDelete = () => {
+  const handleConfirmBulkDelete = async () => {
     const { activityIds } = bulkDeleteConfirmation;
+
+    try {
+      await deleteFromDatabase(activityIds);
+    } catch (error) {
+      console.error('Error deleting activities:', error);
+      showSnackbar('Error deleting activities. Please try again.', 'error');
+      setBulkDeleteConfirmation({ open: false, phase: '', activityIds: [] });
+      return;
+    }
+
     activityIds.forEach((id) => onDeleteActivity(id));
     setSelectedActivityIds((prev) => {
       const next = new Set(prev);
@@ -710,20 +740,166 @@ const hasAcceptedScoreChanges =
     setIsModalOpen(false);
   };
 
-  const handleGenerateReport = () => {
-    try {
-      const overallScoreValue = areAllActivitiesNotApplicable(activities)
-        ? 'N/A'
-        : calculateAverageAIAdoptionScore(activities).toFixed(2);
+  // Bulk-marks every activity in a phase as "Activity NA", overwriting any existing
+  // data for those activities in this phase
+/* DISABLED - 'Mark all activity as NA' - disabled for the Firebase->SQL migration
+  const handleMarkPhaseAsNA = async (phase: string) => {
+    const activityNames = getActivitiesForSDLCPhase(selectedPractice, phase);
+    if (activityNames.length === 0) return;
 
-      generateAndDownloadReport(
-        activities,
-        projectInfo ? { ...projectInfo, overallScoreValue } : undefined
+    const now = new Date();
+    const naActivities: ActivityData[] = activityNames.map((activityName) => {
+      const existing = activities.find(
+        (activity) =>
+          activity.sdlcPhase === phase && activity.activity === activityName
       );
+
+      return {
+        sdlcPhase: phase,
+        activity: activityName,
+        applicability: 'Activity NA',
+        aiAdoptionScore: '',
+        aiToolUsed: '',
+        acceleratorsUsed: '',
+        workDoneByAI: 0,
+        hoursSaved: 0,
+        revenueGenerated: '',
+        benefitTo: '',
+        qualitativeBenefits: [],
+        comments: '',
+        id: existing?.id ?? `${Date.now()}-${activityName}`,
+        createdAt: existing?.createdAt ?? now,
+        status: existing?.status ?? 'draft',
+      };
+    });
+
+    setEditingActivity(null);
+    setIsModalOpen(false);
+
+    if (!projectInfo?.projectId) {
+      naActivities.forEach((activity) => {
+        if (activities.some((existing) => existing.id === activity.id)) {
+          onUpdateActivity(activity);
+        } else {
+          onAddActivity(activity);
+        }
+      });
+      showSnackbar(
+        `All activities under "${phase.replace(/:/g, '')}" marked as Activity NA.`,
+        'success'
+      );
+      return;
+    }
+
+    const activitiesToSave: ActivityWithProjectInfo[] = naActivities.map(
+      (activity) => ({
+        ...activity,
+        status: 'draft',
+        projectId: projectInfo.projectId,
+        project: projectInfo.project,
+        practice: projectInfo.practice,
+        account: projectInfo.account,
+        businessUnit: projectInfo.businessUnit,
+      })
+    );
+
+    try {
+      const savedActivities =
+        await activityStorageUtils.upsertActivitiesForProject(
+          activitiesToSave
+        );
+
+      savedActivities.forEach((saved, index) => {
+        const original = naActivities[index];
+        const existedBefore = activities.some(
+          (activity) => activity.id === original.id
+        );
+        const committed: ActivityData = {
+          ...original,
+          id: saved.id,
+          status: saved.status,
+          createdAt: new Date(saved.createdAt),
+          updatedAt: saved.updatedAt ? new Date(saved.updatedAt) : undefined,
+        };
+
+        if (onCommitActivity && original.id !== saved.id) {
+          onCommitActivity(original.id, committed);
+        } else if (existedBefore) {
+          onUpdateActivity(committed);
+        } else {
+          onAddActivity(committed);
+        }
+      });
+
+      setPendingAutoSaveIds((prev) => {
+        const next = new Set(prev);
+        savedActivities.forEach((saved) => next.add(saved.id));
+        return next;
+      });
+
+      showSnackbar(
+        `All activities under "${phase.replace(/:/g, '')}" marked as Activity NA.`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Error marking phase as NA:', error);
+      naActivities.forEach((activity) => {
+        if (activities.some((existing) => existing.id === activity.id)) {
+          onUpdateActivity(activity);
+        } else {
+          onAddActivity(activity);
+        }
+      });
+      showSnackbar(
+        'Saved locally. We will retry saving automatically.',
+        'error'
+      );
+    }
+  };
+
+*/
+  // The report is read from SQL (usp_AIMI_GetReportData: activities joined with the project's
+  // AI Adoption Metrics and Accepted Score) instead of being built from whatever is on screen,
+  // so it always reflects what is saved. The button is disabled while there are unsaved changes.
+  const handleGenerateReport = async () => {
+    if (!projectInfo?.projectId) return;
+
+    setIsGeneratingReport(true);
+    try {
+      const rows = await reportService.getReportData(
+        { projectId: projectInfo.projectId, practice: projectInfo.practice },
+        new Map([
+          [
+            projectInfo.projectId,
+            {
+              businessHead: projectInfo.businessHead,
+              accountManager: projectInfo.accountManager,
+              manager: projectInfo.manager,
+              headcount: projectInfo.headcount,
+            },
+          ],
+        ])
+      );
+
+      if (rows.length === 0) {
+        showSnackbar(
+          'No saved activities found for this project and practice',
+          'error'
+        );
+        return;
+      }
+
+      const overallScoreValue = areAllActivitiesNotApplicable(rows)
+        ? 'N/A'
+        : calculateAverageAIAdoptionScore(rows).toFixed(2);
+
+      generateAndDownloadProjectReport(rows, overallScoreValue);
       showSnackbar('Report generated and downloaded successfully!', 'success');
     } catch (error) {
       console.error('Error generating report:', error);
       showSnackbar('Error generating report. Please try again.', 'error');
+    } finally {
+      setIsGeneratingReport(false);
     }
   };
 
@@ -760,6 +936,25 @@ const hasAcceptedScoreChanges =
         );
         return;
       }
+    }
+
+    // Activities that skipped the Add/Edit modal (e.g. Excel import) can be missing
+    // mandatory data - block the submit and tell the user exactly what to fix.
+    const invalidActivities = activities
+      .map((activity) => ({
+        activity,
+        errors: getActivityValidationErrors(activity),
+      }))
+      .filter(({ errors }) => errors.length > 0);
+
+    if (invalidActivities.length > 0) {
+      setSubmitValidationIssues(
+        invalidActivities.map(
+          ({ activity, errors }) =>
+            `${activity.sdlcPhase} > ${activity.activity}: ${errors.join('; ')}`
+        )
+      );
+      return;
     }
 
     // Set submitting state to prevent multiple clicks
@@ -834,8 +1029,9 @@ const hasAcceptedScoreChanges =
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleAddActivity}
-              disabled={!selectedPractice || isProjectNA}
+              disabled={!selectedPractice || isProjectNA || !isAdmin}
               sx={styles.addButton}
+              title={!isAdmin ? 'Only admin can add activities' : ''}
             >
               Add Activity
             </Button>
@@ -844,11 +1040,29 @@ const hasAcceptedScoreChanges =
               variant="outlined"
               startIcon={<DownloadIcon />}
               onClick={handleGenerateReport}
-              disabled={activities.length === 0 || hasUnsavedChanges}
+              disabled={
+                activities.length === 0 ||
+                hasUnsavedChanges ||
+                isGeneratingReport
+              }
               sx={styles.generateReportButton}
             >
               Generate Report
             </Button>
+
+{/* DISABLED - 'Import Excel' - disabled for the Firebase->SQL migration
+            {onImportActivities && (
+              <Button
+                variant="outlined"
+                startIcon={<UploadFileIcon />}
+                onClick={onImportActivities}
+                disabled={!selectedPractice || isProjectNA || !isAdmin}
+                title={!isAdmin ? 'Only admin can import activities' : ''}
+              >
+                Import Excel
+              </Button>
+            )}
+*/}
           </Box>
 
           {activities.length > 0 && (
@@ -862,13 +1076,24 @@ const hasAcceptedScoreChanges =
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                   <Box sx={styles.scoreContainer}>
                     <Typography variant="body2" sx={styles.overallScoreLabel}>
-                      Overall Score:
+                      Entered Overall Score:
                     </Typography>
 
-                    <Typography variant="h6" sx={styles.overallScoreValue}>
+                    <Typography variant="h6" sx={styles.enteredScoreValue}>
                       {areAllActivitiesNotApplicable(activities)
                         ? 'N/A'
                         : calculateAverageAIAdoptionScore(activities).toFixed(2)}
+                    </Typography>
+                  </Box>
+                  <Box sx={styles.scoreContainer}>
+                    <Typography variant="body2" sx={styles.overallScoreLabel}>
+                      Accepted Score:
+                    </Typography>
+
+                    <Typography variant="h6" sx={styles.overallScoreValue}>
+                      {acceptedScoreInfo?.acceptedScore !== undefined
+                        ? Number(acceptedScoreInfo.acceptedScore).toFixed(2)
+                        : '-'}
                     </Typography>
                   </Box>
                   {isAuthenticated && (
@@ -1075,8 +1300,15 @@ const hasAcceptedScoreChanges =
           <Button
             variant="outlined"
             onClick={handleSaveDraftClick}
-            disabled={!selectedPractice || !canSubmitOrSaveDraft || isSavingDraft || isSubmitting}
+            disabled={
+              !selectedPractice ||
+              !canSubmitOrSaveDraft ||
+              isSavingDraft ||
+              isSubmitting ||
+              !isAdmin
+            }
             sx={styles.saveDraftButton}
+            title={!isAdmin ? 'Only admin can save activities' : ''}
           >
             {isSavingDraft ? 'Saving...' : 'Save as Draft'}
           </Button>
@@ -1084,8 +1316,15 @@ const hasAcceptedScoreChanges =
             variant="contained"
             startIcon={<SendIcon />}
             onClick={handleSubmit}
-            disabled={!selectedPractice || !canSubmitOrSaveDraft || isSubmitting || isSavingDraft}
+            disabled={
+              !selectedPractice ||
+              !canSubmitOrSaveDraft ||
+              isSubmitting ||
+              isSavingDraft ||
+              !isAdmin
+            }
             sx={styles.submitButton}
+            title={!isAdmin ? 'Only admin can submit activities' : ''}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Activities'}
           </Button>
@@ -1098,6 +1337,7 @@ const hasAcceptedScoreChanges =
         onClose={handleCloseModal}
         onSave={handleSaveActivity}
         onSaveAndAddNew={handleSaveAndAddNew}
+        /* onMarkPhaseAsNA={handleMarkPhaseAsNA} - 'Mark all activity as NA' disabled for the Firebase->SQL migration */
         selectedPractice={selectedPractice}
         editingActivity={editingActivity}
         existingActivities={activities}
@@ -1299,6 +1539,38 @@ const hasAcceptedScoreChanges =
     )}
   </DialogActions>
 </Dialog>
+      <Dialog
+        open={submitValidationIssues.length > 0}
+        onClose={() => setSubmitValidationIssues([])}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ color: 'warning.main' }}>
+          Cannot submit - mandatory data missing
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 1 }}>
+            Edit the following activities and fill in the missing details, then
+            submit again:
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 3 }}>
+            {submitValidationIssues.map((issue) => (
+              <li key={issue}>
+                <Typography variant="body2">{issue}</Typography>
+              </li>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            onClick={() => setSubmitValidationIssues([])}
+          >
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Snackbar for notifications */}
       <CommonSnackbar
         open={snackbar.open}

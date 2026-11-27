@@ -212,6 +212,10 @@ interface TextAreaFieldProps {
   disabled?: boolean;
   placeholder?: string;
   rows?: number;
+  required?: boolean;
+  /** Shown under the field, in red when `error` is set. */
+  helperText?: string;
+  error?: boolean;
 }
 
 interface ApplicabilityFieldProps {
@@ -273,6 +277,9 @@ export const TextAreaField: React.FC<TextAreaFieldProps> = ({
   disabled = false,
   placeholder,
   rows = 4,
+  required = false,
+  helperText,
+  error = false,
 }) => (
   <TextField
     fullWidth
@@ -282,6 +289,9 @@ export const TextAreaField: React.FC<TextAreaFieldProps> = ({
     value={value}
     onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
+    required={required}
+    error={error}
+    helperText={helperText}
     sx={{
       ...formFieldStyles.textField,
       ...(disabled && formFieldStyles.disabled),
