@@ -1,5 +1,9 @@
 import type { ActivityData } from '@activities/types/activityTypes';
 import type { EnrichedActivityWithProjectInfo } from './activityEnrichmentUtils';
+import {
+  areAllActivitiesNotApplicable,
+  calculateAverageAIAdoptionScore,
+} from '@activities/utils/activityStorageUtils';
 
 // Common interface for project information
 interface ProjectInfo {
@@ -31,19 +35,6 @@ const CSV_HEADERS = [
   '# of People Using AI',
   'License Count',
   'License Provider',
-  '% Tickets Auto-Resolved by AI',
-  'MTTR Reduction vs Traditional Model',
-  '# AI Agents in Production (Not Pilots)',
-  '# End-to-End Workflows Re-imagined and Automated',
-  '# MTTD (Mean Time to Detect)',
-  '# MTTR (Mean Time to Respond or Repair)',
-  'Delivery cycle-time reduction attributable to AI',
-  '# AI agents in production (not pilots / POC)',
-  'Contract Test case Pass Rate (%) (Passed Tests / Total Executed Tests) × 100',
-  'Performance Defects Detected Pre-release (%)',
-  '% workforce with externally validated AI / GenAI / Agentic AI certification',
-  'Efforts saved in hours',
-  '# FDE ( Forward Deployment Engineer) penetration as % of client-facing headcount',
   'Overall Score',
   'Accepted Score',
   'Accepted Comment',
@@ -58,6 +49,19 @@ const CSV_HEADERS = [
   'Accelerators Used',
   'Work Done by AI (%)',
   'Hours Saved',
+  '% Tickets Auto-Resolved by AI',
+  'MTTR Reduction vs Traditional Model',
+  '# AI Agents in Production (Not Pilots)',
+  '# End-to-End Workflows Re-imagined and Automated',
+  '# MTTD (Mean Time to Detect)',
+  '# MTTR (Mean Time to Respond or Repair)',
+  'Delivery cycle-time reduction attributable to AI',
+  '# AI agents in production (not pilots / POC)',
+  'Contract Test case Pass Rate (%) (Passed Tests / Total Executed Tests) × 100',
+  'Performance Defects Detected Pre-release (%)',
+  '% workforce with externally validated AI / GenAI / Agentic AI certification',
+  'Efforts saved in hours',
+  '# FDE ( Forward Deployment Engineer) penetration as % of client-facing headcount',
   'Revenue Generated',
   'Benefit To',
   'Qualitative Benefits',
@@ -179,6 +183,18 @@ const createCSVRow = (
   //escapeCSVValue(projectData?.currentPhase),
   escapeCSVValue(projectData?.licenseCount),
   escapeCSVValue(projectData?.licenseProvider),
+  escapeCSVValue(projectData?.overallScoreValue),
+  escapeCSVValue(projectData?.acceptedScore),
+  escapeCSVValue(projectData?.acceptedScoreComment),
+  escapeCSVValue(activity.sdlcPhase),
+  escapeCSVValue(activity.activity),
+  escapeCSVValue(activity.applicability),
+  escapeCSVValue(activity.aiAdoptionScore),
+  escapeCSVValue(activity.aiToolUsed),
+  //escapeCSVValue(activity.clientApproved),
+  escapeCSVValue(activity.acceleratorsUsed),
+  escapeCSVValue(activity.workDoneByAI),
+  escapeCSVValue(activity.hoursSaved),
   escapeCSVValue(projectData?.runOpsAutoResolved),
   escapeCSVValue(projectData?.runOpsMTTRReduction),
   escapeCSVValue(projectData?.runOpsAIAgents),
@@ -192,18 +208,6 @@ const createCSVRow = (
   escapeCSVValue(projectData?.commonAdoptionWorkforceCertification),
   escapeCSVValue(projectData?.commonAdoptionEffortsSaved),
   escapeCSVValue(projectData?.commonDeploymentEngineer),
-  escapeCSVValue(projectData?.overallScoreValue),
-  escapeCSVValue(projectData?.acceptedScore),
-  escapeCSVValue(projectData?.acceptedScoreComment),
-  escapeCSVValue(activity.sdlcPhase),
-  escapeCSVValue(activity.activity),
-  escapeCSVValue(activity.applicability),
-  escapeCSVValue(activity.aiAdoptionScore),
-  escapeCSVValue(activity.aiToolUsed),
-  //escapeCSVValue(activity.clientApproved),
-  escapeCSVValue(activity.acceleratorsUsed),
-  escapeCSVValue(activity.workDoneByAI),
-  escapeCSVValue(activity.hoursSaved),
   escapeCSVValue(activity.revenueGenerated),
   escapeCSVValue(activity.benefitTo),
   escapeCSVValue(activity.qualitativeBenefits),
@@ -231,7 +235,34 @@ export const generateActivitiesCSV = (
 export const generateMultiActivitiesCSV = (
   activities: EnrichedActivityWithProjectInfo[]
 ): string => {
-  const rows = activities.map((activity) => createCSVRow(activity, activity));
+  // The Overall Score is per project + practice (the average AI Adoption Score of its
+  // activities, same as Manage Activities). It is not stored on the activity rows, so it
+  // has to be worked out here or the "Overall Score" column comes out blank.
+  const groups = new Map<string, EnrichedActivityWithProjectInfo[]>();
+  activities.forEach((activity) => {
+    const key = `${activity.projectId}|${activity.practice}`;
+    const group = groups.get(key);
+    if (group) group.push(activity);
+    else groups.set(key, [activity]);
+  });
+  const overallScores = new Map<string, string>();
+  groups.forEach((group, key) => {
+    overallScores.set(
+      key,
+      areAllActivitiesNotApplicable(group)
+        ? 'N/A'
+        : calculateAverageAIAdoptionScore(group).toFixed(2)
+    );
+  });
+
+  const rows = activities.map((activity) =>
+    createCSVRow(activity, {
+      ...activity,
+      overallScoreValue: overallScores.get(
+        `${activity.projectId}|${activity.practice}`
+      ),
+    })
+  );
   return generateCSVContent(CSV_HEADERS, rows);
 };
 
