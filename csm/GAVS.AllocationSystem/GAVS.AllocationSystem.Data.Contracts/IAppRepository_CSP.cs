@@ -320,6 +320,8 @@ namespace GAVS.AllocationSystem.Data.Contracts
         void AimiInsertErrorLog(string empId, string module, string action, string requestUrl, string errorMessage, string exceptionType, string stackTrace);
 
         List<AimiPracticeInfoSpRow> AimiGetPracticeInfo(string projectId, string practice);
+        /// <summary>Maintenance message while AIMI_MAINTENANCE is active in CONFIGURATION_EXT; null when off.</summary>
+        string AimiGetMaintenanceMessage();
         int AimiUpsertPracticeInfo(int? id, string projectId, string practice, string currentPhase, string empId);
 
         List<AimiAiToolMetricSpRow> AimiGetAIToolMetrics(string projectId, string practice);

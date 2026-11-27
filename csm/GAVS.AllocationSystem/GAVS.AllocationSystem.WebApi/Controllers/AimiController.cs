@@ -320,6 +320,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
         // ------------------------------------------------------------------
+        // Maintenance switch (CONFIGURATION_EXT key AIMI_MAINTENANCE)
+        // ------------------------------------------------------------------
+
+        [GET("GetAimiMaintenanceStatus")]
+        [ActionName("GetAimiMaintenanceStatus")]
+        [HttpGet]
+        public IHttpActionResult GetAimiMaintenanceStatus()
+        {
+            var message = CSPdb.AppRepo.AimiGetMaintenanceMessage();
+            return Ok(new AimiMaintenanceStatusResponse
+            {
+                IS_MAINTENANCE_ACTIVE = message != null,
+                MESSAGE = message
+            });
+        }
+
+        // ------------------------------------------------------------------
         // Practice Info (per-project, per-practice current phase)
         // ------------------------------------------------------------------
 

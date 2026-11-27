@@ -2597,6 +2597,13 @@ namespace GAVS.AllocationSystem.Data
                 param1, param2, param3, param4, param5, param6, param7);
         }
 
+        public string AimiGetMaintenanceMessage()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<string>(
+                "[dbo].[usp_AIMI_GetMaintenanceStatus]").FirstOrDefault();
+        }
+
         public List<AimiPracticeInfoSpRow> AimiGetPracticeInfo(string projectId, string practice)
         {
             var dbContext = new CSPDbContext();

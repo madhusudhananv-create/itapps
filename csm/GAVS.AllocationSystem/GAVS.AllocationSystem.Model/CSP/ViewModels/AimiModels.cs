@@ -245,6 +245,14 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         [JsonProperty("ID")] public int ID { get; set; }
     }
 
+    /// Result of GetAimiMaintenanceStatus: whether AIMI is in maintenance, and the notice text.
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiMaintenanceStatusResponse
+    {
+        [JsonProperty("IS_MAINTENANCE_ACTIVE")] public bool IS_MAINTENANCE_ACTIVE { get; set; }
+        [JsonProperty("MESSAGE")] public string MESSAGE { get; set; }
+    }
+
     [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
     public class AimiQualitativeBenefitAnalysisResponse
     {
